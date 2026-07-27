@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/deployment/v1/fault-acceptance.schema.json",
+  "title": "Read-Only Deployment Fault Acceptance v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "workload", "namespace", "replicas", "controls"],
+  "properties": {
+    "schemaVersion": { "const": "deployment-fault-acceptance/v1" },
+    "workload": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,127}$" },
+    "namespace": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,62}$" },
+    "replicas": { "type": "integer", "minimum": 2 },
+    "controls": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status", "evidence"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Z0-9-]{5,64}$" },
+          "status": { "const": "passed" },
+          "evidence": { "type": "string", "minLength": 1, "maxLength": 256 }
+        }
+      }
+    }
+  }
+}

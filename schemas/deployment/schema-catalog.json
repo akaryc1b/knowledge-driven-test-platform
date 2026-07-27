@@ -1,0 +1,9 @@
+{
+  "currentFaultAcceptance": "deployment-fault-acceptance/v1",
+  "schemas": [
+    {
+      "schemaVersion": "deployment-fault-acceptance/v1",
+      "path": "schemas/deployment/v1/fault-acceptance.schema.json"
+    }
+  ]
+}
