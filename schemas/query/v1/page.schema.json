@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/query/v1/page.schema.json",
+  "title": "Governance Query Page v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "projectId", "sort", "items", "page"],
+  "properties": {
+    "schemaVersion": { "const": "governance-query-page/v1" },
+    "projectId": { "type": "string", "minLength": 2, "maxLength": 128 },
+    "sort": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "direction"],
+      "properties": {
+        "field": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "direction": { "enum": ["asc", "desc"] }
+      }
+    },
+    "items": { "type": "array" },
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["limit", "hasMore", "nextCursor"],
+      "properties": {
+        "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "hasMore": { "type": "boolean" },
+        "nextCursor": { "type": ["string", "null"], "maxLength": 2048 }
+      }
+    }
+  }
+}

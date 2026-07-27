@@ -9,8 +9,13 @@ knowledge-driven-test-platform/
 │   ├── knowledge-registry/
 │   ├── knowledge-registry-postgres/
 │   ├── knowledge-governance/
-│   └── knowledge-governance-postgres/
+│   ├── knowledge-governance-postgres/
+│   └── governance-query/
 ├── schemas/
+│   ├── knowledge/
+│   ├── registry/
+│   ├── governance/
+│   └── query/
 ├── deploy/postgres/
 ├── examples/
 ├── docs/
@@ -21,37 +26,38 @@ knowledge-driven-test-platform/
 ## 依赖方向
 
 ```text
-knowledge-governance-postgres
+governance-query
   → knowledge-governance
   → knowledge-registry
   → knowledge-core
 
 knowledge-governance-postgres
+  → knowledge-governance
   → knowledge-registry-postgres
-  → knowledge-registry
 ```
 
-应用组合根负责创建 PostgreSQL Pool，并将同一 Pool 注入 Registry、治理证据 Store 与 Governance Unit of Work。
+查询包只消费 Port，不依赖 PostgreSQL、HTTP 框架或应用层。请求身份通过 Port 注入，Handler 只返回运输无关的 `{status, body}`。
 
-## M1-D 新增结构
+## M1-E 新增结构
 
 ```text
-packages/knowledge-governance-postgres/
-├── migrations/0001_create_governance_evidence.sql
-├── src/review-decision-store.js
-├── src/snapshot-store.js
-├── src/unit-of-work.js
-└── test/postgres-integration.test.js
+packages/governance-query/
+├── src/query-service.js
+├── src/handlers.js
+├── src/identity-port.js
+├── src/cursor.js
+├── src/dto.js
+└── test/
 
-examples/postgres-governance.js
+schemas/query/
+examples/read-only-query-api.js
 ```
-
-PostgreSQL 适配器不读取隐式环境变量，不创建或关闭 Pool。事务绑定适配器只使用调用方提供的 client，不自行开启嵌套事务。
 
 ## 后续演进
 
 ```text
-packages/governance-query/
+packages/project-membership/
+packages/project-membership-postgres/
 packages/test-planner/
 packages/k6-adapter/
 packages/evidence-model/

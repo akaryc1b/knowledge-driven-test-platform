@@ -1,0 +1,14 @@
+{
+  "currentResponseEnvelope": "governance-query-response/v1",
+  "currentPage": "governance-query-page/v1",
+  "schemas": [
+    {
+      "schemaVersion": "governance-query-response/v1",
+      "path": "schemas/query/v1/response-envelope.schema.json"
+    },
+    {
+      "schemaVersion": "governance-query-page/v1",
+      "path": "schemas/query/v1/page.schema.json"
+    }
+  ]
+}
