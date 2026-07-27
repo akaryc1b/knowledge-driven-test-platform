@@ -40,12 +40,29 @@ jobs:
       - run: npm run --silent example:service > /tmp/read-only-service.json
       - run: npm run validate:deployment
       - run: npm run --silent example:deployment > /tmp/deployment-acceptance.json
+      - run: npm run validate:release
       - name: Build non-root read-only service image
         run: docker build -f apps/read-only-governance-service/Dockerfile -t kdtp-read-only-service:test .
       - name: Verify container user
         run: test "$(docker image inspect kdtp-read-only-service:test --format '{{.Config.User}}')" = "node"
       - name: Verify hardened container runtime
         run: docker run --rm --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cap-drop=ALL --security-opt no-new-privileges kdtp-read-only-service:test node --version
+      - name: Capture release evidence metadata
+        shell: bash
+        run: |
+          echo "KDTP_RELEASE_IMAGE_ID=$(docker image inspect kdtp-read-only-service:test --format '{{.Id}}')" >> "$GITHUB_ENV"
+          echo "KDTP_RELEASE_GENERATED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+      - name: Generate M1 release candidate evidence
+        env:
+          KDTP_RELEASE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          KDTP_RELEASE_SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: npm run --silent example:release > /tmp/m1-release-evidence.json
+      - name: Upload M1 release candidate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m1-release-candidate-evidence
+          path: /tmp/m1-release-evidence.json
+          if-no-files-found: error
 
   postgres-integration:
     runs-on: ubuntu-latest
@@ -72,7 +89,7 @@ jobs:
           node-version: 22
       - run: npm ci --ignore-scripts
       - run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
-      - name: Run PostgreSQL integration tests
+      - name: Run PostgreSQL integration and M1 release E2E tests
         shell: bash
         run: |
           set -o pipefail

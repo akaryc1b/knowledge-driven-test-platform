@@ -1,6 +1,6 @@
 {
   "name": "knowledge-driven-test-platform",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -13,6 +13,8 @@
   "scripts": {
     "test": "node --test packages/knowledge-core/test/*.test.js packages/knowledge-registry/test/*.test.js packages/knowledge-registry-postgres/test/*.test.js packages/knowledge-governance/test/*.test.js packages/knowledge-governance-postgres/test/*.test.js packages/governance-query/test/*.test.js packages/project-membership/test/*.test.js packages/project-membership-postgres/test/*.test.js packages/governance-http/test/*.test.js packages/governance-auth-oidc/test/*.test.js apps/knowledge-cli/test/*.test.js apps/read-only-governance-service/test/*.test.js",
     "validate": "node scripts/validate-repository.js",
+    "validate:deployment": "node scripts/validate-kubernetes-manifests.js",
+    "validate:release": "node scripts/validate-release-candidate.js",
     "example:approval": "node apps/knowledge-cli/src/cli.js resolve examples/approval-platform",
     "example:registry": "node examples/registry-lifecycle.js",
     "example:governance": "node examples/governance-lifecycle.js",
@@ -21,11 +23,11 @@
     "example:http": "node examples/read-only-http-transport.js",
     "example:oidc": "node examples/oidc-jwks-authentication.js",
     "example:service": "node examples/read-only-service-operational.js",
+    "example:deployment": "node examples/read-only-deployment-acceptance.js",
+    "example:release": "node examples/read-only-release-candidate.js",
     "start:read-only": "node apps/read-only-governance-service/src/main.js",
-    "test:postgres": "node --test --test-concurrency=1 packages/knowledge-registry-postgres/test/postgres-integration.test.js packages/knowledge-governance-postgres/test/postgres-integration.test.js packages/project-membership-postgres/test/postgres-integration.test.js",
+    "test:postgres": "node --test --test-concurrency=1 packages/knowledge-registry-postgres/test/postgres-integration.test.js packages/knowledge-governance-postgres/test/postgres-integration.test.js packages/project-membership-postgres/test/postgres-integration.test.js apps/read-only-governance-service/test/release-candidate-integration.test.js",
     "example:postgres": "node examples/postgres-registry.js",
-    "example:governance:postgres": "node examples/postgres-governance.js",
-    "validate:deployment": "node scripts/validate-kubernetes-manifests.js",
-    "example:deployment": "node examples/read-only-deployment-acceptance.js"
+    "example:governance:postgres": "node examples/postgres-governance.js"
   }
 }
