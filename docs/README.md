@@ -38,6 +38,7 @@
 - [M2-A Test Planning Contracts and Identity](03-roadmap/m2-a-test-planning-contracts.md)
 - [M2-B Versioned Capability Catalog](03-roadmap/m2-b-versioned-capability-catalog.md)
 - [M2-C Deterministic Planner and Coverage](03-roadmap/m2-c-deterministic-planner.md)
+- [M2-D Durable Test Plan Registry](03-roadmap/m2-d-durable-test-plan-registry.md)
 
 ## 发布与治理
 
@@ -65,3 +66,4 @@
 - [ADR-0015：确定性测试计划身份](05-adr/ADR-0015-deterministic-test-plan-identity.md)
 - [ADR-0016：版本化 Capability Catalog](05-adr/ADR-0016-versioned-capability-catalog.md)
 - [ADR-0017：确定性 Planner、Coverage、Provenance 与 DAG](05-adr/ADR-0017-deterministic-planner-coverage-provenance-dag.md)
+- [ADR-0018：PostgreSQL Durable Test Plan Registry](05-adr/ADR-0018-durable-test-plan-registry.md)
