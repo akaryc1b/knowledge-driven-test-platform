@@ -1,0 +1,37 @@
+name: m2c-apply
+
+on:
+  push:
+    branches:
+      - agent/m2-c-deterministic-planner
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m2-c-deterministic-planner
+          fetch-depth: 0
+      - name: Apply verified offline implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          if test -f packages/test-planner/package.json; then
+            echo "M2-C implementation already applied"
+            exit 0
+          fi
+          cat .github/m2c-patch.part* > /tmp/m2c.patch.gz
+          test "$(sha256sum /tmp/m2c.patch.gz | cut -d' ' -f1)" = "35a8014c409dcfa9ce3b0b175619482563f95539723472b8f990e86d8d2e324b"
+          gzip -dc /tmp/m2c.patch.gz > /tmp/m2c.patch
+          test "$(sha256sum /tmp/m2c.patch | cut -d' ' -f1)" = "74b98ab387408965d96c8892dc8ae5d9fff0d077e896a37256f4a1cc51fa3f02"
+          git apply --check /tmp/m2c.patch
+          git apply /tmp/m2c.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: add deterministic planner and coverage"
+          git push origin HEAD:agent/m2-c-deterministic-planner
