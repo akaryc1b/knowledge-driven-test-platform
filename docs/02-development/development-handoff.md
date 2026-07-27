@@ -1,59 +1,64 @@
-# M1-F 当前开发交接
+# M1-G 当前开发交接
 
-## M0 至 M1-E 已完成
+## M0 至 M1-F 已完成
 
-- 多项目五层知识边界、受控覆盖与不可变快照；
-- Registry 领域边界、生命周期、CAS 与 PostgreSQL 持久化；
-- 项目治理、职责分离、revision 绑定审核和发布策略；
-- PostgreSQL 审核证据、不可变快照与单数据库 Unit of Work；
-- 运输无关的知识、审核和快照只读查询边界；
-- 请求身份 Port、项目隔离、DTO、游标分页与稳定错误 envelope。
+- 多项目五层知识模型与确定性快照；
+- 版本化 Registry、PostgreSQL 持久化与审计历史；
+- 项目治理、职责分离与 revision 绑定审核；
+- PostgreSQL 治理证据与单数据库 Unit of Work；
+- 只读知识、审核和快照查询边界；
+- 持久化项目目录、成员关系和 deny-by-default 授权。
 
-## M1-F 已完成
+## M1-G 已完成
 
-- 独立 `@kdtp/project-membership` package；
-- `ProjectDirectoryPort` 与 `ProjectMembershipPort`；
-- 项目 ACTIVE、SUSPENDED、ARCHIVED 生命周期；
-- 成员 ACTIVE、SUSPENDED、REVOKED 生命周期；
-- VIEWER、AUTHOR、REVIEWER、PUBLISHER、AUDITOR、AUTOMATION 与 PROJECT_ADMIN 角色；
-- 角色到治理动作的确定性映射；
-- 成员生效时间与失效时间；
-- deny-by-default `ProjectMembershipAuthorization`；
-- 内存项目目录与成员 Store；
-- 独立 `@kdtp/project-membership-postgres` package；
-- PostgreSQL 项目、成员和 append-only 审计历史；
-- revision CAS 与并发成员更新保护；
-- 单事务 PostgreSQL 读取授权；
-- migration checksum、回滚与真实 PostgreSQL 合同测试；
-- Query Service 使用成员授权的组合示例。
+- 独立 `@kdtp/governance-http` package；
+- Node `http` 只读 Transport Adapter；
+- 五条 GET 路由白名单；
+- Bearer Credential 提取；
+- Authentication Port；
+- 认证结果到 Request Identity Context 的可信桥接；
+- 请求 ID 透传与生成；
+- JSON 内容协商；
+- 查询参数白名单和重复参数拒绝；
+- URL 长度限制；
+- 只读请求体拒绝与流式大小限制；
+- 只读限流 Port 与内存 fixed-window Adapter；
+- 凭证指纹限流键，不保存原始 Token；
+- 安全响应头；
+- 401、404、405、406、413、429 与 500 稳定映射；
+- 所有 5xx 响应脱敏；
+- 真实临时 Node Server 合同测试。
 
 ## 当前边界
 
-- 项目成员关系可以持久化并驱动现有治理和只读查询授权；
-- 项目或成员缺失、暂停、撤销、未生效或过期均拒绝访问；
-- 角色是平台固定基础角色，暂不支持项目自定义角色；
-- 身份 Context 仍由调用方提供，不验证 OAuth/OIDC Token；
-- 成员管理只有领域 Port 与 Adapter，没有 HTTP 写接口或管理 UI；
-- 没有组织目录同步、SCIM、邀请流程或批量成员导入；
-- 没有 k6 Worker、队列或生产执行。
+- HTTP Transport 只开放 GET，不存在写入路由；
+- InMemory Bearer Authentication 只用于测试与示例，不属于生产 Token 验证器；
+- 未接入 OAuth/OIDC、JWKS、SAML 或 Session；
+- 默认不发送 CORS 响应头；
+- 默认拒绝任何请求体；
+- Server Factory 不自动监听固定端口；
+- 项目读取权限仍由 M1-F Membership Authorization 决定；
+- 没有管理后台、生产 Worker、队列或生产测试执行。
 
 ## 下一安全切片
 
-`M1-G — Read-Only HTTP Transport and Authentication Boundary`
+`M1-H — OIDC/JWKS Read Authentication Adapter`
 
 只允许：
 
-- 只读 HTTP 路由适配器；
-- Bearer credential 提取 Port；
-- 请求 ID、内容协商和响应头治理；
-- 认证结果到 Request Identity Context 的组合；
-- 只读速率限制 Port；
-- HTTP 合同与安全测试。
+- JWT Bearer 验证 Port Adapter；
+- issuer、audience、algorithm 与时钟偏差校验；
+- JWKS 获取、缓存、刷新和 key rotation；
+- subject 到平台 actor 的映射 Port；
+- fail-closed 认证错误；
+- 认证可观测事件；
+- 测试用本地签名密钥和 HTTP-free 合同测试。
 
 暂不允许：
 
-- 任何写入 HTTP API；
-- 成员管理后台；
-- 外部 IdP 管理或组织同步；
-- AI 自动审核或发布；
-- k6 Worker 或生产执行。
+- 写入 HTTP API；
+- IdP 管理后台；
+- 登录页面、Cookie Session 或 Refresh Token；
+- 成员管理 API；
+- AI 自动审核或授权；
+- k6 Worker、队列或生产执行。
