@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   apply:
-    if: ${{ hashFiles('packages/test-plan/package.json') == '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,6 +20,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if test -f packages/test-plan/package.json; then
+            echo "M2-A implementation already applied"
+            exit 0
+          fi
           cat .github/m2a-patch.part* > /tmp/m2a.patch.gz
           test "$(sha256sum /tmp/m2a.patch.gz | cut -d' ' -f1)" = "636b891499e043b64975a573f5e43df4f5b2a74f1e7466746e1febbf27059c52"
           gzip -dc /tmp/m2a.patch.gz > /tmp/m2a.patch
