@@ -40,21 +40,26 @@
 
 ### M1-G — Read-Only HTTP Transport and Authentication Boundary
 
-详细设计见 [`m1-g-read-only-http-auth.md`](./m1-g-read-only-http-auth.md)。
-
 - Node HTTP 只读 Adapter；
-- Bearer Credential 与 Authentication Port；
-- 请求 ID、限流、内容协商和安全响应头；
-- 路由/参数白名单与请求体拒绝；
-- HTTP 合同和真实临时 Server 测试。
-
-## 下一安全切片
+- Bearer、请求 ID、限流、白名单和安全响应。
 
 ### M1-H — OIDC/JWKS Read Authentication Adapter
 
-- JWT issuer、audience、algorithm 和时间声明校验；
-- JWKS 获取、缓存和 key rotation；
-- subject 到 actor 映射；
-- fail-closed 认证与可观测事件。
+详细设计见 [`m1-h-oidc-jwks-auth.md`](./m1-h-oidc-jwks-auth.md)。
 
-仍不开放写入 HTTP API、成员管理 API、IdP 管理后台、AI 自动授权或生产测试执行。
+- RS256 JWT issuer、audience、时间声明和签名校验；
+- HTTPS JWKS、bounded cache、并发刷新和 key rotation；
+- subject 到 actor 映射 Port；
+- fail-closed 认证和脱敏可观测事件。
+
+## 下一安全切片
+
+### M1-I — Read-Only Service Composition and Operational Controls
+
+- 只读应用组合根；
+- 显式配置与启动校验；
+- liveness、readiness 和依赖探针；
+- graceful shutdown 与结构化运行事件；
+- Dockerfile 和本地运行示例。
+
+仍不开放写入 HTTP API、IdP/成员管理后台、AI 自动授权或生产测试执行。
