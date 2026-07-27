@@ -1,5 +1,6 @@
 [
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "DOMAIN-WF-001",
     "boundaryKey": "workflow.transition-guard",
     "name": "工作流状态转换保护",

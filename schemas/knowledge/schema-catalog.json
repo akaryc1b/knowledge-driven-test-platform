@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "knowledge-schema-catalog/v1",
+  "currentKnowledgeRule": "knowledge-rule/v1",
+  "schemas": [
+    {
+      "schemaVersion": "knowledge-rule/v1",
+      "path": "knowledge/v1/knowledge-rule.schema.json",
+      "status": "ACTIVE"
+    },
+    {
+      "schemaVersion": "knowledge-registry-record/v1",
+      "path": "../registry/v1/knowledge-registry-record.schema.json",
+      "status": "ACTIVE"
+    }
+  ],
+  "currentRegistryRecord": "knowledge-registry-record/v1"
+}

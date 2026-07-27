@@ -1,5 +1,6 @@
 [
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "GLOBAL-SEC-001",
     "boundaryKey": "security.secret-log-redaction",
     "name": "日志敏感信息脱敏",
@@ -29,6 +30,7 @@
     "riskLevel": "high"
   },
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "GLOBAL-HTTP-001",
     "boundaryKey": "http.default-timeout",
     "name": "默认 HTTP 超时",
@@ -49,6 +51,7 @@
     "riskLevel": "high"
   },
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "GLOBAL-QUALITY-001",
     "boundaryKey": "quality.orphan-tests",
     "name": "正式测试知识绑定",

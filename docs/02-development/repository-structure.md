@@ -35,3 +35,11 @@ examples → 不作为生产依赖
 ```
 
 核心包不得依赖应用层，也不得读取网络或环境中的隐式全局状态。
+
+## M1-A 新增结构
+
+```text
+packages/knowledge-registry/   Registry 端口、生命周期和内存适配器
+schemas/knowledge/             版本化 JSON Schema 与目录
+examples/registry-lifecycle.js Registry 发布生命周期示例
+```

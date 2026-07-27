@@ -22,6 +22,7 @@
 
 - [总体路线图](03-roadmap/roadmap.md)
 - [M0 基础阶段](03-roadmap/m0-foundation.md)
+- [M1 Registry 与治理](03-roadmap/m1-registry-and-governance.md)
 
 ## 治理
 
@@ -33,3 +34,4 @@
 - [ADR-0001：Monorepo 与零依赖核心](05-adr/ADR-0001-monorepo-zero-dependency-core.md)
 - [ADR-0002：分层边界解析](05-adr/ADR-0002-layered-boundary-resolution.md)
 - [ADR-0003：不可变快照](05-adr/ADR-0003-immutable-snapshots.md)
+- [ADR-0004：Registry Port 与追加式版本](05-adr/ADR-0004-registry-port-and-append-only-versions.md)

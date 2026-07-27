@@ -1,5 +1,6 @@
 [
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "PROJECT-HTTP-001",
     "boundaryKey": "http.default-timeout",
     "name": "审批平台 HTTP 超时",
@@ -20,6 +21,7 @@
     "riskLevel": "high"
   },
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "PROJECT-WF-001",
     "boundaryKey": "workflow.transition-guard",
     "name": "审批平台状态转换加强",
@@ -43,6 +45,7 @@
     "overrideIntent": "strengthen"
   },
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "PROJECT-PERM-001",
     "boundaryKey": "permission.current-approver-only",
     "name": "当前审批人权限",
@@ -64,6 +67,7 @@
     "riskLevel": "high"
   },
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "PROJECT-SLO-001",
     "boundaryKey": "performance.submit-approval",
     "name": "提交审批性能目标",
@@ -87,6 +91,7 @@
     "riskLevel": "high"
   },
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "PROJECT-REL-001",
     "boundaryKey": "reliability.submit-idempotency",
     "name": "审批提交幂等性",

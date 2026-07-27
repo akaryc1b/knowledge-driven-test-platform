@@ -16,6 +16,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm ci --ignore-scripts
       - run: npm test
       - run: npm run validate
       - run: npm run --silent example:approval > /tmp/approval-snapshot.json
+      - run: npm run --silent example:registry > /tmp/registry-record.json

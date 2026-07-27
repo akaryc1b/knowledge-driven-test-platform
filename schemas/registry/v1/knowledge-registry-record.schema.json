@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.internal/schemas/registry/v1/knowledge-registry-record.schema.json",
+  "title": "Knowledge Registry Record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "recordSchemaVersion",
+    "key",
+    "revision",
+    "createdAt",
+    "updatedAt",
+    "knowledge",
+    "history"
+  ],
+  "properties": {
+    "recordSchemaVersion": { "const": "knowledge-registry-record/v1" },
+    "key": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9-]+@(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "revision": { "type": "integer", "minimum": 1 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "knowledge": {
+      "$ref": "../../knowledge/v1/knowledge-rule.schema.json"
+    },
+    "history": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/auditEvent" }
+    }
+  },
+  "$defs": {
+    "auditEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence",
+        "type",
+        "fromStatus",
+        "toStatus",
+        "actor",
+        "at",
+        "reason"
+      ],
+      "properties": {
+        "sequence": { "type": "integer", "minimum": 1 },
+        "type": { "enum": ["CREATED", "DRAFT_REPLACED", "STATUS_TRANSITIONED"] },
+        "fromStatus": {
+          "type": ["string", "null"],
+          "enum": [null, "DRAFT", "REVIEWING", "PUBLISHED", "DEPRECATED", "ARCHIVED"]
+        },
+        "toStatus": {
+          "enum": ["DRAFT", "REVIEWING", "PUBLISHED", "DEPRECATED", "ARCHIVED"]
+        },
+        "actor": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "at": { "type": "string", "format": "date-time" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 512 }
+      }
+    }
+  }
+}

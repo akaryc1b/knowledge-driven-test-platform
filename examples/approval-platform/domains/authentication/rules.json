@@ -1,5 +1,6 @@
 [
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "DOMAIN-AUTH-001",
     "boundaryKey": "auth.token-validation",
     "name": "访问令牌校验",
