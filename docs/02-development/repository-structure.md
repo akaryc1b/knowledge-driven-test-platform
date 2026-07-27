@@ -16,7 +16,8 @@ knowledge-driven-test-platform/
 │   ├── project-membership-postgres/
 │   ├── governance-http/
 │   ├── governance-auth-oidc/
-│   └── test-plan/
+│   ├── test-plan/
+│   └── test-capability/
 ├── schemas/
 │   ├── knowledge/
 │   ├── registry/
@@ -26,7 +27,8 @@ knowledge-driven-test-platform/
 │   ├── authentication/
 │   ├── operations/
 │   ├── deployment/
-│   └── planning/
+│   ├── planning/
+│   └── capability/
 ├── deploy/
 │   ├── postgres/
 │   └── kubernetes/read-only-governance-service/
@@ -107,3 +109,13 @@ packages/k6-adapter/
 packages/evidence-model/
 apps/quality-console/
 ```
+
+## M2-B 新增结构
+
+```text
+packages/test-capability/
+schemas/capability/
+examples/capability-catalog.js
+```
+
+Capability Catalog 是规划输入，不包含执行器实现。目录版本和 digest 必须共同绑定，所有解析使用精确 capability ID/version。
