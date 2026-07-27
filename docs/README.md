@@ -33,9 +33,12 @@
 - [M1-H OIDC/JWKS Authentication](03-roadmap/m1-h-oidc-jwks-auth.md)
 - [M1-I Read-Only Service Composition](03-roadmap/m1-i-read-only-service-composition.md)
 - [M1-J Deployment and Fault Acceptance](03-roadmap/m1-j-read-only-deployment-fault-acceptance.md)
+- [M1-K Release Acceptance and Stack Consolidation](03-roadmap/m1-k-read-only-release-acceptance.md)
 
-## 治理
+## 发布与治理
 
+- [M1-RC1 发布候选说明](releases/M1-RC1.md)
+- [M1 发布验收矩阵](04-governance/m1-release-acceptance-matrix.md)
 - [知识治理](04-governance/knowledge-governance.md)
 - [多项目安全与隔离](04-governance/security-and-isolation.md)
 
@@ -54,3 +57,4 @@
 - [ADR-0011：显式 Issuer、JWKS 与 RS256](05-adr/ADR-0011-explicit-issuer-jwks-rs256.md)
 - [ADR-0012：显式服务组合与运维探针](05-adr/ADR-0012-explicit-read-only-service-composition.md)
 - [ADR-0013：安全 Kubernetes 只读部署基线](05-adr/ADR-0013-secure-kubernetes-read-only-baseline.md)
+- [ADR-0014：堆叠合并前先生成发布证据](05-adr/ADR-0014-evidence-before-stack-merge.md)

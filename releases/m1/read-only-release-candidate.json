@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "m1-read-only-release-candidate/v1",
+  "releaseId": "M1-RC1",
+  "version": "0.12.0",
+  "status": "CANDIDATE",
+  "candidateBranch": "agent/m1-k-release-acceptance",
+  "predecessorHeadSha": "6b1be0a58fb5c0383de7b3444b0419d4348db5cd",
+  "stack": [
+    { "slice": "M1-A", "pr": 1, "base": "main", "head": "agent/m1-a-knowledge-registry", "headSha": "8e0c94e1d8c672885d6b0d663defa1af811fa06a" },
+    { "slice": "M1-B", "pr": 2, "base": "agent/m1-a-knowledge-registry", "head": "agent/m1-b-postgres-registry", "headSha": "75bf742a3f0f1b23d5f52b6d0f7b939108009c9c" },
+    { "slice": "M1-C", "pr": 3, "base": "agent/m1-b-postgres-registry", "head": "agent/m1-c-governance-service", "headSha": "8fa93d28f05fdc63e17ac54b088758967d9ea70e" },
+    { "slice": "M1-D", "pr": 4, "base": "agent/m1-c-governance-service", "head": "agent/m1-d-durable-governance-evidence", "headSha": "0889f23512e8be65784f4507138b4479c17bddf5" },
+    { "slice": "M1-E", "pr": 5, "base": "agent/m1-d-durable-governance-evidence", "head": "agent/m1-e-read-only-query-api", "headSha": "e25ae0c5dd5bcfa8ebddb1ca1175e507495f5fc8" },
+    { "slice": "M1-F", "pr": 6, "base": "agent/m1-e-read-only-query-api", "head": "agent/m1-f-project-membership", "headSha": "ac39348e4ea9e63de12bba5ddc25c04235dd9685" },
+    { "slice": "M1-G", "pr": 7, "base": "agent/m1-f-project-membership", "head": "agent/m1-g-read-only-http-auth", "headSha": "2a0c20c43ccb4b0a2c4f0b31eb172d93db068c88" },
+    { "slice": "M1-H", "pr": 8, "base": "agent/m1-g-read-only-http-auth", "head": "agent/m1-h-oidc-jwks-auth", "headSha": "dc33404ec513bfb707f3a6f5372364de214f9163" },
+    { "slice": "M1-I", "pr": 9, "base": "agent/m1-h-oidc-jwks-auth", "head": "agent/m1-i-read-only-service-composition", "headSha": "fc55d302dec055619880b22ba008e8b93defdc27" },
+    { "slice": "M1-J", "pr": 10, "base": "agent/m1-i-read-only-service-composition", "head": "agent/m1-j-deployment-fault-acceptance", "headSha": "6b1be0a58fb5c0383de7b3444b0419d4348db5cd" }
+  ],
+  "requiredChecks": [
+    "node-workspace",
+    "repository-validation",
+    "postgresql-18",
+    "read-only-e2e",
+    "deployment-manifests",
+    "hardened-container"
+  ],
+  "businessRoutes": [
+    "GET /v1/projects/{projectId}/knowledge",
+    "GET /v1/projects/{projectId}/knowledge/{id}/versions/{version}",
+    "GET /v1/projects/{projectId}/knowledge/{id}/versions/{version}/timeline",
+    "GET /v1/projects/{projectId}/snapshots",
+    "GET /v1/projects/{projectId}/snapshots/{snapshotId}"
+  ],
+  "decision": {
+    "productionEligible": false,
+    "blockers": [
+      "external-registry-digest-missing",
+      "production-secrets-not-configured",
+      "target-cluster-validation-not-run",
+      "stack-prs-not-merged",
+      "main-branch-final-ci-not-run",
+      "release-owner-approval-missing"
+    ]
+  }
+}

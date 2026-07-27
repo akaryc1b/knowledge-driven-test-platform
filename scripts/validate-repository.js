@@ -20,12 +20,15 @@ import {
 import { loadProjectAccessPostgresMigrations } from '../packages/project-membership-postgres/src/index.js';
 import { loadProjectInput } from '../apps/knowledge-cli/src/project-loader.js';
 import { validateKubernetesManifests } from './validate-kubernetes-manifests.js';
+import { validateReleaseCandidate } from './validate-release-candidate.js';
 
 const root = process.cwd();
 const required = [
   'README.md',
+  'CHANGELOG.md',
   '.dockerignore',
   'docs/README.md',
+  'docs/releases/M1-RC1.md',
   'apps/read-only-governance-service/package.json',
   'apps/read-only-governance-service/src/main.js',
   'apps/read-only-governance-service/src/composition.js',
@@ -48,7 +51,7 @@ const required = [
   'schemas/knowledge/schema-catalog.json',
   'schemas/registry/v1/knowledge-registry-record.schema.json',
   'schemas/governance/schema-catalog.json',
-   'schemas/query/schema-catalog.json',
+  'schemas/query/schema-catalog.json',
   'schemas/access/schema-catalog.json',
   'schemas/authentication/schema-catalog.json',
   'schemas/operations/schema-catalog.json',
@@ -56,12 +59,18 @@ const required = [
   'schemas/operations/v1/service-health.schema.json',
   'schemas/deployment/schema-catalog.json',
   'schemas/deployment/v1/fault-acceptance.schema.json',
+  'schemas/release/schema-catalog.json',
+  'schemas/release/v1/release-candidate.schema.json',
+  'schemas/release/v1/release-evidence.schema.json',
+  'releases/m1/read-only-release-candidate.json',
   'deploy/kubernetes/read-only-governance-service/deployment.yaml',
   'deploy/kubernetes/read-only-governance-service/service.yaml',
   'deploy/kubernetes/read-only-governance-service/pdb.yaml',
   'deploy/kubernetes/read-only-governance-service/kustomization.yaml',
   'scripts/validate-kubernetes-manifests.js',
+  'scripts/validate-release-candidate.js',
   'examples/read-only-service-operational.js',
+  'examples/read-only-release-candidate.js',
 ];
 for (const path of required) await stat(join(root, path));
 
@@ -101,7 +110,18 @@ if (operationsCatalog.currentRuntimeEvent !== 'service-runtime-event/v1') throw 
 if (operationsCatalog.currentHealthResponse !== 'service-health/v1') throw new Error('Operations catalog must identify service-health/v1 as current');
 const deploymentCatalog = JSON.parse(await readFile(join(root, 'schemas/deployment/schema-catalog.json'), 'utf8'));
 if (deploymentCatalog.currentFaultAcceptance !== 'deployment-fault-acceptance/v1') throw new Error('Deployment catalog must identify deployment-fault-acceptance/v1 as current');
+const releaseCatalog = JSON.parse(await readFile(join(root, 'schemas/release/schema-catalog.json'), 'utf8'));
+if (releaseCatalog.currentReleaseCandidate !== 'm1-read-only-release-candidate/v1') throw new Error('Release catalog must identify the M1 candidate schema');
+if (releaseCatalog.currentReleaseEvidence !== 'm1-read-only-release-evidence/v1') throw new Error('Release catalog must identify the M1 evidence schema');
 await validateKubernetesManifests();
+const releaseEvidence = await validateReleaseCandidate({
+  generatedAt: '2026-07-27T12:30:00.000Z',
+  commitSha: 'local',
+  branch: 'agent/m1-k-release-acceptance',
+});
+if (releaseEvidence.decision.productionEligible !== false || releaseEvidence.stack.continuous !== true) {
+  throw new Error('M1 release candidate decision or stack continuity changed');
+}
 
 const postgresMigrations = await loadPostgresMigrations();
 if (postgresMigrations.map((item) => item.version).join(',') !== '0001_create_registry') throw new Error('PostgreSQL migration catalog is not deterministic');
@@ -115,8 +135,7 @@ const project = validateProjectRecord(createProjectRecord({
   at: '2026-07-27T12:00:00.000Z', reason: 'validate project directory record',
 }));
 validateMembershipRecord(createMembershipRecord({
-  projectId: project.projectId, subject: 'repository-reader',
-  roles: ['VIEWER'],
+  projectId: project.projectId, subject: 'repository-reader', roles: ['VIEWER'],
   validFrom: '2026-07-27T12:00:00.000Z', validUntil: null,
   actor: 'repository-validator', at: '2026-07-27T12:00:00.000Z', reason: 'validate membership',
 }));
@@ -125,7 +144,6 @@ const httpRoute = matchReadOnlyRoute('GET', '/v1/projects/approval-platform/know
 if (httpRoute.handler !== 'listKnowledge' || httpRoute.projectId !== 'approval-platform') {
   throw new Error('Read-only HTTP route catalog is not deterministic');
 }
-
 const config = loadServiceConfig({
   KDTP_DATABASE_URL: 'postgresql://validator:password@postgres.example/kdtp',
   KDTP_OIDC_ISSUER: 'https://id.example.com/tenant',
@@ -155,7 +173,7 @@ const envelope = validateSnapshotEnvelope(createSnapshotEnvelope({
   reason: 'validate governance snapshot envelope',
 }));
 if (envelope.snapshotId !== snapshot.snapshotId) throw new Error('Governance snapshot envelope identity changed');
-console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}`);
+console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}; release ${releaseEvidence.releaseId}`);
 
 function isKnowledgeRuleFile(path) {
   const normalized = path.replaceAll('\\', '/');

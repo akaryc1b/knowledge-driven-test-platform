@@ -1,0 +1,14 @@
+{
+  "currentReleaseCandidate": "m1-read-only-release-candidate/v1",
+  "currentReleaseEvidence": "m1-read-only-release-evidence/v1",
+  "schemas": [
+    {
+      "schemaVersion": "m1-read-only-release-candidate/v1",
+      "path": "schemas/release/v1/release-candidate.schema.json"
+    },
+    {
+      "schemaVersion": "m1-read-only-release-evidence/v1",
+      "path": "schemas/release/v1/release-evidence.schema.json"
+    }
+  ]
+}
