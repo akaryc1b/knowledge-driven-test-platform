@@ -1,63 +1,45 @@
-# M1-J 当前开发交接
+# M2-A 当前开发交接
 
-## M0 至 M1-I 已完成
+## M1 已完成并合并
 
-- 多项目五层知识模型与确定性快照；
-- Registry、治理证据、项目成员的 PostgreSQL 持久化；
-- 职责分离、revision 绑定审核与默认拒绝授权；
-- 只读 Query、HTTP、OIDC/JWKS 和完整应用组合；
-- `/live`、`/ready`、运行事件、连接跟踪和优雅关闭；
-- 非 Root Docker 镜像基线。
+- M1-A～M1-K 已合并到 `main`；
+- 当前版本为 `0.12.0`；
+- PostgreSQL Registry、治理证据、项目成员、OIDC/JWKS、只读服务和 Kubernetes 基线已经存在；
+- M1-RC1 候选证据独立保留，生产资格仍受外部镜像 digest、生产 Secret、目标集群和发布批准阻断；
+- 当前业务 HTTP 仍只有五条只读知识查询路由。
 
-## M1-J 已完成
+## M2-A 文档决策
 
-- Kubernetes ServiceAccount；
-- 非敏感 ConfigMap；
-- Secret 键契约与非生产示例；
-- 两副本 Deployment；
-- ClusterIP Service；
-- PodDisruptionBudget；
-- RollingUpdate `maxUnavailable=0`；
-- Startup、Liveness 与 Readiness Probe；
-- 非 Root、RuntimeDefault seccomp、只读根文件系统；
-- Drop ALL、禁止提权和禁止 ServiceAccount Token 自动挂载；
-- CPU/内存 requests 与 limits；
-- 有界 `/tmp` volume；
-- JSON-compatible YAML 确定性校验器；
-- Deployment Fault Acceptance Schema 与示例；
-- PostgreSQL 故障/恢复验收；
-- JWKS 故障/恢复验收；
-- Liveness 与 Readiness 分离验收；
-- SIGTERM 活动请求排空验收；
-- Docker 硬化运行参数 CI。
+- 正式计划只消费 `PUBLISHED` Knowledge 的不可变 Snapshot Envelope；
+- Snapshot ID 与 SHA-256 digest 必须同时绑定；
+- `planId` 与 `intentId` 使用 canonical JSON 和 SHA-256 确定性派生；
+- 时间、随机数、数据库序列和对象插入顺序不得参与正式身份；
+- Test Intent 保持执行器无关；
+- Secret、Token、私钥、连接串和运行节点信息在合同入口拒绝；
+- 所有输入和输出 defensive copy；
+- JSON Schema 与运行时验证共享版本化合同和稳定错误码。
 
-## 当前边界
+## 本切片允许
 
-- Manifest 是部署基线，不是生产发布授权；
-- 示例镜像标签必须在生产晋级时替换为 digest；
-- 示例 OIDC 地址必须由环境覆盖；
-- 示例 Secret 不会被默认 Kustomization 应用；
-- 未提供 Ingress、Gateway、NetworkPolicy 或 Helm；
-- 未接入云 Secret Manager；
-- 没有写入 API、管理后台、Worker、队列或生产测试执行。
+- `packages/test-plan/` 领域模型；
+- `schemas/planning/` 五个 v1 合同；
+- canonical JSON、SHA-256、规划 fingerprint、plan ID 与 intent ID；
+- Target Inventory、Planning Policy、Intent、Coverage Obligation、Provenance 与 Test Plan 验证；
+- 内存测试、Schema 测试、示例和仓库校验扩展；
+- M1 全量回归。
+
+## 本切片不允许
+
+- Capability Catalog 实现；
+- Deterministic Planner；
+- PostgreSQL 计划 Registry；
+- 计划审核、批准或冻结；
+- HTTP 写接口；
+- k6、xk6、Playwright、Worker、Queue、Scheduler 或生产测试执行；
+- M3。
 
 ## 下一安全切片
 
-`M1-K — Read-Only Release Acceptance and Stack Consolidation`
+`M2-B — Versioned Capability Catalog`
 
-只允许：
-
-- M1-A 至 M1-J 堆叠 PR 的顺序复核与合并准备；
-- 真实 PostgreSQL + 本地 JWKS + HTTP 只读端到端验收；
-- 镜像 digest 与部署证据模型；
-- 版本、变更记录和 M1 发布候选说明；
-- 安全、故障和可观测性验收矩阵；
-- M1 正式完成条件与未决风险。
-
-暂不允许：
-
-- 写入 HTTP API；
-- 自动生产发布；
-- IdP、成员或 Subject Mapping 管理后台；
-- k6 Worker、任务队列或生产测试执行；
-- 启动 M2 功能开发。
+只允许建立执行器无关、版本化、可解析、可校验和可计算 digest 的 Capability Catalog，并继续禁止任何实际执行器代码。

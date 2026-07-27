@@ -34,6 +34,8 @@
 - [M1-I Read-Only Service Composition](03-roadmap/m1-i-read-only-service-composition.md)
 - [M1-J Deployment and Fault Acceptance](03-roadmap/m1-j-read-only-deployment-fault-acceptance.md)
 - [M1-K Release Acceptance and Stack Consolidation](03-roadmap/m1-k-read-only-release-acceptance.md)
+- [M2 Governed Deterministic Test Planning](03-roadmap/m2-governed-deterministic-test-planning.md)
+- [M2-A Test Planning Contracts and Identity](03-roadmap/m2-a-test-planning-contracts.md)
 
 ## 发布与治理
 
@@ -58,3 +60,4 @@
 - [ADR-0012：显式服务组合与运维探针](05-adr/ADR-0012-explicit-read-only-service-composition.md)
 - [ADR-0013：安全 Kubernetes 只读部署基线](05-adr/ADR-0013-secure-kubernetes-read-only-baseline.md)
 - [ADR-0014：堆叠合并前先生成发布证据](05-adr/ADR-0014-evidence-before-stack-merge.md)
+- [ADR-0015：确定性测试计划身份](05-adr/ADR-0015-deterministic-test-plan-identity.md)
