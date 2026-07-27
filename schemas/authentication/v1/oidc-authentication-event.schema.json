@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/authentication/v1/oidc-authentication-event.schema.json",
+  "title": "OIDC Authentication Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "type",
+    "at",
+    "requestId",
+    "issuer",
+    "keyId",
+    "reasonCode",
+    "subjectFingerprint"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "oidc-authentication-event/v1" },
+    "type": {
+      "enum": ["AUTHENTICATION_SUCCEEDED", "AUTHENTICATION_FAILED", "JWKS_REFRESHED"]
+    },
+    "at": { "type": "string", "format": "date-time" },
+    "requestId": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9._:-]{1,128}$"
+    },
+    "issuer": { "type": ["string", "null"], "maxLength": 2048 },
+    "keyId": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9._:-]{1,128}$"
+    },
+    "reasonCode": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Z][A-Z0-9_]{1,127}$"
+    },
+    "subjectFingerprint": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "keyCount": { "type": "integer", "minimum": 0, "maximum": 1024 }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "currentOidcAuthenticationEvent": "oidc-authentication-event/v1",
+  "schemas": [
+    {
+      "schemaVersion": "oidc-authentication-event/v1",
+      "path": "schemas/authentication/v1/oidc-authentication-event.schema.json"
+    }
+  ]
+}

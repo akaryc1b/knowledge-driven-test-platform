@@ -1,0 +1,15 @@
+export const SUPPORTED_JWT_ALGORITHMS = Object.freeze(['RS256']);
+export const DEFAULT_ALLOWED_ALGORITHMS = Object.freeze(['RS256']);
+export const DEFAULT_CLOCK_SKEW_SECONDS = 60;
+export const DEFAULT_JWKS_CACHE_TTL_MS = 5 * 60 * 1000;
+export const DEFAULT_JWKS_MAX_CACHE_TTL_MS = 60 * 60 * 1000;
+export const DEFAULT_JWKS_MIN_REFRESH_INTERVAL_MS = 1000;
+export const DEFAULT_JWKS_TIMEOUT_MS = 3000;
+export const DEFAULT_JWKS_MAX_RESPONSE_BYTES = 128 * 1024;
+export const DEFAULT_JWKS_MAX_KEYS = 32;
+export const OIDC_AUTH_EVENT_SCHEMA_VERSION = 'oidc-authentication-event/v1';
+export const OIDC_AUTH_EVENT_TYPES = Object.freeze([
+  'AUTHENTICATION_SUCCEEDED',
+  'AUTHENTICATION_FAILED',
+  'JWKS_REFRESHED',
+]);

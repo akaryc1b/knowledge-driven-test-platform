@@ -1,5 +1,9 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
+import {
+  createAuthenticationEvent,
+  OIDC_AUTH_EVENT_SCHEMA_VERSION,
+} from '../packages/governance-auth-oidc/src/index.js';
 import { matchReadOnlyRoute } from '../packages/governance-http/src/index.js';
 import { buildKnowledgeSnapshot, resolveKnowledge } from '../packages/knowledge-core/src/index.js';
 import { createSnapshotEnvelope, validateSnapshotEnvelope } from '../packages/knowledge-governance/src/index.js';
@@ -31,6 +35,7 @@ const required = [
   'packages/project-membership-postgres/src/index.js',
   'packages/project-membership-postgres/migrations/0001_create_project_access.sql',
   'packages/governance-http/src/index.js',
+  'packages/governance-auth-oidc/src/index.js',
   'deploy/postgres/compose.yaml',
   'schemas/knowledge/schema-catalog.json',
   'schemas/knowledge/v1/knowledge-rule.schema.json',
@@ -44,6 +49,8 @@ const required = [
   'schemas/access/schema-catalog.json',
   'schemas/access/v1/project-directory-record.schema.json',
   'schemas/access/v1/project-membership-record.schema.json',
+  'schemas/authentication/schema-catalog.json',
+  'schemas/authentication/v1/oidc-authentication-event.schema.json',
   'apps/knowledge-cli/src/cli.js',
   'examples/approval-platform/project-manifest.json',
   'examples/governance-lifecycle.js',
@@ -51,6 +58,7 @@ const required = [
   'examples/read-only-query-api.js',
   'examples/project-membership-authorization.js',
   'examples/read-only-http-transport.js',
+  'examples/oidc-jwks-authentication.js',
 ];
 for (const path of required) await stat(join(root, path));
 
@@ -83,6 +91,12 @@ if (queryCatalog.currentPage !== 'governance-query-page/v1') throw new Error('Qu
 const accessCatalog = JSON.parse(await readFile(join(root, 'schemas/access/schema-catalog.json'), 'utf8'));
 if (accessCatalog.currentProjectDirectoryRecord !== 'project-directory-record/v1') throw new Error('Access catalog must identify project-directory-record/v1 as current');
 if (accessCatalog.currentProjectMembershipRecord !== 'project-membership-record/v1') throw new Error('Access catalog must identify project-membership-record/v1 as current');
+const authenticationCatalog = JSON.parse(
+  await readFile(join(root, 'schemas/authentication/schema-catalog.json'), 'utf8'),
+);
+if (authenticationCatalog.currentOidcAuthenticationEvent !== OIDC_AUTH_EVENT_SCHEMA_VERSION) {
+  throw new Error('Authentication catalog must identify oidc-authentication-event/v1 as current');
+}
 
 const postgresMigrations = await loadPostgresMigrations();
 if (postgresMigrations.map((item) => item.version).join(',') !== '0001_create_registry') {
@@ -114,6 +128,21 @@ validateMembershipRecord(createMembershipRecord({
   at: '2026-07-27T12:00:00.000Z',
   reason: 'validate project membership record',
 }));
+
+const authEvent = createAuthenticationEvent({
+  type: 'AUTHENTICATION_SUCCEEDED',
+  at: '2026-07-27T12:00:00.000Z',
+  requestId: 'repository-validator',
+  issuer: 'https://issuer.example.test',
+  kid: 'validator-key-1',
+  subject: 'repository-reader',
+  reasonCode: 'AUTHENTICATED',
+});
+if (authEvent.schemaVersion !== OIDC_AUTH_EVENT_SCHEMA_VERSION ||
+    authEvent.subjectFingerprint?.length !== 64 ||
+    'credential' in authEvent || 'claims' in authEvent) {
+  throw new Error('OIDC authentication event is not deterministic or safely bounded');
+}
 
 const httpRoute = matchReadOnlyRoute('GET', '/v1/projects/approval-platform/knowledge');
 if (httpRoute.handler !== 'listKnowledge' || httpRoute.projectId !== 'approval-platform') {

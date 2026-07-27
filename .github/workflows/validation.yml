@@ -25,6 +25,7 @@ jobs:
       - run: npm run --silent example:query > /tmp/read-only-query.json
       - run: npm run --silent example:access > /tmp/project-membership-access.json
       - run: npm run --silent example:http > /tmp/read-only-http.json
+      - run: npm run --silent example:oidc > /tmp/oidc-authentication.json
 
   postgres-integration:
     runs-on: ubuntu-latest
