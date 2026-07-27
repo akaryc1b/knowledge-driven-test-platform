@@ -1,0 +1,14 @@
+{
+  "currentReviewDecision": "knowledge-review-decision/v1",
+  "currentSnapshotEnvelope": "knowledge-snapshot-envelope/v1",
+  "schemas": [
+    {
+      "schemaVersion": "knowledge-review-decision/v1",
+      "path": "schemas/governance/v1/review-decision.schema.json"
+    },
+    {
+      "schemaVersion": "knowledge-snapshot-envelope/v1",
+      "path": "schemas/governance/v1/snapshot-envelope.schema.json"
+    }
+  ]
+}

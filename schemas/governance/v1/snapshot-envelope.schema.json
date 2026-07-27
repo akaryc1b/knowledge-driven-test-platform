@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/governance/v1/snapshot-envelope.schema.json",
+  "title": "Knowledge Snapshot Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "snapshotId",
+    "digest",
+    "projectId",
+    "environmentId",
+    "releaseId",
+    "createdBy",
+    "createdAt",
+    "reason",
+    "snapshot"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "knowledge-snapshot-envelope/v1" },
+    "snapshotId": { "type": "string", "pattern": "^kb-[a-z0-9-]+-[a-f0-9]{12}$" },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "projectId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$" },
+    "environmentId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "releaseId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "createdBy": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "reason": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "snapshot": {
+      "type": "object",
+      "required": ["snapshotId", "digest", "schemaVersion", "context", "rules", "resolution"],
+      "properties": {
+        "snapshotId": { "type": "string" },
+        "digest": { "type": "string" },
+        "schemaVersion": { "const": 1 },
+        "context": { "type": "object" },
+        "rules": { "type": "array" },
+        "resolution": { "type": "array" }
+      }
+    }
+  }
+}
