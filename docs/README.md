@@ -26,6 +26,7 @@
 - [M1 Registry 与治理](03-roadmap/m1-registry-and-governance.md)
 - [M1-B Durable Registry Adapter](03-roadmap/m1-b-durable-registry.md)
 - [M1-C Governance Service Boundary](03-roadmap/m1-c-governance-service.md)
+- [M1-D Durable Governance Evidence](03-roadmap/m1-d-durable-governance-evidence.md)
 
 ## 治理
 
@@ -40,3 +41,4 @@
 - [ADR-0004：Registry Port 与追加式版本](05-adr/ADR-0004-registry-port-and-append-only-versions.md)
 - [ADR-0005：PostgreSQL Durable Registry](05-adr/ADR-0005-postgresql-durable-registry.md)
 - [ADR-0006：Revision 绑定治理](05-adr/ADR-0006-revision-bound-governance.md)
+- [ADR-0007：单数据库 Governance Unit of Work](05-adr/ADR-0007-single-database-governance-unit-of-work.md)

@@ -2,61 +2,47 @@
 
 ## 目标
 
-将 M0 的“文件输入与即时解析”升级为“版本化知识对象经过持久化、授权和审核治理后再进入解析与快照”。
+将文件输入升级为经过版本化、持久化、授权、审核和不可变证据治理的公司知识。
 
-M1 继续保持传输层、管理后台和生产测试执行在范围外。
+## 已完成切片
 
-## M1-A — Knowledge Schema and Registry Boundary
+### M1-A — Knowledge Schema and Registry Boundary
 
-已完成：
+- 版本化 Schema；
+- Registry Port 和内存适配器；
+- CAS、生命周期和审计历史。
 
-- `knowledge-rule/v1` 版本化 JSON Schema；
-- 知识逻辑 ID 与严格 SemVer；
-- 异步 Registry Port 与内存适配器；
-- revision CAS、草稿更新和治理生命周期；
-- 可复用 Registry 合同测试。
+### M1-B — Durable Registry Adapter
 
-生命周期：
+- PostgreSQL Registry；
+- checksum migration；
+- advisory lock、row lock 和 CAS；
+- 真实数据库合同测试。
 
-```text
-DRAFT ──submit-review──> REVIEWING ──publish──> PUBLISHED
-  ▲                           │                     │
-  └────request-changes────────┘                     └──deprecate──> DEPRECATED ──archive──> ARCHIVED
-```
+### M1-C — Governance Service Boundary
 
-## M1-B — Durable Registry Adapter
-
-详细设计见 [`m1-b-durable-registry.md`](./m1-b-durable-registry.md)。
-
-已完成：
-
-- PostgreSQL 18 Schema 与 checksum migration；
-- 事务、唯一约束、row lock、advisory lock 和 revision CAS；
-- PostgreSQL Registry Adapter；
-- Docker Compose 与 CI PostgreSQL 集成测试。
-
-## M1-C — Governance Service Boundary
-
-详细设计见 [`m1-c-governance-service.md`](./m1-c-governance-service.md)。
-
-已完成：
-
-- 项目级授权 Port；
-- 作者、审核人和发布人职责分离；
-- 绑定 Registry revision 的审核决策；
-- risk-level 发布前审批策略；
-- 审计查询模型；
-- 不可变知识快照 Store Port；
-- 内存适配器与可复用合同测试。
-
-## 下一安全切片
+- 项目授权；
+- 职责分离；
+- revision 绑定审核；
+- 发布策略、审计查询和快照 Store Port。
 
 ### M1-D — Durable Governance Evidence
 
-- PostgreSQL review decision 与 snapshot envelope 持久化；
-- append-only 审核证据；
-- 治理 Unit of Work；
-- Registry 与审核决定的单数据库事务组合；
-- durable adapter 合同和并发测试。
+详细设计见 [`m1-d-durable-governance-evidence.md`](./m1-d-durable-governance-evidence.md)。
 
-仍不开放 HTTP API、身份认证、RBAC 管理后台、AI 自动发布或生产测试执行。
+- PostgreSQL review decision 与 snapshot envelope；
+- append-only 与 immutable 数据库保护；
+- Governance Unit of Work；
+- Registry 与审核证据同事务提交；
+- 并发发布与并发审核测试。
+
+## 下一安全切片
+
+### M1-E — Read-Only Governance Query API
+
+- 只读应用服务边界；
+- 项目知识、审核和快照查询 DTO；
+- 身份上下文 Port；
+- 分页、过滤和错误映射。
+
+仍不开放写入 HTTP API、RBAC 管理后台、AI 自动发布或生产测试执行。
