@@ -10,12 +10,15 @@ knowledge-driven-test-platform/
 │   ├── knowledge-registry-postgres/
 │   ├── knowledge-governance/
 │   ├── knowledge-governance-postgres/
-│   └── governance-query/
+│   ├── governance-query/
+│   ├── project-membership/
+│   └── project-membership-postgres/
 ├── schemas/
 │   ├── knowledge/
 │   ├── registry/
 │   ├── governance/
-│   └── query/
+│   ├── query/
+│   └── access/
 ├── deploy/postgres/
 ├── examples/
 ├── docs/
@@ -29,38 +32,36 @@ knowledge-driven-test-platform/
 governance-query
   → knowledge-governance
   → knowledge-registry
-  → knowledge-core
 
-knowledge-governance-postgres
+project-membership
   → knowledge-governance
+
+project-membership-postgres
+  → project-membership
   → knowledge-registry-postgres
 ```
 
-查询包只消费 Port，不依赖 PostgreSQL、HTTP 框架或应用层。请求身份通过 Port 注入，Handler 只返回运输无关的 `{status, body}`。
+`ProjectMembershipAuthorization` 实现现有 `ProjectAuthorizationPort`，因此治理写服务和只读查询服务无需感知成员数据来自内存还是 PostgreSQL。
 
-## M1-E 新增结构
-
-```text
-packages/governance-query/
-├── src/query-service.js
-├── src/handlers.js
-├── src/identity-port.js
-├── src/cursor.js
-├── src/dto.js
-└── test/
-
-schemas/query/
-examples/read-only-query-api.js
-```
-
-## 后续演进
+## M1-F 新增结构
 
 ```text
 packages/project-membership/
+├── src/lifecycle.js
+├── src/authorization.js
+├── src/in-memory-directory.js
+├── src/in-memory-memberships.js
+└── test/
+
 packages/project-membership-postgres/
-packages/test-planner/
-packages/k6-adapter/
-packages/evidence-model/
-apps/knowledge-api/
-apps/quality-console/
+├── migrations/0001_create_project_access.sql
+├── src/project-directory.js
+├── src/membership-store.js
+├── src/authorization.js
+└── test/postgres-integration.test.js
+
+schemas/access/
+examples/project-membership-authorization.js
 ```
+
+PostgreSQL 授权适配器在一个只读 `REPEATABLE READ` 事务中联合读取项目和成员，避免跨查询观察到不一致状态。
