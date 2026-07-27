@@ -8,6 +8,16 @@
 - M1-RC1 候选证据独立保留，生产资格仍受外部镜像 digest、生产 Secret、目标集群和发布批准阻断；
 - 当前业务 HTTP 仍只有五条只读知识查询路由。
 
+## M2-A 已完成
+
+- `@kdtp/test-plan` 执行器无关领域模型；
+- 五个 `schemas/planning` v1 合同；
+- canonical JSON、SHA-256 fingerprint、确定性 Plan/Intent/Obligation/Provenance ID；
+- 不可变 Snapshot ID 与 digest 双绑定；
+- Target Inventory、Planning Policy、Coverage、Provenance 和 DRAFT Test Plan；
+- defensive copy、敏感数据拒绝和执行器脚本拒绝；
+- 规划合同示例、Schema 测试和仓库验证。
+
 ## M2-A 文档决策
 
 - 正式计划只消费 `PUBLISHED` Knowledge 的不可变 Snapshot Envelope；

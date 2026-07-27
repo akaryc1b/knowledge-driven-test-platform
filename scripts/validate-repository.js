@@ -18,6 +18,15 @@ import {
   validateProjectRecord,
 } from '../packages/project-membership/src/index.js';
 import { loadProjectAccessPostgresMigrations } from '../packages/project-membership-postgres/src/index.js';
+import {
+  createCoverageObligation,
+  createPlanningRequest,
+  createProvenanceEntry,
+  createTargetInventory,
+  createTestIntent,
+  createTestPlan,
+  validateTestPlan,
+} from '../packages/test-plan/src/index.js';
 import { loadProjectInput } from '../apps/knowledge-cli/src/project-loader.js';
 import { validateKubernetesManifests } from './validate-kubernetes-manifests.js';
 import { validateReleaseCandidate } from './validate-release-candidate.js';
@@ -47,6 +56,8 @@ const required = [
   'packages/project-membership-postgres/migrations/0001_create_project_access.sql',
   'packages/governance-http/src/index.js',
   'packages/governance-auth-oidc/src/index.js',
+  'packages/test-plan/src/index.js',
+  'packages/test-plan/test/schema.test.js',
   'deploy/postgres/compose.yaml',
   'schemas/knowledge/schema-catalog.json',
   'schemas/registry/v1/knowledge-registry-record.schema.json',
@@ -62,6 +73,12 @@ const required = [
   'schemas/release/schema-catalog.json',
   'schemas/release/v1/release-candidate.schema.json',
   'schemas/release/v1/release-evidence.schema.json',
+  'schemas/planning/schema-catalog.json',
+  'schemas/planning/v1/test-planning-request.schema.json',
+  'schemas/planning/v1/test-target-inventory.schema.json',
+  'schemas/planning/v1/test-intent.schema.json',
+  'schemas/planning/v1/test-coverage-obligation.schema.json',
+  'schemas/planning/v1/test-plan.schema.json',
   'releases/m1/read-only-release-candidate.json',
   'deploy/kubernetes/read-only-governance-service/deployment.yaml',
   'deploy/kubernetes/read-only-governance-service/service.yaml',
@@ -71,6 +88,7 @@ const required = [
   'scripts/validate-release-candidate.js',
   'examples/read-only-service-operational.js',
   'examples/read-only-release-candidate.js',
+  'examples/test-plan-contracts.js',
 ];
 for (const path of required) await stat(join(root, path));
 
@@ -113,6 +131,12 @@ if (deploymentCatalog.currentFaultAcceptance !== 'deployment-fault-acceptance/v1
 const releaseCatalog = JSON.parse(await readFile(join(root, 'schemas/release/schema-catalog.json'), 'utf8'));
 if (releaseCatalog.currentReleaseCandidate !== 'm1-read-only-release-candidate/v1') throw new Error('Release catalog must identify the M1 candidate schema');
 if (releaseCatalog.currentReleaseEvidence !== 'm1-read-only-release-evidence/v1') throw new Error('Release catalog must identify the M1 evidence schema');
+const planningCatalog = JSON.parse(await readFile(join(root, 'schemas/planning/schema-catalog.json'), 'utf8'));
+if (planningCatalog.currentPlanningRequest !== 'test-planning-request/v1') throw new Error('Planning catalog must identify test-planning-request/v1 as current');
+if (planningCatalog.currentTargetInventory !== 'test-target-inventory/v1') throw new Error('Planning catalog must identify test-target-inventory/v1 as current');
+if (planningCatalog.currentTestIntent !== 'test-intent/v1') throw new Error('Planning catalog must identify test-intent/v1 as current');
+if (planningCatalog.currentCoverageObligation !== 'test-coverage-obligation/v1') throw new Error('Planning catalog must identify test-coverage-obligation/v1 as current');
+if (planningCatalog.currentTestPlan !== 'test-plan/v1') throw new Error('Planning catalog must identify test-plan/v1 as current');
 await validateKubernetesManifests();
 const releaseEvidence = await validateReleaseCandidate({
   generatedAt: '2026-07-27T12:30:00.000Z',
@@ -173,7 +197,99 @@ const envelope = validateSnapshotEnvelope(createSnapshotEnvelope({
   reason: 'validate governance snapshot envelope',
 }));
 if (envelope.snapshotId !== snapshot.snapshotId) throw new Error('Governance snapshot envelope identity changed');
-console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}; release ${releaseEvidence.releaseId}`);
+const planningTargetInventory = createTargetInventory({
+  projectId: snapshot.context.projectId,
+  environmentId: snapshot.context.environmentId,
+  releaseId: snapshot.context.releaseId,
+  targets: [{
+    targetId: 'api:approval-submit',
+    kind: 'api',
+    name: 'Submit approval API',
+    locator: 'POST /v1/approvals',
+    tags: ['approval'],
+    attributes: { operationId: 'submitApproval' },
+  }],
+});
+const planningKnowledge = snapshot.rules.find((rule) => rule.boundaryKey === 'workflow.approval-submit')
+  ?? snapshot.rules[0];
+const planningRequest = createPlanningRequest({
+  projectId: snapshot.context.projectId,
+  environmentId: snapshot.context.environmentId,
+  releaseId: snapshot.context.releaseId,
+  knowledgeSnapshotId: envelope.snapshotId,
+  knowledgeSnapshotDigest: envelope.digest,
+  knowledgeSnapshot: envelope,
+  plannerVersion: '1.0.0',
+  capabilityCatalogVersion: '1.0.0',
+  capabilityCatalogDigest: 'a'.repeat(64),
+  targetInventory: planningTargetInventory,
+  planningPolicy: {
+    policyId: 'policy:repository-validation',
+    version: '1.0.0',
+    entries: [{
+      policyEntryId: 'policy-entry:approval-api',
+      priority: 1,
+      selectors: { knowledgeIds: [planningKnowledge.id], targetIds: ['api:approval-submit'] },
+      capabilityRefs: [{ capabilityId: 'api-functional', version: '1.0.0' }],
+      mandatory: true,
+    }],
+    exemptions: [],
+  },
+  createdAt: '2026-07-27T12:00:00.000Z',
+  createdBy: 'repository-validator',
+});
+const planningKnowledgeRef = {
+  knowledgeId: planningKnowledge.id,
+  version: planningKnowledge.version,
+  boundaryKey: planningKnowledge.boundaryKey,
+  snapshotId: envelope.snapshotId,
+  snapshotDigest: envelope.digest,
+};
+const planningIntent = createTestIntent({
+  planInputFingerprint: planningRequest.inputFingerprint,
+  intentKind: 'api-functional',
+  targetId: 'api:approval-submit',
+  capability: { capabilityId: 'api-functional', version: '1.0.0' },
+  sourceKnowledge: [planningKnowledgeRef],
+  policyEntryId: 'policy-entry:approval-api',
+  input: { operationId: 'submitApproval' },
+  assertions: { statusCode: 201 },
+  thresholds: {},
+  dependencies: [],
+  tags: ['mandatory'],
+});
+const planningObligation = createCoverageObligation({
+  planInputFingerprint: planningRequest.inputFingerprint,
+  targetId: planningIntent.targetId,
+  capability: planningIntent.capability,
+  sourceKnowledge: planningIntent.sourceKnowledge,
+  policyEntryId: planningIntent.policyEntryId,
+  mandatory: true,
+  status: 'COVERED',
+  intentIds: [planningIntent.intentId],
+});
+const planningProvenance = createProvenanceEntry({
+  intentId: planningIntent.intentId,
+  knowledgeId: planningKnowledgeRef.knowledgeId,
+  knowledgeVersion: planningKnowledgeRef.version,
+  boundaryKey: planningKnowledgeRef.boundaryKey,
+  snapshotId: planningKnowledgeRef.snapshotId,
+  snapshotDigest: planningKnowledgeRef.snapshotDigest,
+  capabilityId: planningIntent.capability.capabilityId,
+  capabilityVersion: planningIntent.capability.version,
+  targetId: planningIntent.targetId,
+  policyEntryId: planningIntent.policyEntryId,
+});
+const planningPlan = validateTestPlan(createTestPlan({
+  planningRequest,
+  intents: [planningIntent],
+  coverageObligations: [planningObligation],
+  provenance: [planningProvenance],
+}));
+if (planningPlan.coverage.summary.covered !== 1 || planningPlan.provenance.length !== 1) {
+  throw new Error('M2-A planning contracts are not deterministic');
+}
+console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}; release ${releaseEvidence.releaseId}; plan ${planningPlan.planId}`);
 
 function isKnowledgeRuleFile(path) {
   const normalized = path.replaceAll('\\', '/');

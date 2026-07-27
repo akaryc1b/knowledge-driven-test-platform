@@ -1,0 +1,495 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/planning/v1/test-plan.schema.json",
+  "title": "Test Plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "planId",
+    "projectId",
+    "environmentId",
+    "releaseId",
+    "status",
+    "revision",
+    "inputFingerprint",
+    "knowledgeSnapshot",
+    "planner",
+    "capabilityCatalog",
+    "targets",
+    "planningPolicy",
+    "intents",
+    "coverage",
+    "provenance",
+    "createdAt",
+    "createdBy",
+    "digest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "test-plan/v1"
+    },
+    "planId": {
+      "type": "string",
+      "pattern": "^tp-[a-z0-9-]+-[a-f0-9]{12}$"
+    },
+    "projectId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"
+    },
+    "environmentId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$"
+    },
+    "releaseId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$"
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "REVIEWING",
+        "APPROVED",
+        "FROZEN",
+        "SUPERSEDED",
+        "ARCHIVED"
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "inputFingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "knowledgeSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "snapshotId",
+        "digest",
+        "projectId",
+        "environmentId",
+        "releaseId",
+        "createdBy",
+        "createdAt",
+        "reason",
+        "snapshot"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "knowledge-snapshot-envelope/v1"
+        },
+        "snapshotId": {
+          "type": "string",
+          "pattern": "^kb-[a-z0-9-]+-[a-f0-9]{12}$"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "projectId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"
+        },
+        "environmentId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$"
+        },
+        "releaseId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$"
+        },
+        "createdBy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "snapshot": {
+          "type": "object",
+          "required": [
+            "snapshotId",
+            "digest",
+            "schemaVersion",
+            "context",
+            "rules",
+            "resolution"
+          ],
+          "properties": {
+            "snapshotId": {
+              "type": "string"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "schemaVersion": {
+              "const": 1
+            },
+            "context": {
+              "type": "object"
+            },
+            "rules": {
+              "type": "array",
+              "minItems": 1
+            },
+            "resolution": {
+              "type": "array"
+            }
+          }
+        }
+      }
+    },
+    "planner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+        }
+      }
+    },
+    "capabilityCatalog": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "digest"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "targets": {
+      "$ref": "test-target-inventory.schema.json"
+    },
+    "planningPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policyId",
+        "version",
+        "entries",
+        "exemptions"
+      ],
+      "properties": {
+        "policyId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._:-]{2,255}$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "policyEntryId",
+              "priority",
+              "selectors",
+              "capabilityRefs",
+              "mandatory"
+            ],
+            "properties": {
+              "policyEntryId": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._:-]{2,255}$"
+              },
+              "priority": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000
+              },
+              "selectors": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "knowledgeIds": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "boundaryKeys": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "knowledgeTags": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "targetIds": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "targetKinds": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "targetTags": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "capabilityRefs": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "capabilityId",
+                    "version"
+                  ],
+                  "properties": {
+                    "capabilityId": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9._:-]{2,255}$"
+                    },
+                    "version": {
+                      "type": "string",
+                      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+                    }
+                  }
+                }
+              },
+              "mandatory": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "exemptions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "exemptionId",
+              "knowledgeId",
+              "knowledgeVersion",
+              "targetId",
+              "capabilityId",
+              "capabilityVersion",
+              "reason",
+              "owner"
+            ],
+            "properties": {
+              "exemptionId": {
+                "type": "string",
+                "pattern": "^exemption-[a-f0-9]{16}$"
+              },
+              "knowledgeId": {
+                "type": "string",
+                "pattern": "^[A-Z][A-Z0-9]{1,31}(?:-[A-Z0-9][A-Z0-9]{0,31}){2,7}$"
+              },
+              "knowledgeVersion": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+              },
+              "targetId": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._:-]{2,255}$"
+              },
+              "capabilityId": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9._:-]{2,255}$"
+              },
+              "capabilityVersion": {
+                "type": "string",
+                "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "owner": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "intents": {
+      "type": "array",
+      "items": {
+        "$ref": "test-intent.schema.json"
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "obligations",
+        "summary"
+      ],
+      "properties": {
+        "obligations": {
+          "type": "array",
+          "items": {
+            "$ref": "test-coverage-obligation.schema.json"
+          }
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "total",
+            "mandatory",
+            "covered",
+            "partial",
+            "unplanned",
+            "exempt"
+          ],
+          "properties": {
+            "total": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "mandatory": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "covered": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "partial": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unplanned": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "exempt": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "provenanceId",
+          "intentId",
+          "knowledgeId",
+          "knowledgeVersion",
+          "boundaryKey",
+          "snapshotId",
+          "snapshotDigest",
+          "capabilityId",
+          "capabilityVersion",
+          "targetId",
+          "policyEntryId"
+        ],
+        "properties": {
+          "provenanceId": {
+            "type": "string",
+            "pattern": "^pv-[a-f0-9]{16}$"
+          },
+          "intentId": {
+            "type": "string",
+            "pattern": "^intent-[a-f0-9]{16}$"
+          },
+          "knowledgeId": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9]{1,31}(?:-[A-Z0-9][A-Z0-9]{0,31}){2,7}$"
+          },
+          "knowledgeVersion": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+          },
+          "boundaryKey": {
+            "type": "string"
+          },
+          "snapshotId": {
+            "type": "string",
+            "pattern": "^kb-[a-z0-9-]+-[a-f0-9]{12}$"
+          },
+          "snapshotDigest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "capabilityId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{2,255}$"
+          },
+          "capabilityVersion": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+          },
+          "targetId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{2,255}$"
+          },
+          "policyEntryId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{2,255}$"
+          }
+        }
+      }
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "createdBy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
