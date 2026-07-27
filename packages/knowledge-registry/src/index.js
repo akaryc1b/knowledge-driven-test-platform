@@ -10,6 +10,7 @@ export {
   SCOPE_LEVELS,
 } from './constants.js';
 export { RegistryError } from './errors.js';
+export { compareRegistryRecords, validateRegistryFilter } from './filters.js';
 export {
   compareKnowledgeVersions,
   knowledgeKey,

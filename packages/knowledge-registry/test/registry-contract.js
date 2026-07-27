@@ -7,11 +7,20 @@ import { createCommand, knowledge, T0, T1, T2, T3, T4, transitionCommand } from 
  * Shared contract for every KnowledgeRegistryPort adapter.
  *
  * @param {string} adapterName
- * @param {() => import('../src/registry-port.js').KnowledgeRegistryPort} createRegistry
+ * @param {() => import('../src/registry-port.js').KnowledgeRegistryPort | Promise<import('../src/registry-port.js').KnowledgeRegistryPort>} createRegistry
+ * @param {{beforeEach?: () => Promise<void> | void, afterEach?: (registry: import('../src/registry-port.js').KnowledgeRegistryPort) => Promise<void> | void}} [hooks]
  */
-export function defineKnowledgeRegistryContractTests(adapterName, createRegistry) {
-  test(`${adapterName}: creates and retrieves a defensive copy`, async () => {
-    const registry = createRegistry();
+export function defineKnowledgeRegistryContractTests(adapterName, createRegistry, hooks = {}) {
+  const adapterTest = (name, body) => test(`${adapterName}: ${name}`, { concurrency: false }, async () => {
+    await hooks.beforeEach?.();
+    const registry = await createRegistry();
+    try {
+      await body(registry);
+    } finally {
+      await hooks.afterEach?.(registry);
+    }
+  });
+  adapterTest(`creates and retrieves a defensive copy`, async (registry) => {
     const created = await registry.createDraft(createCommand());
     created.knowledge.value.expected = false;
 
@@ -21,8 +30,7 @@ export function defineKnowledgeRegistryContractTests(adapterName, createRegistry
     assert.equal(stored.history.length, 1);
   });
 
-  test(`${adapterName}: rejects duplicate id and version`, async () => {
-    const registry = createRegistry();
+  adapterTest(`rejects duplicate id and version`, async (registry) => {
     await registry.createDraft(createCommand());
     await assert.rejects(
       () => registry.createDraft(createCommand({ at: T1 })),
@@ -30,8 +38,7 @@ export function defineKnowledgeRegistryContractTests(adapterName, createRegistry
     );
   });
 
-  test(`${adapterName}: concurrent duplicate creation has one winner`, async () => {
-    const registry = createRegistry();
+  adapterTest(`concurrent duplicate creation has one winner`, async (registry) => {
     const results = await Promise.allSettled([
       registry.createDraft(createCommand()),
       registry.createDraft(createCommand({ at: T1 })),
@@ -42,8 +49,7 @@ export function defineKnowledgeRegistryContractTests(adapterName, createRegistry
     assert.equal(rejected.reason.code, 'KNOWLEDGE_VERSION_EXISTS');
   });
 
-  test(`${adapterName}: requires monotonically increasing versions`, async () => {
-    const registry = createRegistry();
+  adapterTest(`requires monotonically increasing versions`, async (registry) => {
     await registry.createDraft(createCommand({
       knowledge: knowledge({ version: '2.0.0' }),
     }));
@@ -57,8 +63,7 @@ export function defineKnowledgeRegistryContractTests(adapterName, createRegistry
     );
   });
 
-  test(`${adapterName}: replaces draft using revision CAS`, async () => {
-    const registry = createRegistry();
+  adapterTest(`replaces draft using revision CAS`, async (registry) => {
     const created = await registry.createDraft(createCommand());
     const updated = await registry.replaceDraft({
       id: created.knowledge.id,
@@ -75,8 +80,7 @@ export function defineKnowledgeRegistryContractTests(adapterName, createRegistry
     assert.equal(updated.history.at(-1).type, 'DRAFT_REPLACED');
   });
 
-  test(`${adapterName}: rejects stale revision`, async () => {
-    const registry = createRegistry();
+  adapterTest(`rejects stale revision`, async (registry) => {
     const created = await registry.createDraft(createCommand());
     await registry.replaceDraft({
       id: created.knowledge.id,
@@ -102,8 +106,7 @@ export function defineKnowledgeRegistryContractTests(adapterName, createRegistry
     );
   });
 
-  test(`${adapterName}: supports the governed publication lifecycle`, async () => {
-    const registry = createRegistry();
+  adapterTest(`supports the governed publication lifecycle`, async (registry) => {
     let record = await registry.createDraft(createCommand());
     record = await registry.transition(transitionCommand(record, 'REVIEWING', T1));
     record = await registry.transition(transitionCommand(record, 'PUBLISHED', T2));
@@ -117,8 +120,7 @@ export function defineKnowledgeRegistryContractTests(adapterName, createRegistry
     assert.equal(record.revision, 5);
   });
 
-  test(`${adapterName}: published content cannot be replaced`, async () => {
-    const registry = createRegistry();
+  adapterTest(`published content cannot be replaced`, async (registry) => {
     let record = await registry.createDraft(createCommand());
     record = await registry.transition(transitionCommand(record, 'REVIEWING', T1));
     record = await registry.transition(transitionCommand(record, 'PUBLISHED', T2));
@@ -137,16 +139,14 @@ export function defineKnowledgeRegistryContractTests(adapterName, createRegistry
     );
   });
 
-  test(`${adapterName}: rejects invalid list filters`, async () => {
-    const registry = createRegistry();
+  adapterTest(`rejects invalid list filters`, async (registry) => {
     await assert.rejects(
       () => registry.list({ status: 'UNKNOWN' }),
       (error) => error instanceof RegistryError && error.code === 'INVALID_REGISTRY_FILTER',
     );
   });
 
-  test(`${adapterName}: lists records in stable identity and version order`, async () => {
-    const registry = createRegistry();
+  adapterTest(`lists records in stable identity and version order`, async (registry) => {
     await registry.createDraft(createCommand({
       knowledge: knowledge({ id: 'PROJECT-ZETA-001', version: '1.0.0' }),
     }));

@@ -20,9 +20,10 @@
 3. 强制规则与覆盖策略；
 4. 确定性知识快照；
 5. 示例项目与验证测试；
-6. 版本化知识 Schema 与 Registry 领域边界。
+6. 版本化知识 Schema 与 Registry 领域边界；
+7. PostgreSQL 持久化 Registry Adapter、migration 与真实数据库合同测试。
 
-暂不包含生产数据库、管理后台、认证授权、向量检索、生产执行调度和大规模分布式压测。
+暂不包含 HTTP API、管理后台、认证授权、向量检索、生产执行调度和大规模分布式压测。
 
 ## 仓库结构
 
@@ -41,6 +42,11 @@ scripts/              仓库验证脚本
 npm test
 npm run validate
 npm run example:approval
+
+# 完整 PostgreSQL 合同测试需要本地数据库与 pg 驱动
+docker compose -f deploy/postgres/compose.yaml up -d
+npm install --no-save --package-lock=false pg@8.22.0
+KDTP_POSTGRES_TEST_URL=postgresql://postgres:postgres@127.0.0.1:55432/kdtp_test npm run test:postgres
 ```
 
 详细设计见 [`docs/README.md`](docs/README.md)。

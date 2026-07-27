@@ -21,3 +21,30 @@ jobs:
       - run: npm run validate
       - run: npm run --silent example:approval > /tmp/approval-snapshot.json
       - run: npm run --silent example:registry > /tmp/registry-record.json
+
+  postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: kdtp_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kdtp_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --ignore-scripts
+      - run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
+      - run: npm run test:postgres

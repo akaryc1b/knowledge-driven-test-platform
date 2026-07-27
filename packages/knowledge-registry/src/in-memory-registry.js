@@ -1,6 +1,6 @@
 import { RegistryError, registryInvariant } from './errors.js';
-import { KNOWLEDGE_STATUSES, SCOPE_LEVELS } from './constants.js';
 import { compareKnowledgeVersions, knowledgeKey, validateKnowledgeId } from './identity.js';
+import { compareRegistryRecords, validateRegistryFilter } from './filters.js';
 import {
   createKnowledgeRecord,
   replaceDraftRecord,
@@ -44,7 +44,7 @@ export class InMemoryKnowledgeRegistry extends KnowledgeRegistryPort {
   }
 
   async list(filter = {}) {
-    validateFilter(filter);
+    validateRegistryFilter(filter);
     const records = [...this.records.values()].filter((record) => {
       const knowledge = record.knowledge;
       return (
@@ -54,7 +54,7 @@ export class InMemoryKnowledgeRegistry extends KnowledgeRegistryPort {
         (filter.scopeKey === undefined || knowledge.scope.key === filter.scopeKey)
       );
     });
-    records.sort(compareRecords);
+    records.sort(compareRegistryRecords);
     return structuredClone(records);
   }
 
@@ -104,32 +104,5 @@ export class InMemoryKnowledgeRegistry extends KnowledgeRegistryPort {
       });
     }
     return structuredClone(record);
-  }
-}
-
-function compareRecords(left, right) {
-  return (
-    left.knowledge.id.localeCompare(right.knowledge.id) ||
-    compareKnowledgeVersions(left.knowledge.version, right.knowledge.version)
-  );
-}
-
-function validateFilter(filter) {
-  registryInvariant(filter && typeof filter === 'object' && !Array.isArray(filter),
-    'INVALID_REGISTRY_FILTER', 'Registry filter must be an object');
-  if (filter.id !== undefined) validateKnowledgeId(filter.id);
-  if (filter.status !== undefined) {
-    registryInvariant(KNOWLEDGE_STATUSES.includes(filter.status),
-      'INVALID_REGISTRY_FILTER', 'Registry status filter is invalid', { status: filter.status });
-  }
-  if (filter.scopeLevel !== undefined) {
-    registryInvariant(SCOPE_LEVELS.includes(filter.scopeLevel),
-      'INVALID_REGISTRY_FILTER', 'Registry scopeLevel filter is invalid', {
-        scopeLevel: filter.scopeLevel,
-      });
-  }
-  if (filter.scopeKey !== undefined) {
-    registryInvariant(typeof filter.scopeKey === 'string' && filter.scopeKey.length > 0,
-      'INVALID_REGISTRY_FILTER', 'Registry scopeKey filter must be a non-empty string');
   }
 }
