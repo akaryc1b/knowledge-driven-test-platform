@@ -1,0 +1,28 @@
+name: m2d-bootstrap-source
+
+on:
+  push:
+    branches:
+      - agent/m2-d-durable-test-plan-registry
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m2-d-durable-test-plan-registry
+          fetch-depth: 0
+      - name: Package branch workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar --exclude=.git --exclude=node_modules -czf /tmp/m2d-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: m2d-bootstrap-source
+          path: /tmp/m2d-source.tar.gz
+          if-no-files-found: error
