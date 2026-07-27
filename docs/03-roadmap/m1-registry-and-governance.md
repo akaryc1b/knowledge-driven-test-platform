@@ -2,7 +2,7 @@
 
 ## 目标
 
-将公司知识从文件输入升级为经过版本化、持久化、项目授权、审核、不可变证据、安全认证和可运维只读服务治理的可信资产。
+将公司知识从文件输入升级为经过版本化、持久化、项目授权、审核、不可变证据、安全认证、可运维服务和可审查部署治理的可信资产。
 
 ## 已完成切片
 
@@ -40,21 +40,29 @@
 
 ### M1-I — Read-Only Service Composition and Operational Controls
 
-详细设计见 [`m1-i-read-only-service-composition.md`](./m1-i-read-only-service-composition.md)。
-
-- 显式应用组合根；
-- 三组 migration 与 JWKS 预热；
-- `/live` 和 `/ready`；
-- 运行事件、连接跟踪和优雅关闭；
+- 显式应用组合根、migrations、JWKS 预热；
+- `/live`、`/ready`、运行事件和优雅关闭；
 - 非 Root Dockerfile。
-
-## 下一安全切片
 
 ### M1-J — Read-Only Deployment Manifest and Fault Acceptance
 
-- Kubernetes manifests；
-- Security Context、资源和滚动升级基线；
-- PostgreSQL/JWKS 故障恢复；
-- SIGTERM 和连接排空验收。
+详细设计见 [`m1-j-read-only-deployment-fault-acceptance.md`](./m1-j-read-only-deployment-fault-acceptance.md)。
 
-仍不开放写入 HTTP API、管理后台、自动生产发布或生产测试执行。
+- Kubernetes Deployment、Service、ServiceAccount、ConfigMap 和 PDB；
+- Pod Security、资源限额和滚动升级基线；
+- Secret 引用契约和示例隔离；
+- PostgreSQL/JWKS 故障恢复；
+- SIGTERM 和连接排空验收；
+- Manifest 与硬化容器 CI。
+
+## 下一安全切片
+
+### M1-K — Read-Only Release Acceptance and Stack Consolidation
+
+- M1 堆叠 PR 顺序复核；
+- 真实只读端到端验收；
+- 镜像 digest 和部署证据；
+- M1 发布候选说明与风险矩阵；
+- M1 正式完成条件。
+
+仍不开放写入 HTTP API、自动生产发布、管理后台、Worker、队列或生产测试执行。
