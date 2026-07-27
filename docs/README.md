@@ -37,6 +37,7 @@
 - [M2 Governed Deterministic Test Planning](03-roadmap/m2-governed-deterministic-test-planning.md)
 - [M2-A Test Planning Contracts and Identity](03-roadmap/m2-a-test-planning-contracts.md)
 - [M2-B Versioned Capability Catalog](03-roadmap/m2-b-versioned-capability-catalog.md)
+- [M2-C Deterministic Planner and Coverage](03-roadmap/m2-c-deterministic-planner.md)
 
 ## 发布与治理
 
@@ -63,3 +64,4 @@
 - [ADR-0014：堆叠合并前先生成发布证据](05-adr/ADR-0014-evidence-before-stack-merge.md)
 - [ADR-0015：确定性测试计划身份](05-adr/ADR-0015-deterministic-test-plan-identity.md)
 - [ADR-0016：版本化 Capability Catalog](05-adr/ADR-0016-versioned-capability-catalog.md)
+- [ADR-0017：确定性 Planner、Coverage、Provenance 与 DAG](05-adr/ADR-0017-deterministic-planner-coverage-provenance-dag.md)
