@@ -1,6 +1,6 @@
 {
   "name": "knowledge-driven-test-platform",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,11 +11,12 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "node --test packages/knowledge-core/test/*.test.js packages/knowledge-registry/test/*.test.js packages/knowledge-registry-postgres/test/*.test.js packages/knowledge-governance/test/*.test.js packages/knowledge-governance-postgres/test/*.test.js apps/knowledge-cli/test/*.test.js",
+    "test": "node --test packages/knowledge-core/test/*.test.js packages/knowledge-registry/test/*.test.js packages/knowledge-registry-postgres/test/*.test.js packages/knowledge-governance/test/*.test.js packages/knowledge-governance-postgres/test/*.test.js packages/governance-query/test/*.test.js apps/knowledge-cli/test/*.test.js",
     "validate": "node scripts/validate-repository.js",
     "example:approval": "node apps/knowledge-cli/src/cli.js resolve examples/approval-platform",
     "example:registry": "node examples/registry-lifecycle.js",
     "example:governance": "node examples/governance-lifecycle.js",
+    "example:query": "node examples/read-only-query-api.js",
     "test:postgres": "node --test --test-concurrency=1 packages/knowledge-registry-postgres/test/postgres-integration.test.js packages/knowledge-governance-postgres/test/postgres-integration.test.js",
     "example:postgres": "node examples/postgres-registry.js",
     "example:governance:postgres": "node examples/postgres-governance.js"

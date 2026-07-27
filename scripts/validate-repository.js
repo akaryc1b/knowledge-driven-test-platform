@@ -1,6 +1,7 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { buildKnowledgeSnapshot, resolveKnowledge } from '../packages/knowledge-core/src/index.js';
+import { QUERY_PAGE_SCHEMA_VERSION, QUERY_RESPONSE_SCHEMA_VERSION } from '../packages/governance-query/src/index.js';
 import { createSnapshotEnvelope, validateSnapshotEnvelope } from '../packages/knowledge-governance/src/index.js';
 import { loadGovernancePostgresMigrations } from '../packages/knowledge-governance-postgres/src/index.js';
 import { validateKnowledgeObject } from '../packages/knowledge-registry/src/index.js';
@@ -18,6 +19,7 @@ const required = [
   'packages/knowledge-governance/src/index.js',
   'packages/knowledge-governance-postgres/src/index.js',
   'packages/knowledge-governance-postgres/migrations/0001_create_governance_evidence.sql',
+  'packages/governance-query/src/index.js',
   'deploy/postgres/compose.yaml',
   'schemas/knowledge/schema-catalog.json',
   'schemas/knowledge/v1/knowledge-rule.schema.json',
@@ -25,10 +27,14 @@ const required = [
   'schemas/governance/schema-catalog.json',
   'schemas/governance/v1/review-decision.schema.json',
   'schemas/governance/v1/snapshot-envelope.schema.json',
+  'schemas/query/schema-catalog.json',
+  'schemas/query/v1/response-envelope.schema.json',
+  'schemas/query/v1/page.schema.json',
   'apps/knowledge-cli/src/cli.js',
   'examples/approval-platform/project-manifest.json',
   'examples/governance-lifecycle.js',
   'examples/postgres-governance.js',
+  'examples/read-only-query-api.js',
 ];
 for (const path of required) await stat(join(root, path));
 
@@ -52,9 +58,18 @@ for (const path of files.filter(isKnowledgeRuleFile)) {
 const schemaCatalog = JSON.parse(await readFile(join(root, 'schemas/knowledge/schema-catalog.json'), 'utf8'));
 if (schemaCatalog.currentKnowledgeRule !== 'knowledge-rule/v1') throw new Error('Schema catalog must identify knowledge-rule/v1 as current');
 if (schemaCatalog.currentRegistryRecord !== 'knowledge-registry-record/v1') throw new Error('Schema catalog must identify knowledge-registry-record/v1 as current');
+
 const governanceCatalog = JSON.parse(await readFile(join(root, 'schemas/governance/schema-catalog.json'), 'utf8'));
 if (governanceCatalog.currentReviewDecision !== 'knowledge-review-decision/v1') throw new Error('Governance catalog must identify knowledge-review-decision/v1 as current');
 if (governanceCatalog.currentSnapshotEnvelope !== 'knowledge-snapshot-envelope/v1') throw new Error('Governance catalog must identify knowledge-snapshot-envelope/v1 as current');
+
+const queryCatalog = JSON.parse(await readFile(join(root, 'schemas/query/schema-catalog.json'), 'utf8'));
+if (queryCatalog.currentResponseEnvelope !== QUERY_RESPONSE_SCHEMA_VERSION) {
+  throw new Error('Query catalog must identify the current response envelope');
+}
+if (queryCatalog.currentPage !== QUERY_PAGE_SCHEMA_VERSION) {
+  throw new Error('Query catalog must identify the current page schema');
+}
 
 const postgresMigrations = await loadPostgresMigrations();
 if (postgresMigrations.map((item) => item.version).join(',') !== '0001_create_registry') {
@@ -76,6 +91,7 @@ const envelope = validateSnapshotEnvelope(createSnapshotEnvelope({
   reason: 'validate governance snapshot envelope',
 }));
 if (envelope.snapshotId !== snapshot.snapshotId) throw new Error('Governance snapshot envelope identity changed');
+
 console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}`);
 
 function isKnowledgeRuleFile(path) {
