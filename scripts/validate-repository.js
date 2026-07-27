@@ -2,6 +2,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { buildKnowledgeSnapshot, resolveKnowledge } from '../packages/knowledge-core/src/index.js';
 import { validateKnowledgeObject } from '../packages/knowledge-registry/src/index.js';
+import { loadPostgresMigrations } from '../packages/knowledge-registry-postgres/src/index.js';
 import { loadProjectInput } from '../apps/knowledge-cli/src/project-loader.js';
 
 const root = process.cwd();
@@ -10,6 +11,9 @@ const required = [
   'docs/README.md',
   'packages/knowledge-core/src/index.js',
   'packages/knowledge-registry/src/index.js',
+  'packages/knowledge-registry-postgres/src/index.js',
+  'packages/knowledge-registry-postgres/migrations/0001_create_registry.sql',
+  'deploy/postgres/compose.yaml',
   'schemas/knowledge/schema-catalog.json',
   'schemas/knowledge/v1/knowledge-rule.schema.json',
   'schemas/registry/v1/knowledge-registry-record.schema.json',
@@ -26,7 +30,7 @@ for (const path of files.filter((path) => path.endsWith('.json'))) {
   JSON.parse(await readFile(path, 'utf8'));
 }
 
-for (const path of files.filter((path) => /\.(js|json|md|yaml|yml)$/.test(path))) {
+for (const path of files.filter((path) => /\.(js|json|md|sql|yaml|yml)$/.test(path))) {
   const content = await readFile(path, 'utf8');
   if (!content.endsWith('\n')) {
     throw new Error(`${relative(root, path)} must end with a newline`);
@@ -52,6 +56,11 @@ if (schemaCatalog.currentKnowledgeRule !== 'knowledge-rule/v1') {
 }
 if (schemaCatalog.currentRegistryRecord !== 'knowledge-registry-record/v1') {
   throw new Error('Schema catalog must identify knowledge-registry-record/v1 as current');
+}
+
+const postgresMigrations = await loadPostgresMigrations();
+if (postgresMigrations.map((item) => item.version).join(',') !== '0001_create_registry') {
+  throw new Error('PostgreSQL migration catalog is not deterministic');
 }
 
 const input = await loadProjectInput(join(root, 'examples/approval-platform'));

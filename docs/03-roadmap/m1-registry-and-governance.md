@@ -66,11 +66,13 @@ DRAFT ──submit-review──> REVIEWING ──publish──> PUBLISHED
 
 ### M1-B — Durable Registry Adapter
 
-- PostgreSQL Schema；
-- 迁移脚本；
-- 事务与唯一约束；
-- 数据库 Registry 适配器；
-- 与内存实现相同的合同测试。
+详细设计见 [`m1-b-durable-registry.md`](./m1-b-durable-registry.md)。
+
+- PostgreSQL Schema 与 checksum migration；
+- 事务、唯一约束、row lock、advisory lock 和 revision CAS；
+- PostgreSQL Registry Adapter；
+- 与内存实现相同的合同测试；
+- Docker Compose 与 CI PostgreSQL 集成测试。
 
 仍不开放 HTTP、认证、管理后台和 AI 自动发布。
 

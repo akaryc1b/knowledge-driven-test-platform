@@ -43,3 +43,20 @@ packages/knowledge-registry/   Registry 端口、生命周期和内存适配器
 schemas/knowledge/             版本化 JSON Schema 与目录
 examples/registry-lifecycle.js Registry 发布生命周期示例
 ```
+
+## M1-B 新增结构
+
+```text
+packages/knowledge-registry-postgres/  PostgreSQL adapter、migration 与集成测试
+deploy/postgres/                       本地 PostgreSQL Compose 环境
+examples/postgres-registry.js          durable adapter 组合示例
+```
+
+依赖方向保持为：
+
+```text
+knowledge-registry-postgres → knowledge-registry → Node.js 标准库
+应用组合根 → pg Pool → knowledge-registry-postgres
+```
+
+PostgreSQL adapter 不读取隐式环境变量，也不负责创建或关闭连接池。
