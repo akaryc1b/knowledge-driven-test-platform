@@ -1,67 +1,61 @@
-# M1-H 当前开发交接
+# M1-I 当前开发交接
 
-## M0 至 M1-G 已完成
+## M0 至 M1-H 已完成
 
 - 多项目五层知识模型与确定性快照；
-- 版本化 Registry、PostgreSQL 持久化与审计历史；
-- 项目治理、职责分离与 revision 绑定审核；
-- PostgreSQL 治理证据与单数据库 Unit of Work；
-- 只读知识、审核和快照查询边界；
-- 持久化项目成员与 deny-by-default 授权；
-- 只读 Node HTTP Transport、Bearer 入口、限流和安全响应。
+- 版本化 Registry、PostgreSQL 持久化和审计；
+- 职责分离、revision 绑定审核与治理证据；
+- 项目成员、固定角色和默认拒绝授权；
+- 只读查询 DTO、游标和稳定错误 Envelope；
+- Node 只读 HTTP、安全请求边界和限流；
+- RS256 OIDC/JWKS、Key Rotation、Subject Mapping 和认证事件。
 
-## M1-H 已完成
+## M1-I 已完成
 
-- 独立 `@kdtp/governance-auth-oidc` package；
-- `OidcJwksBearerAuthentication` Authentication Port Adapter；
-- 显式 issuer、audience 和 JWKS URI 配置；
-- RS256 algorithm allow-list；
-- JWT compact serialization、header 和 claims 校验；
-- `iss`、`aud`、`sub`、`exp`、`nbf` 和 `iat` 校验；
-- clock skew 与可选 maximum token age；
-- token header 中的 `jku`、`x5u`、`jwk`、`x5c` 和 `crit` 拒绝；
-- HTTPS JWKS 获取、超时和流式响应大小限制；
-- bounded Cache-Control max-age；
-- 并发刷新去重和未知 kid 的受控刷新；
-- JWKS key rotation；
-- RSA 2048-bit 最小密钥要求；
-- subject 到平台 actor 的映射 Port 与静态适配器；
-- fail-closed 401/503 认证语义；
-- 认证成功、失败和 JWKS 刷新可观测事件；
-- subject fingerprint 与 Token/claims 脱敏；
-- 本地签名密钥、模拟 JWKS 和真实临时 JWKS Server 测试。
+- 独立 `@kdtp/read-only-governance-service` 应用；
+- 显式环境配置和上下限校验；
+- PostgreSQL Pool 创建参数；
+- Registry、Governance、Project Access 三组 migration 编排；
+- JWKS 启动预热；
+- Registry、Evidence、Membership、Query、HTTP 和 OIDC 完整组合；
+- `/live` 与 `/ready`；
+- PostgreSQL 和 JWKS readiness checks；
+- readiness 超时与并发去重；
+- 结构化 Runtime Event Port 和 JSON Lines Sink；
+- OIDC 事件到运行事件的脱敏桥接；
+- Server Socket 跟踪；
+- SIGTERM / SIGINT 优雅关闭；
+- 启动 readiness 失败自动回收 Server 和 Pool；
+- 非 Root Dockerfile 和 Healthcheck；
+- Operations JSON Schemas；
+- 本地运维启动示例。
 
 ## 当前边界
 
-- 首版只支持 RS256；
-- issuer 和 jwksUri 必须显式配置，不执行 OIDC Discovery；
-- 生产 issuer 与 JWKS URI 必须使用 HTTPS；
-- `allowHttpForTesting` 只用于本地测试 JWKS Server；
-- subject mapper 仍由应用组合根提供；
-- 认证事件 Store 当前只有内存示例，事件投递为 best-effort；
-- 不处理 Cookie、Session、Refresh Token 或 Token Revocation；
-- 不提供 IdP、subject mapping 或成员管理后台；
-- 所有写入 HTTP API、k6 Worker、队列和生产执行仍冻结。
+- 业务 HTTP 仍只有五条 GET 路由；
+- `/live` 与 `/ready` 不需要认证，但不返回业务或敏感信息；
+- Subject Mapping 仍通过启动配置提供；
+- 没有 Kubernetes、Helm、生产 Secret 管理或发布流水线；
+- 没有 IdP/成员/映射管理 API；
+- 没有写入 API、Worker、队列或生产测试执行。
 
 ## 下一安全切片
 
-`M1-I — Read-Only Service Composition and Operational Controls`
+`M1-J — Read-Only Deployment Manifest and Fault Acceptance`
 
 只允许：
 
-- 只读服务应用组合根；
-- 显式配置加载与启动校验；
-- Registry、治理、成员、查询、HTTP 和 OIDC Adapter 组合；
-- liveness、readiness 与依赖探针；
-- 结构化运行事件 Port；
-- graceful shutdown；
-- Dockerfile 与本地只读服务启动示例；
-- 不含业务数据的运维端点。
+- Kubernetes Deployment、Service 和探针配置；
+- ConfigMap/Secret 引用契约，不提交真实 Secret；
+- Pod Security Context、资源限制和只读文件系统；
+- PodDisruptionBudget 与滚动升级基线；
+- PostgreSQL/JWKS 故障和恢复验收；
+- SIGTERM、连接排空和启动失败验收；
+- 容器镜像与 manifest 静态校验。
 
 暂不允许：
 
 - 写入 HTTP API；
-- 登录页面、Session 或 Refresh Token；
-- IdP/成员管理后台；
-- AI 自动审核或授权；
-- k6 Worker、队列或生产测试执行。
+- IdP、成员或 Subject Mapping 管理后台；
+- 自动生产发布；
+- k6 Worker、任务队列或生产测试执行。

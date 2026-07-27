@@ -6,29 +6,28 @@
 
 - **平台统一，项目隔离**：执行机制统一，每个项目拥有独立边界包。
 - **基线继承，受控覆盖**：公司基线、领域能力包、项目规则、环境参数和发布覆盖按固定优先级解析。
-- **知识先于测试**：测试必须引用已发布知识，禁止无依据的正式测试。
-- **快照不可变**：每次执行固定知识快照，保证历史结果可复现。
-- **规则可审计**：每条知识有唯一 ID、版本、来源、负责人、风险和生命周期。
-- **职责分离**：作者、审核人和发布人按项目授权，审核绑定精确 Registry revision。
-- **证据原子提交**：审核决定、快照和 Registry 状态通过 Governance Unit of Work 受控持久化。
-- **只读查询先行**：查询 Handler 与网络框架解耦，身份、项目隔离和错误响应在应用边界内确定。
-- **成员默认拒绝**：项目或成员缺失、暂停、撤销、未生效或过期时不授予任何治理动作。
-- **信任根显式**：OIDC issuer、audience 和 JWKS URI 由应用配置，Token 不能控制签名 key 来源。
-- **AI 辅助而不裁决**：AI 可提取、生成和分析，最终规则与质量门禁由结构化知识和确定性代码执行。
+- **知识先于测试**：正式测试必须引用已发布知识。
+- **快照不可变**：每次执行固定知识快照，历史结果可复现。
+- **职责分离**：作者、审核人和发布人按项目授权。
+- **成员默认拒绝**：项目或成员缺失、暂停、撤销、未生效或过期时不授予动作。
+- **信任根显式**：OIDC issuer、audience 和 JWKS URI 由应用配置。
+- **运维先于发布**：服务启动、readiness、运行事件和优雅关闭具有确定性合同。
+- **AI 辅助而不裁决**：最终规则与质量门禁由结构化知识和确定性代码执行。
 
 ## 当前阶段能力
 
-1. 多项目五层知识模型与受控覆盖；
-2. 确定性知识快照；
-3. 版本化 Registry 与 PostgreSQL 持久化；
-4. 职责分离、revision 绑定审核和发布策略；
-5. PostgreSQL 审核证据、不可变快照与 Governance Unit of Work；
-6. 项目隔离的知识、审核和快照只读查询；
-7. 项目目录、成员状态、有效期和固定角色授权；
-8. 只读 Node HTTP、请求安全、限流和稳定响应；
-9. RS256 OIDC/JWKS、key rotation、subject mapping 和认证事件。
+1. 多项目五层知识模型与确定性快照；
+2. 版本化 Registry 和 PostgreSQL 持久化；
+3. 审核治理、不可变证据和单数据库 Unit of Work；
+4. 项目成员、固定角色和默认拒绝授权；
+5. 项目隔离的只读查询和稳定 DTO；
+6. Node 只读 HTTP、安全请求边界和限流；
+7. RS256 OIDC/JWKS、Key Rotation 和 Subject Mapping；
+8. 可启动的只读服务组合根；
+9. `/live`、`/ready`、结构化运行事件和优雅关闭；
+10. 非 Root Docker 镜像基线。
 
-暂不包含写入 HTTP API、登录页面、Session、Refresh Token、IdP/RBAC 管理后台、生产执行调度和大规模分布式压测。
+业务 HTTP 仍然只有五条 GET 路由。写入 API、管理后台、生产执行调度和自动生产发布仍未开放。
 
 ## 本地验证
 
@@ -42,11 +41,21 @@ npm run example:query
 npm run example:access
 npm run example:http
 npm run example:oidc
+npm run example:service
+```
 
-# PostgreSQL 验证
+PostgreSQL 集成验证：
+
+```bash
 docker compose -f deploy/postgres/compose.yaml up -d
 npm install --no-save --package-lock=false pg@8.22.0
 KDTP_POSTGRES_TEST_URL=postgresql://postgres:postgres@127.0.0.1:55432/kdtp_test npm run test:postgres
 ```
 
-详细设计见 [`docs/README.md`](docs/README.md)。
+生产型只读入口位于：
+
+```text
+apps/read-only-governance-service/src/main.js
+```
+
+配置示例见 [`apps/read-only-governance-service/service.env.example`](apps/read-only-governance-service/service.env.example)。详细设计见 [`docs/README.md`](docs/README.md)。

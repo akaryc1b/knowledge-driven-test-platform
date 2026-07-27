@@ -1,0 +1,24 @@
+{
+  "name": "@kdtp/read-only-governance-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.js",
+  "bin": {
+    "kdtp-read-only-governance": "src/main.js"
+  },
+  "dependencies": {
+    "@kdtp/governance-auth-oidc": "0.1.0",
+    "@kdtp/governance-http": "0.1.0",
+    "@kdtp/governance-query": "0.1.0",
+    "@kdtp/knowledge-governance-postgres": "0.1.0",
+    "@kdtp/knowledge-registry-postgres": "0.1.0",
+    "@kdtp/project-membership-postgres": "0.1.0"
+  },
+  "peerDependencies": {
+    "pg": ">=8.22.0 <9"
+  },
+  "peerDependenciesMeta": {
+    "pg": { "optional": true }
+  }
+}

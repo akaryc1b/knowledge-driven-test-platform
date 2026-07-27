@@ -31,6 +31,7 @@
 - [M1-F Durable Project Membership](03-roadmap/m1-f-project-membership.md)
 - [M1-G Read-Only HTTP and Authentication](03-roadmap/m1-g-read-only-http-auth.md)
 - [M1-H OIDC/JWKS Authentication](03-roadmap/m1-h-oidc-jwks-auth.md)
+- [M1-I Read-Only Service Composition](03-roadmap/m1-i-read-only-service-composition.md)
 
 ## 治理
 
@@ -49,4 +50,5 @@
 - [ADR-0008：运输无关只读查询](05-adr/ADR-0008-transport-independent-read-query-boundary.md)
 - [ADR-0009：成员驱动默认拒绝授权](05-adr/ADR-0009-membership-backed-deny-by-default-authorization.md)
 - [ADR-0010：认证后构造查询身份](05-adr/ADR-0010-authenticate-before-query-identity.md)
-- [ADR-0011：显式 issuer/JWKS 与首版 RS256](05-adr/ADR-0011-explicit-issuer-jwks-rs256.md)
+- [ADR-0011：显式 Issuer、JWKS 与 RS256](05-adr/ADR-0011-explicit-issuer-jwks-rs256.md)
+- [ADR-0012：显式服务组合与运维探针](05-adr/ADR-0012-explicit-read-only-service-composition.md)

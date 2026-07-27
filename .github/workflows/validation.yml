@@ -18,7 +18,18 @@ jobs:
           node-version: 22
       - run: npm ci --ignore-scripts
       - run: npm test
-      - run: npm run validate
+      - name: Run repository validation
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run validate 2>&1 | tee /tmp/repository-validation.log
+      - name: Upload repository validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-validation-log
+          path: /tmp/repository-validation.log
+          if-no-files-found: error
       - run: npm run --silent example:approval > /tmp/approval-snapshot.json
       - run: npm run --silent example:registry > /tmp/registry-record.json
       - run: npm run --silent example:governance > /tmp/governance-evidence.json
@@ -26,6 +37,11 @@ jobs:
       - run: npm run --silent example:access > /tmp/project-membership-access.json
       - run: npm run --silent example:http > /tmp/read-only-http.json
       - run: npm run --silent example:oidc > /tmp/oidc-authentication.json
+      - run: npm run --silent example:service > /tmp/read-only-service.json
+      - name: Build non-root read-only service image
+        run: docker build -f apps/read-only-governance-service/Dockerfile -t kdtp-read-only-service:test .
+      - name: Verify container user
+        run: test "$(docker image inspect kdtp-read-only-service:test --format '{{.Config.User}}')" = "node"
 
   postgres-integration:
     runs-on: ubuntu-latest

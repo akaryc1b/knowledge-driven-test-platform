@@ -3,7 +3,8 @@
 ```text
 knowledge-driven-test-platform/
 ├── apps/
-│   └── knowledge-cli/
+│   ├── knowledge-cli/
+│   └── read-only-governance-service/
 ├── packages/
 │   ├── knowledge-core/
 │   ├── knowledge-registry/
@@ -16,7 +17,13 @@ knowledge-driven-test-platform/
 │   ├── governance-http/
 │   └── governance-auth-oidc/
 ├── schemas/
-│   └── authentication/
+│   ├── knowledge/
+│   ├── registry/
+│   ├── governance/
+│   ├── query/
+│   ├── access/
+│   ├── authentication/
+│   └── operations/
 ├── deploy/postgres/
 ├── examples/
 ├── docs/
@@ -24,43 +31,53 @@ knowledge-driven-test-platform/
 └── .github/workflows/
 ```
 
-## M1-H 依赖方向
+## M1-I 依赖方向
 
 ```text
-governance-auth-oidc
-  → governance-http AuthenticationPort
-  → Node.js crypto / fetch
-
-governance-http
+read-only-governance-service
+  → governance-auth-oidc
+  → governance-http
   → governance-query
-  → project-membership authorization
+  → knowledge-registry-postgres
+  → knowledge-governance-postgres
+  → project-membership-postgres
+  → pg（运行时 Driver）
 ```
 
-`governance-auth-oidc` 只负责验证外部 JWT、解析受信任 claims、获取签名公钥并把 subject 映射为平台 actor。它不读取 Registry、项目成员或业务数据库。
+应用组合根可以读取环境变量、创建 Pool、执行 migrations、监听端口和处理进程信号。任何 package 都不得反向依赖应用层。
 
-## M1-H 新增结构
+## M1-I 新增结构
 
 ```text
-packages/governance-auth-oidc/
-├── src/oidc-authentication.js
-├── src/remote-jwks-provider.js
-├── src/jwt.js
-├── src/ports.js
-├── src/static-subject-mapper.js
-├── src/telemetry.js
-└── test/
+apps/read-only-governance-service/
+├── src/config.js
+├── src/composition.js
+├── src/readiness.js
+├── src/operational-http.js
+├── src/runtime-events.js
+├── src/service.js
+├── src/main.js
+├── test/
+├── Dockerfile
+└── service.env.example
 
-schemas/authentication/
-examples/oidc-jwks-authentication.js
+schemas/operations/
+examples/read-only-service-operational.js
 ```
 
-OIDC Adapter 使用显式 issuer 和 jwksUri，不隐式执行 Discovery。应用组合根负责真实 subject mapping、事件 Sink、网络策略和配置来源。
+## 运行约束
+
+- `main.js` 动态加载 `pg`；
+- Docker 镜像固定安装 `pg@8.22.0`；
+- Server Factory 不在 package 中隐藏创建；
+- 探针不经过业务认证，但也不访问业务 DTO；
+- 运行事件拒绝敏感 Detail Key；
+- 应用关闭前先撤销 readiness。
 
 ## 后续演进
 
 ```text
-apps/knowledge-read-api/
-packages/runtime-observability/
+deploy/read-only-service/kubernetes/
 packages/test-planner/
 packages/k6-adapter/
 packages/evidence-model/

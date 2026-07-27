@@ -1,0 +1,14 @@
+{
+  "currentRuntimeEvent": "service-runtime-event/v1",
+  "currentHealthResponse": "service-health/v1",
+  "schemas": [
+    {
+      "schemaVersion": "service-runtime-event/v1",
+      "path": "schemas/operations/v1/service-runtime-event.schema.json"
+    },
+    {
+      "schemaVersion": "service-health/v1",
+      "path": "schemas/operations/v1/service-health.schema.json"
+    }
+  ]
+}
