@@ -13,14 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Package branch workspace for local validation
-        run: tar --exclude=.git -czf /tmp/kdtp-source.tgz .
-      - name: Upload branch workspace
-        uses: actions/upload-artifact@v4
-        with:
-          name: m2-bootstrap-source
-          path: /tmp/kdtp-source.tgz
-          if-no-files-found: error
       - uses: actions/setup-node@v4
         with:
           node-version: 22
