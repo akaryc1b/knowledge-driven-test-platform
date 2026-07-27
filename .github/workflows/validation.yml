@@ -18,7 +18,18 @@ jobs:
           node-version: 22
       - run: npm ci --ignore-scripts
       - run: npm test
-      - run: npm run validate
+      - name: Run repository validation
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run validate 2>&1 | tee /tmp/repository-validation.log
+      - name: Upload repository validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-validation-log
+          path: /tmp/repository-validation.log
+          if-no-files-found: error
       - run: npm run --silent example:approval > /tmp/approval-snapshot.json
       - run: npm run --silent example:registry > /tmp/registry-record.json
       - run: npm run --silent example:governance > /tmp/governance-evidence.json
