@@ -6,63 +6,31 @@
 
 ## 已完成切片
 
-### M1-A — Knowledge Schema and Registry Boundary
+- M1-A：版本化 Knowledge Registry；
+- M1-B：PostgreSQL Registry；
+- M1-C：Governance Service；
+- M1-D：Durable Governance Evidence；
+- M1-E：Read-Only Query；
+- M1-F：Project Membership Authorization；
+- M1-G：Read-Only HTTP；
+- M1-H：OIDC/JWKS Authentication；
+- M1-I：Service Composition and Operations；
+- M1-J：Kubernetes and Fault Acceptance；
+- M1-K：Release Acceptance and Stack Consolidation。
 
-- 版本化 Schema、Registry Port、CAS、生命周期和审计。
+M1-K 详细设计见 [`m1-k-read-only-release-acceptance.md`](./m1-k-read-only-release-acceptance.md)。
 
-### M1-B — Durable Registry Adapter
+## M1 完成条件
 
-- PostgreSQL Registry、migration、锁和事务。
+- PR #1～#10 堆叠连续；
+- 最终头分支全量 CI 成功；
+- 真实 PostgreSQL/JWKS/JWT/HTTP E2E 成功；
+- 发布候选、部署和镜像证据可生成；
+- 已知风险和生产阻断项已记录；
+- main 合并后必须再次执行同等验收。
 
-### M1-C — Governance Service Boundary
+## M1 之后
 
-- 项目授权、职责分离、revision 绑定审核和发布策略。
+M2 仍保持冻结。只有 M1 堆叠完成评审、按顺序合并并在 main 通过最终验收后，才能在独立会话中规划 Test Planning。
 
-### M1-D — Durable Governance Evidence
-
-- PostgreSQL 审核证据、不可变快照和 Unit of Work。
-
-### M1-E — Read-Only Governance Query API
-
-- 运输无关查询、DTO、过滤、游标和错误 Envelope。
-
-### M1-F — Durable Project Membership and Read Authorization
-
-- 项目目录、成员、角色、PostgreSQL 持久化和默认拒绝授权。
-
-### M1-G — Read-Only HTTP Transport and Authentication Boundary
-
-- Node HTTP、Bearer 入口、请求安全、限流和安全响应头。
-
-### M1-H — OIDC/JWKS Read Authentication Adapter
-
-- RS256、issuer/audience、JWKS cache/rotation、subject mapping 和认证事件。
-
-### M1-I — Read-Only Service Composition and Operational Controls
-
-- 显式应用组合根、migrations、JWKS 预热；
-- `/live`、`/ready`、运行事件和优雅关闭；
-- 非 Root Dockerfile。
-
-### M1-J — Read-Only Deployment Manifest and Fault Acceptance
-
-详细设计见 [`m1-j-read-only-deployment-fault-acceptance.md`](./m1-j-read-only-deployment-fault-acceptance.md)。
-
-- Kubernetes Deployment、Service、ServiceAccount、ConfigMap 和 PDB；
-- Pod Security、资源限额和滚动升级基线；
-- Secret 引用契约和示例隔离；
-- PostgreSQL/JWKS 故障恢复；
-- SIGTERM 和连接排空验收；
-- Manifest 与硬化容器 CI。
-
-## 下一安全切片
-
-### M1-K — Read-Only Release Acceptance and Stack Consolidation
-
-- M1 堆叠 PR 顺序复核；
-- 真实只读端到端验收；
-- 镜像 digest 和部署证据；
-- M1 发布候选说明与风险矩阵；
-- M1 正式完成条件。
-
-仍不开放写入 HTTP API、自动生产发布、管理后台、Worker、队列或生产测试执行。
+写入 HTTP API、自动生产发布、管理后台、Worker、队列和生产测试执行继续在范围外。
