@@ -48,5 +48,16 @@ jobs:
           node-version: 22
       - run: npm ci --ignore-scripts
       - run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
-      - run: npm run test:postgres
+      - name: Run PostgreSQL integration tests
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:postgres 2>&1 | tee /tmp/postgres-test.log
+      - name: Upload PostgreSQL test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-test-log
+          path: /tmp/postgres-test.log
+          if-no-files-found: error
       - run: npm run --silent example:governance:postgres > /tmp/postgres-governance.json
