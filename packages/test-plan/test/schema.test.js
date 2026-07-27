@@ -12,7 +12,7 @@ import {
 
 const root = resolve(import.meta.dirname, '../../..');
 
-test('planning schema catalog pins all five current contracts', async () => {
+test('planning schema catalog pins all core planning contracts', async () => {
   const catalog = JSON.parse(await readFile(resolve(root, 'schemas/planning/schema-catalog.json'), 'utf8'));
   assert.equal(catalog.currentPlanningRequest, TEST_PLANNING_REQUEST_SCHEMA_VERSION);
   assert.equal(catalog.currentTargetInventory, TEST_TARGET_INVENTORY_SCHEMA_VERSION);

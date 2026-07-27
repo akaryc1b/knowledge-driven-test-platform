@@ -10,6 +10,14 @@
     "test-target-inventory/v1": "schemas/planning/v1/test-target-inventory.schema.json",
     "test-intent/v1": "schemas/planning/v1/test-intent.schema.json",
     "test-coverage-obligation/v1": "schemas/planning/v1/test-coverage-obligation.schema.json",
-    "test-plan/v1": "schemas/planning/v1/test-plan.schema.json"
-  }
+    "test-plan/v1": "schemas/planning/v1/test-plan.schema.json",
+    "test-planning-result/v1": "schemas/planning/v1/test-planning-result.schema.json",
+    "test-coverage-matrix/v1": "schemas/planning/v1/test-coverage-matrix.schema.json",
+    "test-provenance-graph/v1": "schemas/planning/v1/test-provenance-graph.schema.json",
+    "test-dependency-dag/v1": "schemas/planning/v1/test-dependency-dag.schema.json"
+  },
+  "currentPlanningResult": "test-planning-result/v1",
+  "currentCoverageMatrix": "test-coverage-matrix/v1",
+  "currentProvenanceGraph": "test-provenance-graph/v1",
+  "currentDependencyDag": "test-dependency-dag/v1"
 }
