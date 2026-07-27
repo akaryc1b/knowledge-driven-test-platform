@@ -17,6 +17,7 @@
 - [Monorepo 结构](02-development/repository-structure.md)
 - [开发规范](02-development/development-standards.md)
 - [测试策略](02-development/testing-strategy.md)
+- [当前开发交接](02-development/development-handoff.md)
 
 ## 路线图
 
@@ -24,6 +25,7 @@
 - [M0 基础阶段](03-roadmap/m0-foundation.md)
 - [M1 Registry 与治理](03-roadmap/m1-registry-and-governance.md)
 - [M1-B Durable Registry Adapter](03-roadmap/m1-b-durable-registry.md)
+- [M1-C Governance Service Boundary](03-roadmap/m1-c-governance-service.md)
 
 ## 治理
 
@@ -37,3 +39,4 @@
 - [ADR-0003：不可变快照](05-adr/ADR-0003-immutable-snapshots.md)
 - [ADR-0004：Registry Port 与追加式版本](05-adr/ADR-0004-registry-port-and-append-only-versions.md)
 - [ADR-0005：PostgreSQL Durable Registry](05-adr/ADR-0005-postgresql-durable-registry.md)
+- [ADR-0006：Revision 绑定治理](05-adr/ADR-0006-revision-bound-governance.md)
