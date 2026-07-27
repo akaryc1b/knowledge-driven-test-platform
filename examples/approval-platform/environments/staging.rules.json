@@ -1,0 +1,46 @@
+[
+  {
+    "id": "ENV-SLO-001",
+    "boundaryKey": "performance.submit-approval",
+    "name": "预发布提交审批性能目标",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "ENVIRONMENT",
+      "key": "staging"
+    },
+    "enforcement": "default",
+    "overridePolicy": "allow",
+    "enabled": true,
+    "value": {
+      "p95Ms": 700,
+      "p99Ms": 1200,
+      "maxErrorRate": 0.02,
+      "targetRps": 100
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  },
+  {
+    "id": "ENV-DATA-001",
+    "boundaryKey": "data.test-dataset-size",
+    "name": "预发布数据规模",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "ENVIRONMENT",
+      "key": "staging"
+    },
+    "enforcement": "optional",
+    "overridePolicy": "allow",
+    "enabled": true,
+    "value": {
+      "approvalInstances": 500000,
+      "activeTasks": 100000
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  }
+]

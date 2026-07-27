@@ -1,0 +1,24 @@
+[
+  {
+    "id": "DOMAIN-AUTH-001",
+    "boundaryKey": "auth.token-validation",
+    "name": "访问令牌校验",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "DOMAIN",
+      "key": "authentication"
+    },
+    "enforcement": "mandatory",
+    "overridePolicy": "deny",
+    "enabled": true,
+    "value": {
+      "rejectMissing": true,
+      "rejectExpired": true,
+      "rejectInvalidSignature": true
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  }
+]

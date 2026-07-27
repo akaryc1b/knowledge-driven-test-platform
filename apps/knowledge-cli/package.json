@@ -1,0 +1,9 @@
+{
+  "name": "@kdtp/knowledge-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "kdtp-knowledge": "./src/cli.js"
+  }
+}

@@ -1,0 +1,109 @@
+[
+  {
+    "id": "PROJECT-HTTP-001",
+    "boundaryKey": "http.default-timeout",
+    "name": "审批平台 HTTP 超时",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "PROJECT",
+      "key": "approval-platform"
+    },
+    "enforcement": "default",
+    "overridePolicy": "allow",
+    "enabled": true,
+    "value": {
+      "timeoutMs": 5000
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  },
+  {
+    "id": "PROJECT-WF-001",
+    "boundaryKey": "workflow.transition-guard",
+    "name": "审批平台状态转换加强",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "PROJECT",
+      "key": "approval-platform"
+    },
+    "enforcement": "default",
+    "overridePolicy": "allow",
+    "enabled": true,
+    "value": {
+      "requireVersionMatch": true,
+      "requireCas": true,
+      "rejectDuplicateCompletion": true
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high",
+    "overrideIntent": "strengthen"
+  },
+  {
+    "id": "PROJECT-PERM-001",
+    "boundaryKey": "permission.current-approver-only",
+    "name": "当前审批人权限",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "PROJECT",
+      "key": "approval-platform"
+    },
+    "enforcement": "mandatory",
+    "overridePolicy": "deny",
+    "enabled": true,
+    "value": {
+      "approve": "currentApproverOnly",
+      "reject": "currentApproverOnly"
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  },
+  {
+    "id": "PROJECT-SLO-001",
+    "boundaryKey": "performance.submit-approval",
+    "name": "提交审批性能目标",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "PROJECT",
+      "key": "approval-platform"
+    },
+    "enforcement": "default",
+    "overridePolicy": "allow",
+    "enabled": true,
+    "value": {
+      "p95Ms": 500,
+      "p99Ms": 1000,
+      "maxErrorRate": 0.01,
+      "targetRps": 300
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  },
+  {
+    "id": "PROJECT-REL-001",
+    "boundaryKey": "reliability.submit-idempotency",
+    "name": "审批提交幂等性",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "PROJECT",
+      "key": "approval-platform"
+    },
+    "enforcement": "mandatory",
+    "overridePolicy": "strengthen",
+    "enabled": true,
+    "value": {
+      "idempotencyKeyRequired": true
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  }
+]

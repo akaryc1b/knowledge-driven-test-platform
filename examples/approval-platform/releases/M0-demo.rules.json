@@ -1,0 +1,45 @@
+[
+  {
+    "id": "RELEASE-REL-001",
+    "boundaryKey": "reliability.submit-idempotency",
+    "name": "M0 幂等证据加强",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "RELEASE",
+      "key": "M0-demo"
+    },
+    "enforcement": "default",
+    "overridePolicy": "allow",
+    "enabled": true,
+    "value": {
+      "concurrentDuplicateAttempts": 20,
+      "requireSingleCompletionEvidence": true
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high",
+    "overrideIntent": "strengthen"
+  },
+  {
+    "id": "RELEASE-FEATURE-001",
+    "boundaryKey": "release.unknown-reconciliation",
+    "name": "UNKNOWN 持久化与对账",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "RELEASE",
+      "key": "M0-demo"
+    },
+    "enforcement": "mandatory",
+    "overridePolicy": "deny",
+    "enabled": true,
+    "value": {
+      "durableUnknownRequired": true,
+      "reconciliationRequired": true
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  }
+]

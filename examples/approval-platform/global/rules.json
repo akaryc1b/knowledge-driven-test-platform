@@ -1,0 +1,71 @@
+[
+  {
+    "id": "GLOBAL-SEC-001",
+    "boundaryKey": "security.secret-log-redaction",
+    "name": "日志敏感信息脱敏",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "GLOBAL",
+      "key": "company"
+    },
+    "enforcement": "mandatory",
+    "overridePolicy": "deny",
+    "enabled": true,
+    "value": {
+      "redactHeaders": [
+        "authorization",
+        "cookie",
+        "set-cookie"
+      ],
+      "redactFields": [
+        "password",
+        "token",
+        "secret"
+      ]
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  },
+  {
+    "id": "GLOBAL-HTTP-001",
+    "boundaryKey": "http.default-timeout",
+    "name": "默认 HTTP 超时",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "GLOBAL",
+      "key": "company"
+    },
+    "enforcement": "default",
+    "overridePolicy": "allow",
+    "enabled": true,
+    "value": {
+      "timeoutMs": 10000
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  },
+  {
+    "id": "GLOBAL-QUALITY-001",
+    "boundaryKey": "quality.orphan-tests",
+    "name": "正式测试知识绑定",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "GLOBAL",
+      "key": "company"
+    },
+    "enforcement": "mandatory",
+    "overridePolicy": "deny",
+    "enabled": true,
+    "value": {
+      "formalExecutionRequiresKnowledgeRefs": true
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  }
+]

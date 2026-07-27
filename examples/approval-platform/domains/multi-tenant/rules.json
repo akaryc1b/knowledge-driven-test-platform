@@ -1,0 +1,24 @@
+[
+  {
+    "id": "DOMAIN-TENANT-001",
+    "boundaryKey": "tenant.cross-tenant-access",
+    "name": "跨租户访问隔离",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "DOMAIN",
+      "key": "multi-tenant"
+    },
+    "enforcement": "mandatory",
+    "overridePolicy": "deny",
+    "enabled": true,
+    "value": {
+      "read": "forbidden",
+      "write": "forbidden",
+      "export": "forbidden"
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  }
+]

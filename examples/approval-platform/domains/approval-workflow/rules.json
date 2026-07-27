@@ -1,0 +1,23 @@
+[
+  {
+    "id": "DOMAIN-WF-001",
+    "boundaryKey": "workflow.transition-guard",
+    "name": "工作流状态转换保护",
+    "version": "1.0.0",
+    "status": "PUBLISHED",
+    "scope": {
+      "level": "DOMAIN",
+      "key": "approval-workflow"
+    },
+    "enforcement": "mandatory",
+    "overridePolicy": "strengthen",
+    "enabled": true,
+    "value": {
+      "requireActiveTask": true,
+      "rejectTerminalStateMutation": true
+    },
+    "owner": "quality-platform-team",
+    "source": "M0 example",
+    "riskLevel": "high"
+  }
+]

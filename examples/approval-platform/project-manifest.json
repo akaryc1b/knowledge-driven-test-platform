@@ -1,0 +1,22 @@
+{
+  "globalId": "company",
+  "projectId": "approval-platform",
+  "name": "审批中心",
+  "environmentId": "staging",
+  "releaseId": "M0-demo",
+  "domainPacks": [
+    "authentication",
+    "multi-tenant",
+    "approval-workflow"
+  ],
+  "owners": {
+    "product": "approval-product-team",
+    "development": "approval-dev-team",
+    "quality": "quality-platform-team"
+  },
+  "classification": {
+    "criticality": "critical",
+    "tenantModel": "multi-tenant",
+    "authModel": "oauth2-rbac"
+  }
+}
