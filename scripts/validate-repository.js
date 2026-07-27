@@ -87,7 +87,7 @@ const accessCatalog = JSON.parse(await readFile(join(root, 'schemas/access/schem
 if (accessCatalog.currentProjectDirectoryRecord !== 'project-directory-record/v1') throw new Error('Access catalog must identify project-directory-record/v1 as current');
 if (accessCatalog.currentProjectMembershipRecord !== 'project-membership-record/v1') throw new Error('Access catalog must identify project-membership-record/v1 as current');
 const authenticationCatalog = JSON.parse(await readFile(join(root, 'schemas/authentication/schema-catalog.json'), 'utf8'));
-if (authenticationCatalog.currentAuthenticationEvent !== 'oidc-authentication-event/v1') throw new Error('Authentication catalog must identify oidc-authentication-event/v1 as current');
+if (authenticationCatalog.currentOidcAuthenticationEvent !== 'oidc-authentication-event/v1') throw new Error('Authentication catalog must identify oidc-authentication-event/v1 as current');
 const operationsCatalog = JSON.parse(await readFile(join(root, 'schemas/operations/schema-catalog.json'), 'utf8'));
 if (operationsCatalog.currentRuntimeEvent !== 'service-runtime-event/v1') throw new Error('Operations catalog must identify service-runtime-event/v1 as current');
 if (operationsCatalog.currentHealthResponse !== 'service-health/v1') throw new Error('Operations catalog must identify service-health/v1 as current');
