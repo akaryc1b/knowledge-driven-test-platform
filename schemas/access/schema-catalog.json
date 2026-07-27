@@ -1,0 +1,14 @@
+{
+  "currentProjectDirectoryRecord": "project-directory-record/v1",
+  "currentProjectMembershipRecord": "project-membership-record/v1",
+  "schemas": [
+    {
+      "schemaVersion": "project-directory-record/v1",
+      "path": "schemas/access/v1/project-directory-record.schema.json"
+    },
+    {
+      "schemaVersion": "project-membership-record/v1",
+      "path": "schemas/access/v1/project-membership-record.schema.json"
+    }
+  ]
+}

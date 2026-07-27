@@ -1,0 +1,18 @@
+{
+  "name": "@kdtp/project-membership-postgres",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.js",
+  "dependencies": {
+    "@kdtp/knowledge-governance": "0.1.0",
+    "@kdtp/knowledge-registry-postgres": "0.1.0",
+    "@kdtp/project-membership": "0.1.0"
+  },
+  "peerDependencies": {
+    "pg": ">=8.22.0 <9"
+  },
+  "peerDependenciesMeta": {
+    "pg": { "optional": true }
+  }
+}
