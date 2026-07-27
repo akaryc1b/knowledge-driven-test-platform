@@ -1,5 +1,6 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
+import { matchReadOnlyRoute } from '../packages/governance-http/src/index.js';
 import { buildKnowledgeSnapshot, resolveKnowledge } from '../packages/knowledge-core/src/index.js';
 import { createSnapshotEnvelope, validateSnapshotEnvelope } from '../packages/knowledge-governance/src/index.js';
 import { loadGovernancePostgresMigrations } from '../packages/knowledge-governance-postgres/src/index.js';
@@ -29,6 +30,7 @@ const required = [
   'packages/project-membership/src/index.js',
   'packages/project-membership-postgres/src/index.js',
   'packages/project-membership-postgres/migrations/0001_create_project_access.sql',
+  'packages/governance-http/src/index.js',
   'deploy/postgres/compose.yaml',
   'schemas/knowledge/schema-catalog.json',
   'schemas/knowledge/v1/knowledge-rule.schema.json',
@@ -48,6 +50,7 @@ const required = [
   'examples/postgres-governance.js',
   'examples/read-only-query-api.js',
   'examples/project-membership-authorization.js',
+  'examples/read-only-http-transport.js',
 ];
 for (const path of required) await stat(join(root, path));
 
@@ -111,6 +114,11 @@ validateMembershipRecord(createMembershipRecord({
   at: '2026-07-27T12:00:00.000Z',
   reason: 'validate project membership record',
 }));
+
+const httpRoute = matchReadOnlyRoute('GET', '/v1/projects/approval-platform/knowledge');
+if (httpRoute.handler !== 'listKnowledge' || httpRoute.projectId !== 'approval-platform') {
+  throw new Error('Read-only HTTP route catalog is not deterministic');
+}
 
 const input = await loadProjectInput(join(root, 'examples/approval-platform'));
 const snapshot = buildKnowledgeSnapshot(resolveKnowledge(input));

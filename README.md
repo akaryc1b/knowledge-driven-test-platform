@@ -13,6 +13,7 @@
 - **证据原子提交**：审核决定、快照和 Registry 状态通过 Governance Unit of Work 受控持久化。
 - **只读查询先行**：查询 Handler 与网络框架解耦，身份、项目隔离和错误响应在应用边界内确定。
 - **成员默认拒绝**：项目或成员缺失、暂停、撤销、未生效或过期时不授予任何治理动作。
+- **认证先于查询**：原始凭证只存在于 HTTP 与 Authentication Adapter，查询和授权领域只接收已认证 actor。
 - **AI 辅助而不裁决**：AI 可提取、生成和分析，最终规则与质量门禁由结构化知识和确定性代码执行。
 
 ## 当前阶段能力
@@ -24,9 +25,10 @@
 5. PostgreSQL 审核证据、不可变快照与 Governance Unit of Work；
 6. 项目隔离的知识、审核和快照只读查询；
 7. 项目目录、成员状态、有效期和固定角色授权；
-8. PostgreSQL 项目成员、CAS、append-only 历史和并发保护。
+8. PostgreSQL 项目成员、CAS、append-only 历史和并发保护；
+9. Node 只读 HTTP Transport、Bearer 认证入口、限流和安全响应头。
 
-暂不包含写入 HTTP API、OAuth/OIDC、RBAC 管理后台、向量检索、生产执行调度和大规模分布式压测。
+暂不包含写入 HTTP API、生产 OAuth/OIDC Adapter、RBAC 管理后台、向量检索、生产执行调度和大规模分布式压测。
 
 ## 本地验证
 
@@ -38,6 +40,7 @@ npm run example:registry
 npm run example:governance
 npm run example:query
 npm run example:access
+npm run example:http
 
 # PostgreSQL 验证
 docker compose -f deploy/postgres/compose.yaml up -d
