@@ -23,17 +23,23 @@ knowledge-driven-test-platform/
 │   ├── query/
 │   ├── access/
 │   ├── authentication/
-│   └── operations/
-├── deploy/postgres/
+│   ├── operations/
+│   └── deployment/
+├── deploy/
+│   ├── postgres/
+│   └── kubernetes/read-only-governance-service/
 ├── examples/
 ├── docs/
 ├── scripts/
 └── .github/workflows/
 ```
 
-## M1-I 依赖方向
+## 依赖方向
 
 ```text
+Kubernetes manifests
+  → read-only-governance-service container contract
+
 read-only-governance-service
   → governance-auth-oidc
   → governance-http
@@ -41,43 +47,43 @@ read-only-governance-service
   → knowledge-registry-postgres
   → knowledge-governance-postgres
   → project-membership-postgres
-  → pg（运行时 Driver）
+  → pg
 ```
 
-应用组合根可以读取环境变量、创建 Pool、执行 migrations、监听端口和处理进程信号。任何 package 都不得反向依赖应用层。
+应用组合根可以读取环境变量、创建 Pool、执行 migrations、监听端口和处理进程信号。Package 不得反向依赖应用或部署层。
 
-## M1-I 新增结构
+## M1-J 新增结构
 
 ```text
-apps/read-only-governance-service/
-├── src/config.js
-├── src/composition.js
-├── src/readiness.js
-├── src/operational-http.js
-├── src/runtime-events.js
-├── src/service.js
-├── src/main.js
-├── test/
-├── Dockerfile
-└── service.env.example
+deploy/kubernetes/read-only-governance-service/
+├── serviceaccount.yaml
+├── configmap.yaml
+├── secret.example.yaml
+├── deployment.yaml
+├── service.yaml
+├── pdb.yaml
+├── kustomization.yaml
+└── README.md
 
-schemas/operations/
-examples/read-only-service-operational.js
+schemas/deployment/
+scripts/validate-kubernetes-manifests.js
+examples/read-only-deployment-acceptance.js
 ```
 
-## 运行约束
+## 部署约束
 
-- `main.js` 动态加载 `pg`；
-- Docker 镜像固定安装 `pg@8.22.0`；
-- Server Factory 不在 package 中隐藏创建；
-- 探针不经过业务认证，但也不访问业务 DTO；
-- 运行事件拒绝敏感 Detail Key；
-- 应用关闭前先撤销 readiness。
+- Manifest 使用 JSON-compatible YAML；
+- 默认 Kustomization 不应用示例 Secret；
+- ClusterIP Service 不创建外部入口；
+- 生产镜像由晋级流程替换为不可变 digest；
+- Kubernetes termination grace 必须覆盖应用关闭时间；
+- `/live` 与 `/ready` 保持不同依赖语义；
+- 故障验收测试属于应用测试，不依赖真实集群。
 
 ## 后续演进
 
 ```text
-deploy/read-only-service/kubernetes/
+release-candidates/
 packages/test-planner/
 packages/k6-adapter/
 packages/evidence-model/

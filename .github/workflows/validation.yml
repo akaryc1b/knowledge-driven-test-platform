@@ -38,10 +38,14 @@ jobs:
       - run: npm run --silent example:http > /tmp/read-only-http.json
       - run: npm run --silent example:oidc > /tmp/oidc-authentication.json
       - run: npm run --silent example:service > /tmp/read-only-service.json
+      - run: npm run validate:deployment
+      - run: npm run --silent example:deployment > /tmp/deployment-acceptance.json
       - name: Build non-root read-only service image
         run: docker build -f apps/read-only-governance-service/Dockerfile -t kdtp-read-only-service:test .
       - name: Verify container user
         run: test "$(docker image inspect kdtp-read-only-service:test --format '{{.Config.User}}')" = "node"
+      - name: Verify hardened container runtime
+        run: docker run --rm --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cap-drop=ALL --security-opt no-new-privileges kdtp-read-only-service:test node --version
 
   postgres-integration:
     runs-on: ubuntu-latest

@@ -19,6 +19,7 @@ import {
 } from '../packages/project-membership/src/index.js';
 import { loadProjectAccessPostgresMigrations } from '../packages/project-membership-postgres/src/index.js';
 import { loadProjectInput } from '../apps/knowledge-cli/src/project-loader.js';
+import { validateKubernetesManifests } from './validate-kubernetes-manifests.js';
 
 const root = process.cwd();
 const required = [
@@ -47,12 +48,19 @@ const required = [
   'schemas/knowledge/schema-catalog.json',
   'schemas/registry/v1/knowledge-registry-record.schema.json',
   'schemas/governance/schema-catalog.json',
-  'schemas/query/schema-catalog.json',
+   'schemas/query/schema-catalog.json',
   'schemas/access/schema-catalog.json',
   'schemas/authentication/schema-catalog.json',
   'schemas/operations/schema-catalog.json',
   'schemas/operations/v1/service-runtime-event.schema.json',
   'schemas/operations/v1/service-health.schema.json',
+  'schemas/deployment/schema-catalog.json',
+  'schemas/deployment/v1/fault-acceptance.schema.json',
+  'deploy/kubernetes/read-only-governance-service/deployment.yaml',
+  'deploy/kubernetes/read-only-governance-service/service.yaml',
+  'deploy/kubernetes/read-only-governance-service/pdb.yaml',
+  'deploy/kubernetes/read-only-governance-service/kustomization.yaml',
+  'scripts/validate-kubernetes-manifests.js',
   'examples/read-only-service-operational.js',
 ];
 for (const path of required) await stat(join(root, path));
@@ -91,6 +99,9 @@ if (authenticationCatalog.currentOidcAuthenticationEvent !== 'oidc-authenticatio
 const operationsCatalog = JSON.parse(await readFile(join(root, 'schemas/operations/schema-catalog.json'), 'utf8'));
 if (operationsCatalog.currentRuntimeEvent !== 'service-runtime-event/v1') throw new Error('Operations catalog must identify service-runtime-event/v1 as current');
 if (operationsCatalog.currentHealthResponse !== 'service-health/v1') throw new Error('Operations catalog must identify service-health/v1 as current');
+const deploymentCatalog = JSON.parse(await readFile(join(root, 'schemas/deployment/schema-catalog.json'), 'utf8'));
+if (deploymentCatalog.currentFaultAcceptance !== 'deployment-fault-acceptance/v1') throw new Error('Deployment catalog must identify deployment-fault-acceptance/v1 as current');
+await validateKubernetesManifests();
 
 const postgresMigrations = await loadPostgresMigrations();
 if (postgresMigrations.map((item) => item.version).join(',') !== '0001_create_registry') throw new Error('PostgreSQL migration catalog is not deterministic');
@@ -104,7 +115,8 @@ const project = validateProjectRecord(createProjectRecord({
   at: '2026-07-27T12:00:00.000Z', reason: 'validate project directory record',
 }));
 validateMembershipRecord(createMembershipRecord({
-  projectId: project.projectId, subject: 'repository-reader', roles: ['VIEWER'],
+  projectId: project.projectId, subject: 'repository-reader',
+  roles: ['VIEWER'],
   validFrom: '2026-07-27T12:00:00.000Z', validUntil: null,
   actor: 'repository-validator', at: '2026-07-27T12:00:00.000Z', reason: 'validate membership',
 }));

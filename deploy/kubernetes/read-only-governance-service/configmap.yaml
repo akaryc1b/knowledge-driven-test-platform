@@ -1,0 +1,37 @@
+{
+  "apiVersion": "v1",
+  "kind": "ConfigMap",
+  "metadata": {
+    "name": "kdtp-read-only-governance-config",
+    "namespace": "kdtp-system",
+    "labels": {
+      "app.kubernetes.io/name": "kdtp-read-only-governance",
+      "app.kubernetes.io/component": "read-api"
+    }
+  },
+  "data": {
+    "KDTP_SERVICE_NAME": "kdtp-read-only-governance",
+    "KDTP_HTTP_HOST": "0.0.0.0",
+    "KDTP_HTTP_PORT": "8080",
+    "KDTP_HTTP_MAX_BODY_BYTES": "0",
+    "KDTP_HTTP_MAX_URL_LENGTH": "4096",
+    "KDTP_HTTP_REQUEST_TIMEOUT_MS": "15000",
+    "KDTP_HTTP_HEADERS_TIMEOUT_MS": "10000",
+    "KDTP_HTTP_KEEP_ALIVE_TIMEOUT_MS": "5000",
+    "KDTP_PG_MAX_POOL_SIZE": "10",
+    "KDTP_PG_CONNECTION_TIMEOUT_MS": "5000",
+    "KDTP_PG_IDLE_TIMEOUT_MS": "30000",
+    "KDTP_OIDC_ISSUER": "https://replace.example.invalid/tenant",
+    "KDTP_OIDC_JWKS_URI": "https://replace.example.invalid/tenant/jwks",
+    "KDTP_OIDC_AUDIENCE": "kdtp-read-api",
+    "KDTP_OIDC_CLOCK_SKEW_SECONDS": "60",
+    "KDTP_OIDC_JWKS_TIMEOUT_MS": "3000",
+    "KDTP_OIDC_JWKS_CACHE_TTL_MS": "300000",
+    "KDTP_OIDC_JWKS_MAX_CACHE_TTL_MS": "3600000",
+    "KDTP_RATE_LIMIT_MAX_REQUESTS": "120",
+    "KDTP_RATE_LIMIT_WINDOW_MS": "60000",
+    "KDTP_RATE_LIMIT_MAX_ENTRIES": "10000",
+    "KDTP_READINESS_TIMEOUT_MS": "3000",
+    "KDTP_SHUTDOWN_TIMEOUT_MS": "10000"
+  }
+}

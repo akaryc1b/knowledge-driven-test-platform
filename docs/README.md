@@ -32,6 +32,7 @@
 - [M1-G Read-Only HTTP and Authentication](03-roadmap/m1-g-read-only-http-auth.md)
 - [M1-H OIDC/JWKS Authentication](03-roadmap/m1-h-oidc-jwks-auth.md)
 - [M1-I Read-Only Service Composition](03-roadmap/m1-i-read-only-service-composition.md)
+- [M1-J Deployment and Fault Acceptance](03-roadmap/m1-j-read-only-deployment-fault-acceptance.md)
 
 ## 治理
 
@@ -52,3 +53,4 @@
 - [ADR-0010：认证后构造查询身份](05-adr/ADR-0010-authenticate-before-query-identity.md)
 - [ADR-0011：显式 Issuer、JWKS 与 RS256](05-adr/ADR-0011-explicit-issuer-jwks-rs256.md)
 - [ADR-0012：显式服务组合与运维探针](05-adr/ADR-0012-explicit-read-only-service-composition.md)
+- [ADR-0013：安全 Kubernetes 只读部署基线](05-adr/ADR-0013-secure-kubernetes-read-only-baseline.md)

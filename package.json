@@ -1,6 +1,6 @@
 {
   "name": "knowledge-driven-test-platform",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -24,6 +24,8 @@
     "start:read-only": "node apps/read-only-governance-service/src/main.js",
     "test:postgres": "node --test --test-concurrency=1 packages/knowledge-registry-postgres/test/postgres-integration.test.js packages/knowledge-governance-postgres/test/postgres-integration.test.js packages/project-membership-postgres/test/postgres-integration.test.js",
     "example:postgres": "node examples/postgres-registry.js",
-    "example:governance:postgres": "node examples/postgres-governance.js"
+    "example:governance:postgres": "node examples/postgres-governance.js",
+    "validate:deployment": "node scripts/validate-kubernetes-manifests.js",
+    "example:deployment": "node examples/read-only-deployment-acceptance.js"
   }
 }
