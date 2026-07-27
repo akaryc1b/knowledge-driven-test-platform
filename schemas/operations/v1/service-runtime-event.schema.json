@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/operations/v1/service-runtime-event.schema.json",
+  "title": "Read-Only Service Runtime Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "type", "at", "service", "requestId", "details"],
+  "properties": {
+    "schemaVersion": { "const": "service-runtime-event/v1" },
+    "type": {
+      "enum": [
+        "SERVICE_STARTING",
+        "MIGRATIONS_APPLIED",
+        "JWKS_WARMED",
+        "SERVICE_LISTENING",
+        "SERVICE_READY",
+        "SERVICE_NOT_READY",
+        "SERVICE_STOPPING",
+        "SERVICE_STOPPED",
+        "SERVICE_FAILED",
+        "AUTHENTICATION_EVENT"
+      ]
+    },
+    "at": { "type": "string", "format": "date-time" },
+    "service": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "requestId": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,128}$" }
+      ]
+    },
+    "details": {
+      "type": "object",
+      "maxProperties": 24,
+      "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9._-]{0,63}$" },
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "null" },
+          { "type": "boolean" },
+          { "type": "number" },
+          { "type": "string", "maxLength": 512 }
+        ]
+      }
+    }
+  }
+}

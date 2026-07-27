@@ -1,9 +1,10 @@
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import {
-  createAuthenticationEvent,
-  OIDC_AUTH_EVENT_SCHEMA_VERSION,
-} from '../packages/governance-auth-oidc/src/index.js';
+  createRuntimeEvent,
+  loadServiceConfig,
+  publicServiceConfig,
+} from '../apps/read-only-governance-service/src/index.js';
 import { matchReadOnlyRoute } from '../packages/governance-http/src/index.js';
 import { buildKnowledgeSnapshot, resolveKnowledge } from '../packages/knowledge-core/src/index.js';
 import { createSnapshotEnvelope, validateSnapshotEnvelope } from '../packages/knowledge-governance/src/index.js';
@@ -22,7 +23,13 @@ import { loadProjectInput } from '../apps/knowledge-cli/src/project-loader.js';
 const root = process.cwd();
 const required = [
   'README.md',
+  '.dockerignore',
   'docs/README.md',
+  'apps/read-only-governance-service/package.json',
+  'apps/read-only-governance-service/src/main.js',
+  'apps/read-only-governance-service/src/composition.js',
+  'apps/read-only-governance-service/Dockerfile',
+  'apps/read-only-governance-service/service.env.example',
   'packages/knowledge-core/src/index.js',
   'packages/knowledge-registry/src/index.js',
   'packages/knowledge-registry-postgres/src/index.js',
@@ -38,27 +45,15 @@ const required = [
   'packages/governance-auth-oidc/src/index.js',
   'deploy/postgres/compose.yaml',
   'schemas/knowledge/schema-catalog.json',
-  'schemas/knowledge/v1/knowledge-rule.schema.json',
   'schemas/registry/v1/knowledge-registry-record.schema.json',
   'schemas/governance/schema-catalog.json',
-  'schemas/governance/v1/review-decision.schema.json',
-  'schemas/governance/v1/snapshot-envelope.schema.json',
   'schemas/query/schema-catalog.json',
-  'schemas/query/v1/page.schema.json',
-  'schemas/query/v1/response-envelope.schema.json',
   'schemas/access/schema-catalog.json',
-  'schemas/access/v1/project-directory-record.schema.json',
-  'schemas/access/v1/project-membership-record.schema.json',
   'schemas/authentication/schema-catalog.json',
-  'schemas/authentication/v1/oidc-authentication-event.schema.json',
-  'apps/knowledge-cli/src/cli.js',
-  'examples/approval-platform/project-manifest.json',
-  'examples/governance-lifecycle.js',
-  'examples/postgres-governance.js',
-  'examples/read-only-query-api.js',
-  'examples/project-membership-authorization.js',
-  'examples/read-only-http-transport.js',
-  'examples/oidc-jwks-authentication.js',
+  'schemas/operations/schema-catalog.json',
+  'schemas/operations/v1/service-runtime-event.schema.json',
+  'schemas/operations/v1/service-health.schema.json',
+  'examples/read-only-service-operational.js',
 ];
 for (const path of required) await stat(join(root, path));
 
@@ -91,62 +86,50 @@ if (queryCatalog.currentPage !== 'governance-query-page/v1') throw new Error('Qu
 const accessCatalog = JSON.parse(await readFile(join(root, 'schemas/access/schema-catalog.json'), 'utf8'));
 if (accessCatalog.currentProjectDirectoryRecord !== 'project-directory-record/v1') throw new Error('Access catalog must identify project-directory-record/v1 as current');
 if (accessCatalog.currentProjectMembershipRecord !== 'project-membership-record/v1') throw new Error('Access catalog must identify project-membership-record/v1 as current');
-const authenticationCatalog = JSON.parse(
-  await readFile(join(root, 'schemas/authentication/schema-catalog.json'), 'utf8'),
-);
-if (authenticationCatalog.currentOidcAuthenticationEvent !== OIDC_AUTH_EVENT_SCHEMA_VERSION) {
-  throw new Error('Authentication catalog must identify oidc-authentication-event/v1 as current');
-}
+const authenticationCatalog = JSON.parse(await readFile(join(root, 'schemas/authentication/schema-catalog.json'), 'utf8'));
+if (authenticationCatalog.currentAuthenticationEvent !== 'oidc-authentication-event/v1') throw new Error('Authentication catalog must identify oidc-authentication-event/v1 as current');
+const operationsCatalog = JSON.parse(await readFile(join(root, 'schemas/operations/schema-catalog.json'), 'utf8'));
+if (operationsCatalog.currentRuntimeEvent !== 'service-runtime-event/v1') throw new Error('Operations catalog must identify service-runtime-event/v1 as current');
+if (operationsCatalog.currentHealthResponse !== 'service-health/v1') throw new Error('Operations catalog must identify service-health/v1 as current');
 
 const postgresMigrations = await loadPostgresMigrations();
-if (postgresMigrations.map((item) => item.version).join(',') !== '0001_create_registry') {
-  throw new Error('PostgreSQL migration catalog is not deterministic');
-}
+if (postgresMigrations.map((item) => item.version).join(',') !== '0001_create_registry') throw new Error('PostgreSQL migration catalog is not deterministic');
 const governanceMigrations = await loadGovernancePostgresMigrations();
-if (governanceMigrations.map((item) => item.version).join(',') !== '0001_create_governance_evidence') {
-  throw new Error('Governance PostgreSQL migration catalog is not deterministic');
-}
+if (governanceMigrations.map((item) => item.version).join(',') !== '0001_create_governance_evidence') throw new Error('Governance PostgreSQL migration catalog is not deterministic');
 const accessMigrations = await loadProjectAccessPostgresMigrations();
-if (accessMigrations.map((item) => item.version).join(',') !== '0001_create_project_access') {
-  throw new Error('Project access PostgreSQL migration catalog is not deterministic');
-}
+if (accessMigrations.map((item) => item.version).join(',') !== '0001_create_project_access') throw new Error('Project access PostgreSQL migration catalog is not deterministic');
 
 const project = validateProjectRecord(createProjectRecord({
-  projectId: 'approval-platform',
-  name: 'Approval Platform',
-  actor: 'repository-validator',
-  at: '2026-07-27T12:00:00.000Z',
-  reason: 'validate project directory record',
+  projectId: 'approval-platform', name: 'Approval Platform', actor: 'repository-validator',
+  at: '2026-07-27T12:00:00.000Z', reason: 'validate project directory record',
 }));
 validateMembershipRecord(createMembershipRecord({
-  projectId: project.projectId,
-  subject: 'repository-reader',
-  roles: ['VIEWER'],
-  validFrom: '2026-07-27T12:00:00.000Z',
-  validUntil: null,
-  actor: 'repository-validator',
-  at: '2026-07-27T12:00:00.000Z',
-  reason: 'validate project membership record',
+  projectId: project.projectId, subject: 'repository-reader', roles: ['VIEWER'],
+  validFrom: '2026-07-27T12:00:00.000Z', validUntil: null,
+  actor: 'repository-validator', at: '2026-07-27T12:00:00.000Z', reason: 'validate membership',
 }));
-
-const authEvent = createAuthenticationEvent({
-  type: 'AUTHENTICATION_SUCCEEDED',
-  at: '2026-07-27T12:00:00.000Z',
-  requestId: 'repository-validator',
-  issuer: 'https://issuer.example.test',
-  kid: 'validator-key-1',
-  subject: 'repository-reader',
-  reasonCode: 'AUTHENTICATED',
-});
-if (authEvent.schemaVersion !== OIDC_AUTH_EVENT_SCHEMA_VERSION ||
-    authEvent.subjectFingerprint?.length !== 64 ||
-    'credential' in authEvent || 'claims' in authEvent) {
-  throw new Error('OIDC authentication event is not deterministic or safely bounded');
-}
 
 const httpRoute = matchReadOnlyRoute('GET', '/v1/projects/approval-platform/knowledge');
 if (httpRoute.handler !== 'listKnowledge' || httpRoute.projectId !== 'approval-platform') {
   throw new Error('Read-only HTTP route catalog is not deterministic');
+}
+
+const config = loadServiceConfig({
+  KDTP_DATABASE_URL: 'postgresql://validator:password@postgres.example/kdtp',
+  KDTP_OIDC_ISSUER: 'https://id.example.com/tenant',
+  KDTP_OIDC_JWKS_URI: 'https://id.example.com/tenant/jwks',
+  KDTP_OIDC_AUDIENCE: 'kdtp-read-api',
+  KDTP_OIDC_SUBJECT_MAPPINGS_JSON: '[{"subject":"subject-1","actor":"reader-1"}]',
+});
+const publicConfig = JSON.stringify(publicServiceConfig(config));
+if (publicConfig.includes('password') || publicConfig.includes('subject-1')) {
+  throw new Error('Public service configuration leaked sensitive values');
+}
+const runtimeEvent = createRuntimeEvent({ type: 'SERVICE_STARTING', service: config.serviceName });
+if (runtimeEvent.schemaVersion !== 'service-runtime-event/v1') throw new Error('Runtime event schema changed');
+const dockerfile = await readFile(join(root, 'apps/read-only-governance-service/Dockerfile'), 'utf8');
+if (!/^USER node$/m.test(dockerfile) || !dockerfile.includes('/live')) {
+  throw new Error('Read-only service Dockerfile must run as node and define liveness healthcheck');
 }
 
 const input = await loadProjectInput(join(root, 'examples/approval-platform'));

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/operations/v1/service-health.schema.json",
+  "title": "Read-Only Service Health Response v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion"],
+  "properties": {
+    "schemaVersion": { "const": "service-health/v1" },
+    "service": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "status": { "enum": ["live", "stopping", "ready", "not_ready"] },
+    "uptimeSeconds": { "type": "integer", "minimum": 0 },
+    "checks": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "status"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]{1,31}$" },
+          "status": { "enum": ["ok", "failed"] }
+        }
+      }
+    },
+    "requestId": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "pattern": "^[A-Za-z0-9._:-]{1,128}$" }
+      ]
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[A-Z0-9_]{3,64}$" },
+        "message": { "type": "string", "minLength": 1, "maxLength": 256 }
+      }
+    }
+  },
+  "oneOf": [
+    { "required": ["service", "status", "uptimeSeconds", "checks"] },
+    { "required": ["requestId", "error"] }
+  ]
+}
