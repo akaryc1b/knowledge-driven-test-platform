@@ -29,7 +29,7 @@ if (!connectionString) {
   const reset = async () => {
     await pool.query(
       `TRUNCATE TABLE ${POSTGRES_SCHEMA}.knowledge_history,
-                      ${POSTGRES_SCHEMA}.knowledge_records`,
+                      ${POSTGRES_SCHEMA}.knowledge_records CASCADE`,
     );
   };
 
@@ -110,7 +110,6 @@ if (!connectionString) {
     assert.deepEqual(result.applied, []);
     assert.deepEqual(result.discovered, ['0001_create_registry']);
   });
-
 
   test('PostgreSQL migration runner rejects changed checksums', { concurrency: false }, async () => {
     const directory = await mkdtemp(join(tmpdir(), 'kdtp-postgres-checksum-'));
