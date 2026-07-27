@@ -29,6 +29,7 @@
 - [M1-D Durable Governance Evidence](03-roadmap/m1-d-durable-governance-evidence.md)
 - [M1-E Read-Only Governance Query API](03-roadmap/m1-e-read-only-query-api.md)
 - [M1-F Durable Project Membership](03-roadmap/m1-f-project-membership.md)
+- [M1-G Read-Only HTTP and Authentication](03-roadmap/m1-g-read-only-http-auth.md)
 
 ## 治理
 
@@ -45,4 +46,5 @@
 - [ADR-0006：Revision 绑定治理](05-adr/ADR-0006-revision-bound-governance.md)
 - [ADR-0007：单数据库 Governance Unit of Work](05-adr/ADR-0007-single-database-governance-unit-of-work.md)
 - [ADR-0008：运输无关只读查询](05-adr/ADR-0008-transport-independent-read-query-boundary.md)
-- [ADR-0009：成员关系驱动授权](05-adr/ADR-0009-membership-backed-deny-by-default-authorization.md)
+- [ADR-0009：成员驱动默认拒绝授权](05-adr/ADR-0009-membership-backed-deny-by-default-authorization.md)
+- [ADR-0010：认证后构造查询身份](05-adr/ADR-0010-authenticate-before-query-identity.md)
