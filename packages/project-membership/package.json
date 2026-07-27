@@ -1,0 +1,10 @@
+{
+  "name": "@kdtp/project-membership",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.js",
+  "dependencies": {
+    "@kdtp/knowledge-governance": "0.1.0"
+  }
+}

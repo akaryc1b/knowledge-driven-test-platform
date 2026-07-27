@@ -23,6 +23,7 @@ jobs:
       - run: npm run --silent example:registry > /tmp/registry-record.json
       - run: npm run --silent example:governance > /tmp/governance-evidence.json
       - run: npm run --silent example:query > /tmp/read-only-query.json
+      - run: npm run --silent example:access > /tmp/project-membership-access.json
 
   postgres-integration:
     runs-on: ubuntu-latest
