@@ -1,5 +1,6 @@
 [
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "ENV-SLO-001",
     "boundaryKey": "performance.submit-approval",
     "name": "预发布提交审批性能目标",
@@ -23,6 +24,7 @@
     "riskLevel": "high"
   },
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "ENV-DATA-001",
     "boundaryKey": "data.test-dataset-size",
     "name": "预发布数据规模",

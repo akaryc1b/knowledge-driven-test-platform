@@ -1,5 +1,6 @@
 [
   {
+    "schemaVersion": "knowledge-rule/v1",
     "id": "DOMAIN-TENANT-001",
     "boundaryKey": "tenant.cross-tenant-access",
     "name": "跨租户访问隔离",

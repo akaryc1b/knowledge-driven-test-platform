@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.internal/schemas/knowledge/v1/knowledge-rule.schema.json",
+  "title": "Knowledge Rule v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "boundaryKey",
+    "name",
+    "version",
+    "status",
+    "scope",
+    "enforcement",
+    "overridePolicy",
+    "enabled",
+    "value",
+    "owner",
+    "source",
+    "riskLevel"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "knowledge-rule/v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9]{1,31}(?:-[A-Z0-9][A-Z0-9]{0,31}){2,7}$"
+    },
+    "boundaryKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9][a-z0-9-]*)+$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "maxLength": 32
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "REVIEWING",
+        "PUBLISHED",
+        "DEPRECATED",
+        "ARCHIVED"
+      ]
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "level",
+        "key"
+      ],
+      "properties": {
+        "level": {
+          "enum": [
+            "GLOBAL",
+            "DOMAIN",
+            "PROJECT",
+            "ENVIRONMENT",
+            "RELEASE"
+          ]
+        },
+        "key": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+        }
+      }
+    },
+    "enforcement": {
+      "enum": [
+        "optional",
+        "default",
+        "mandatory"
+      ]
+    },
+    "overridePolicy": {
+      "enum": [
+        "allow",
+        "strengthen",
+        "deny"
+      ]
+    },
+    "mergeStrategy": {
+      "enum": [
+        "replace",
+        "deep-merge"
+      ]
+    },
+    "overrideIntent": {
+      "const": "strengthen"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "value": {},
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "riskLevel": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  }
+}
