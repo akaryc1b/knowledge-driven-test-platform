@@ -3,6 +3,7 @@ import { GovernanceError, governanceInvariant } from './errors.js';
 export const PROJECT_AUTHORIZATION_PORT_METHODS = Object.freeze(['authorize']);
 export const REVIEW_DECISION_STORE_PORT_METHODS = Object.freeze(['append', 'list']);
 export const SNAPSHOT_STORE_PORT_METHODS = Object.freeze(['save', 'get', 'list']);
+export const GOVERNANCE_UNIT_OF_WORK_PORT_METHODS = Object.freeze(['execute']);
 
 export class ProjectAuthorizationPort {
   async authorize() { throw unsupported('ProjectAuthorizationPort', 'authorize'); }
@@ -19,6 +20,10 @@ export class KnowledgeSnapshotStorePort {
   async list() { throw unsupported('KnowledgeSnapshotStorePort', 'list'); }
 }
 
+export class GovernanceUnitOfWorkPort {
+  async execute() { throw unsupported('GovernanceUnitOfWorkPort', 'execute'); }
+}
+
 export function assertProjectAuthorizationPort(port) {
   return assertPort(port, PROJECT_AUTHORIZATION_PORT_METHODS, 'authorization');
 }
@@ -27,6 +32,9 @@ export function assertReviewDecisionStorePort(port) {
 }
 export function assertKnowledgeSnapshotStorePort(port) {
   return assertPort(port, SNAPSHOT_STORE_PORT_METHODS, 'snapshot store');
+}
+export function assertGovernanceUnitOfWorkPort(port) {
+  return assertPort(port, GOVERNANCE_UNIT_OF_WORK_PORT_METHODS, 'governance unit of work');
 }
 
 function assertPort(port, methods, name) {

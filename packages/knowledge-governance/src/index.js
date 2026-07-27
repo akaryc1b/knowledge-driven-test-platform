@@ -5,6 +5,7 @@ export * from './governance-service.js';
 export * from './in-memory-authorization.js';
 export * from './in-memory-review-store.js';
 export * from './in-memory-snapshot-store.js';
+export * from './passthrough-unit-of-work.js';
 export * from './policy.js';
 export * from './ports.js';
 export * from './validation.js';

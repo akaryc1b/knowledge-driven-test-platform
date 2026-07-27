@@ -7,7 +7,9 @@ import {
   REVIEW_DECISION_SCHEMA_VERSION,
 } from './constants.js';
 import { GovernanceError, governanceInvariant } from './errors.js';
+import { PassthroughGovernanceUnitOfWork } from './passthrough-unit-of-work.js';
 import {
+  assertGovernanceUnitOfWorkPort,
   assertKnowledgeSnapshotStorePort,
   assertProjectAuthorizationPort,
   assertReviewDecisionStorePort,
@@ -20,11 +22,18 @@ import {
 } from './validation.js';
 
 export class KnowledgeGovernanceService {
-  constructor({ registry, authorization, reviewStore, snapshotStore, policy = new GovernancePolicy() }) {
+  constructor({ registry, authorization, reviewStore, snapshotStore, unitOfWork, policy = new GovernancePolicy() }) {
     this.registry = assertKnowledgeRegistryPort(registry);
     this.authorization = assertProjectAuthorizationPort(authorization);
     this.reviewStore = assertReviewDecisionStorePort(reviewStore);
     this.snapshotStore = assertKnowledgeSnapshotStorePort(snapshotStore);
+    this.unitOfWork = unitOfWork === undefined
+      ? new PassthroughGovernanceUnitOfWork({
+        registry: this.registry,
+        reviewStore: this.reviewStore,
+        snapshotStore: this.snapshotStore,
+      })
+      : assertGovernanceUnitOfWorkPort(unitOfWork);
     governanceInvariant(policy instanceof GovernancePolicy,
       'INVALID_GOVERNANCE_POLICY', 'policy must be a GovernancePolicy');
     this.policy = policy;
@@ -37,107 +46,123 @@ export class KnowledgeGovernanceService {
       knowledgeId: command?.knowledge?.id,
       version: command?.knowledge?.version,
     });
-    return this.registry.createDraft(command);
+    return this.unitOfWork.execute(({ registry }) => registry.createDraft(command));
   }
 
   async replaceDraft(command) {
     const projectId = validateProjectId(command?.projectId);
-    const record = await this.requireRecord(command, projectId);
-    await this.assertAuthorized(projectId, command?.actor, 'KNOWLEDGE_EDIT', resource(record));
+    const visible = await this.requireRecord(this.registry, command, projectId);
+    await this.assertAuthorized(projectId, command?.actor, 'KNOWLEDGE_EDIT', resource(visible));
     assertProjectBinding(projectId, command?.knowledge);
-    return this.registry.replaceDraft(command);
+    return this.unitOfWork.execute(async ({ registry }) => {
+      const current = await this.requireRecord(registry, command, projectId);
+      governanceInvariant(current.revision === command?.expectedRevision,
+        'REVISION_CONFLICT', 'Draft replacement revision changed before transaction', {
+          key: current.key,
+          expectedRevision: command?.expectedRevision,
+          actualRevision: current.revision,
+        });
+      return registry.replaceDraft(command);
+    });
   }
 
   async submitForReview(command) {
     const projectId = validateProjectId(command?.projectId);
-    const record = await this.requireRecord(command, projectId);
-    await this.assertAuthorized(projectId, command?.actor, 'KNOWLEDGE_SUBMIT', resource(record));
-    this.policy.assertSubmitAllowed(record, command?.actor);
-    return this.registry.transition({
-      id: record.knowledge.id,
-      version: record.knowledge.version,
-      expectedRevision: command?.expectedRevision,
-      toStatus: 'REVIEWING',
-      actor: command?.actor,
-      at: command?.at,
-      reason: command?.reason,
+    const visible = await this.requireRecord(this.registry, command, projectId);
+    await this.assertAuthorized(projectId, command?.actor, 'KNOWLEDGE_SUBMIT', resource(visible));
+    return this.unitOfWork.execute(async ({ registry }) => {
+      const record = await this.requireRecord(registry, command, projectId);
+      this.policy.assertSubmitAllowed(record, command?.actor);
+      return registry.transition({
+        id: record.knowledge.id,
+        version: record.knowledge.version,
+        expectedRevision: command?.expectedRevision,
+        toStatus: 'REVIEWING',
+        actor: command?.actor,
+        at: command?.at,
+        reason: command?.reason,
+      });
     });
   }
 
   async review(command) {
     const projectId = validateProjectId(command?.projectId);
-    const record = await this.requireRecord(command, projectId);
-    validateExpectedRevision(command?.expectedRevision);
-    governanceInvariant(record.revision === command.expectedRevision,
-      'REVISION_CONFLICT', 'Governance review revision does not match registry revision', {
-        expectedRevision: command.expectedRevision,
-        actualRevision: record.revision,
-        key: record.key,
-      });
-    governanceInvariant(record.knowledge.status === 'REVIEWING',
-      'KNOWLEDGE_NOT_REVIEWING', 'Only REVIEWING knowledge can receive a review decision', {
-        key: record.key,
-        status: record.knowledge.status,
-      });
-    await this.assertAuthorized(projectId, command?.actor, 'KNOWLEDGE_REVIEW', resource(record));
-    this.policy.assertReviewerAllowed(record, command?.actor);
-
-    const decision = await this.reviewStore.append({
-      schemaVersion: REVIEW_DECISION_SCHEMA_VERSION,
-      decisionId: command?.decisionId,
-      projectId,
-      knowledgeKey: record.key,
-      knowledgeId: record.knowledge.id,
-      version: record.knowledge.version,
-      reviewRevision: record.revision,
-      decision: command?.decision,
-      reviewer: command?.actor,
-      at: command?.at,
-      reason: command?.reason,
-    });
-
-    if (decision.decision === 'REQUEST_CHANGES') {
-      const transitioned = await this.registry.transition({
-        id: record.knowledge.id,
+    const visible = await this.requireRecord(this.registry, command, projectId);
+    await this.assertAuthorized(projectId, command?.actor, 'KNOWLEDGE_REVIEW', resource(visible));
+    return this.unitOfWork.execute(async ({ registry, reviewStore }) => {
+      const record = await this.requireRecord(registry, command, projectId);
+      validateExpectedRevision(command?.expectedRevision);
+      governanceInvariant(record.revision === command.expectedRevision,
+        'REVISION_CONFLICT', 'Governance review revision does not match registry revision', {
+          expectedRevision: command.expectedRevision,
+          actualRevision: record.revision,
+          key: record.key,
+        });
+      governanceInvariant(record.knowledge.status === 'REVIEWING',
+        'KNOWLEDGE_NOT_REVIEWING', 'Only REVIEWING knowledge can receive a review decision', {
+          key: record.key,
+          status: record.knowledge.status,
+        });
+      this.policy.assertReviewerAllowed(record, command?.actor);
+      const decision = await reviewStore.append({
+        schemaVersion: REVIEW_DECISION_SCHEMA_VERSION,
+        decisionId: command?.decisionId,
+        projectId,
+        knowledgeKey: record.key,
+        knowledgeId: record.knowledge.id,
         version: record.knowledge.version,
-        expectedRevision: record.revision,
-        toStatus: 'DRAFT',
-        actor: command?.actor,
+        reviewRevision: record.revision,
+        decision: command?.decision,
+        reviewer: command?.actor,
         at: command?.at,
         reason: command?.reason,
       });
-      return { decision, record: transitioned };
-    }
-    return { decision, record };
+      if (decision.decision === 'REQUEST_CHANGES') {
+        const transitioned = await registry.transition({
+          id: record.knowledge.id,
+          version: record.knowledge.version,
+          expectedRevision: record.revision,
+          toStatus: 'DRAFT',
+          actor: command?.actor,
+          at: command?.at,
+          reason: command?.reason,
+        });
+        return { decision, record: transitioned };
+      }
+      return { decision, record };
+    });
   }
 
   async publish(command) {
     const projectId = validateProjectId(command?.projectId);
-    const record = await this.requireRecord(command, projectId);
-    validateExpectedRevision(command?.expectedRevision);
-    governanceInvariant(record.revision === command.expectedRevision,
-      'REVISION_CONFLICT', 'Publish revision does not match registry revision', {
-        expectedRevision: command.expectedRevision,
-        actualRevision: record.revision,
-        key: record.key,
+    const visible = await this.requireRecord(this.registry, command, projectId);
+    await this.assertAuthorized(projectId, command?.actor, 'KNOWLEDGE_PUBLISH', resource(visible));
+    return this.unitOfWork.execute(async ({ registry, reviewStore }) => {
+      const record = await this.requireRecord(registry, command, projectId);
+      validateExpectedRevision(command?.expectedRevision);
+      governanceInvariant(record.revision === command.expectedRevision,
+        'REVISION_CONFLICT', 'Publish revision does not match registry revision', {
+          expectedRevision: command.expectedRevision,
+          actualRevision: record.revision,
+          key: record.key,
+        });
+      const decisions = await reviewStore.list({
+        projectId,
+        knowledgeKey: record.key,
+        reviewRevision: record.revision,
       });
-    await this.assertAuthorized(projectId, command?.actor, 'KNOWLEDGE_PUBLISH', resource(record));
-    const decisions = await this.reviewStore.list({
-      projectId,
-      knowledgeKey: record.key,
-      reviewRevision: record.revision,
+      const evidence = this.policy.evaluatePublish(record, decisions, command?.actor);
+      const published = await registry.transition({
+        id: record.knowledge.id,
+        version: record.knowledge.version,
+        expectedRevision: record.revision,
+        toStatus: 'PUBLISHED',
+        actor: command?.actor,
+        at: command?.at,
+        reason: command?.reason,
+      });
+      return { record: published, evidence };
     });
-    const evidence = this.policy.evaluatePublish(record, decisions, command?.actor);
-    const published = await this.registry.transition({
-      id: record.knowledge.id,
-      version: record.knowledge.version,
-      expectedRevision: record.revision,
-      toStatus: 'PUBLISHED',
-      actor: command?.actor,
-      at: command?.at,
-      reason: command?.reason,
-    });
-    return { record: published, evidence };
   }
 
   async deprecate(command) {
@@ -155,27 +180,30 @@ export class KnowledgeGovernanceService {
       environmentId: envelope.environmentId,
       releaseId: envelope.releaseId,
     });
-    return this.snapshotStore.save(envelope);
+    return this.unitOfWork.execute(({ snapshotStore }) => snapshotStore.save(envelope));
   }
 
   async transitionGoverned(command, action, toStatus) {
     const projectId = validateProjectId(command?.projectId);
-    const record = await this.requireRecord(command, projectId);
-    await this.assertAuthorized(projectId, command?.actor, action, resource(record));
-    return this.registry.transition({
-      id: record.knowledge.id,
-      version: record.knowledge.version,
-      expectedRevision: command?.expectedRevision,
-      toStatus,
-      actor: command?.actor,
-      at: command?.at,
-      reason: command?.reason,
+    const visible = await this.requireRecord(this.registry, command, projectId);
+    await this.assertAuthorized(projectId, command?.actor, action, resource(visible));
+    return this.unitOfWork.execute(async ({ registry }) => {
+      const record = await this.requireRecord(registry, command, projectId);
+      return registry.transition({
+        id: record.knowledge.id,
+        version: record.knowledge.version,
+        expectedRevision: command?.expectedRevision,
+        toStatus,
+        actor: command?.actor,
+        at: command?.at,
+        reason: command?.reason,
+      });
     });
   }
 
-  async requireRecord(command, projectId) {
+  async requireRecord(registry, command, projectId) {
     const key = knowledgeKey(command?.id, command?.version);
-    const record = await this.registry.get({ id: command?.id, version: command?.version });
+    const record = await registry.get({ id: command?.id, version: command?.version });
     if (!record) throw new GovernanceError('KNOWLEDGE_NOT_FOUND', `Knowledge ${key} was not found`, { key });
     assertProjectBinding(projectId, record.knowledge);
     return record;

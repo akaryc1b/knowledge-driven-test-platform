@@ -49,3 +49,4 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
       - run: npm run test:postgres
+      - run: npm run --silent example:governance:postgres > /tmp/postgres-governance.json
