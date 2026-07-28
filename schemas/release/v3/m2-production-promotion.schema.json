@@ -1,0 +1,563 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/release/v3/m2-production-promotion.schema.json",
+  "title": "M2 Production Promotion v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "releaseId",
+    "version",
+    "phase",
+    "sourceEvidence",
+    "promotionSource",
+    "mainBranchFinalCi",
+    "imageRelease",
+    "secrets",
+    "targetClusterValidation",
+    "approvals",
+    "decision"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "m2-production-promotion/v1"
+    },
+    "releaseId": {
+      "const": "M2-RC1"
+    },
+    "version": {
+      "const": "0.12.0"
+    },
+    "phase": {
+      "const": "PRODUCTION_PROMOTION"
+    },
+    "sourceEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate",
+        "postMergeAcceptance"
+      ],
+      "properties": {
+        "candidate": {
+          "$ref": "#/$defs/evidenceRef"
+        },
+        "postMergeAcceptance": {
+          "$ref": "#/$defs/evidenceRef"
+        }
+      }
+    },
+    "promotionSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch",
+        "mainSha"
+      ],
+      "properties": {
+        "branch": {
+          "const": "main"
+        },
+        "mainSha": {
+          "$ref": "#/$defs/sha"
+        }
+      }
+    },
+    "mainBranchFinalCi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "event",
+        "sourceSha",
+        "runId",
+        "artifacts"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "UNVERIFIED",
+            "PASSED"
+          ]
+        },
+        "event": {
+          "const": "push"
+        },
+        "sourceSha": {
+          "$ref": "#/$defs/sha"
+        },
+        "runId": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "artifacts": {
+          "$ref": "#/$defs/ciArtifacts"
+        }
+      }
+    },
+    "imageRelease": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "repository",
+        "immutableReference",
+        "registryDigest",
+        "sourceSha",
+        "buildRunId",
+        "sbom",
+        "provenanceAttestation",
+        "sbomAttestation",
+        "pullVerification"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "MISSING",
+            "PUBLISHED"
+          ]
+        },
+        "repository": {
+          "const": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service"
+        },
+        "immutableReference": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "registryDigest": {
+          "$ref": "#/$defs/artifactDigestOrNull"
+        },
+        "sourceSha": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "buildRunId": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "sbom": {
+          "$ref": "#/$defs/sbom"
+        },
+        "provenanceAttestation": {
+          "$ref": "#/$defs/attestation"
+        },
+        "sbomAttestation": {
+          "$ref": "#/$defs/attestation"
+        },
+        "pullVerification": {
+          "$ref": "#/$defs/pullVerification"
+        }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "provider",
+        "references",
+        "configuredAt"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "NOT_CONFIGURED",
+            "CONFIGURED"
+          ]
+        },
+        "provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "references": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/secretReference"
+          }
+        },
+        "configuredAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "targetClusterValidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "clusterRef",
+        "validationRunId",
+        "sourceSha",
+        "imageDigest",
+        "deploymentManifestDigest",
+        "validatedAt"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "NOT_RUN",
+            "PASSED"
+          ]
+        },
+        "clusterRef": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validationRunId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sourceSha": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/sha"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "imageDigest": {
+          "$ref": "#/$defs/artifactDigestOrNull"
+        },
+        "deploymentManifestDigest": {
+          "$ref": "#/$defs/artifactDigestOrNull"
+        },
+        "validatedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "approvals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "change",
+        "releaseOwner"
+      ],
+      "properties": {
+        "change": {
+          "$ref": "#/$defs/approval"
+        },
+        "releaseOwner": {
+          "$ref": "#/$defs/approval"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "productionEligible",
+        "resolvedBlockers",
+        "openBlockers"
+      ],
+      "properties": {
+        "productionEligible": {
+          "type": "boolean"
+        },
+        "resolvedBlockers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/blocker"
+          }
+        },
+        "openBlockers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/blocker"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "rawDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "artifactDigest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "artifactDigestOrNull": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/artifactDigest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "evidenceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "digest"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "$ref": "#/$defs/rawDigest"
+        }
+      }
+    },
+    "ciArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "m1ReleaseEvidence",
+        "m2ReleaseEvidence",
+        "m2PostMergeEvidence",
+        "postgresValidation",
+        "repositoryValidation",
+        "deploymentValidation"
+      ],
+      "properties": {
+        "m1ReleaseEvidence": {
+          "$ref": "#/$defs/artifactDigestOrNull"
+        },
+        "m2ReleaseEvidence": {
+          "$ref": "#/$defs/artifactDigestOrNull"
+        },
+        "m2PostMergeEvidence": {
+          "$ref": "#/$defs/artifactDigestOrNull"
+        },
+        "postgresValidation": {
+          "$ref": "#/$defs/artifactDigestOrNull"
+        },
+        "repositoryValidation": {
+          "$ref": "#/$defs/artifactDigestOrNull"
+        },
+        "deploymentValidation": {
+          "$ref": "#/$defs/artifactDigestOrNull"
+        }
+      }
+    },
+    "sbom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "format",
+        "digest"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "MISSING",
+            "GENERATED"
+          ]
+        },
+        "format": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "spdx-json",
+            "cyclonedx-json",
+            null
+          ]
+        },
+        "digest": {
+          "$ref": "#/$defs/artifactDigestOrNull"
+        }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "attestationId",
+        "url",
+        "bundleDigest"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "MISSING",
+            "VERIFIED"
+          ]
+        },
+        "attestationId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "uri",
+              "pattern": "^https://"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "bundleDigest": {
+          "$ref": "#/$defs/artifactDigestOrNull"
+        }
+      }
+    },
+    "pullVerification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "verifiedReference",
+        "resolvedDigest",
+        "verifiedAt"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "NOT_RUN",
+            "PASSED"
+          ]
+        },
+        "verifiedReference": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "resolvedDigest": {
+          "$ref": "#/$defs/artifactDigestOrNull"
+        },
+        "verifiedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "secretReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "reference"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reference": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "system",
+        "approvalId",
+        "approvedAt"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "MISSING",
+            "APPROVED"
+          ]
+        },
+        "system": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "approvalId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "approvedAt": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "blocker": {
+      "enum": [
+        "main-branch-final-ci-not-verified",
+        "external-registry-digest-missing",
+        "production-secrets-not-configured",
+        "target-cluster-validation-not-run",
+        "change-approval-missing",
+        "release-owner-approval-missing"
+      ]
+    }
+  }
+}
