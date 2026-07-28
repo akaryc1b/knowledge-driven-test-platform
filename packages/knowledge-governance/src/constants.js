@@ -10,6 +10,15 @@ export const GOVERNANCE_ACTIONS = Object.freeze([
   'AUDIT_READ',
   'SNAPSHOT_PERSIST',
   'SNAPSHOT_READ',
+  'PLAN_CREATE',
+  'PLAN_GENERATE',
+  'PLAN_EDIT',
+  'PLAN_SUBMIT',
+  'PLAN_REVIEW',
+  'PLAN_APPROVE',
+  'PLAN_FREEZE',
+  'PLAN_READ',
+  'PLAN_AUDIT_READ',
 ]);
 
 export const REVIEW_DECISIONS = Object.freeze(['APPROVE', 'REQUEST_CHANGES']);
