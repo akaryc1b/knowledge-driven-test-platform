@@ -27,7 +27,9 @@ jobs:
         run: tar -tzf /tmp/m2f-files.tar.gz >/tmp/m2f-files.list
       - name: Extract M2-F implementation
         shell: bash
-        run: tar -xzf /tmp/m2f-files.tar.gz
+        run: |
+          tar -xzf /tmp/m2f-files.tar.gz
+          git restore --source=HEAD -- .github/workflows/validation.yml
       - name: Remove transport chunks
         shell: bash
         run: |
