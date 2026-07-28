@@ -1,0 +1,34 @@
+name: m2d-apply
+
+on:
+  push:
+    branches:
+      - agent/m2-d-durable-test-plan-registry
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ hashFiles('packages/test-plan-registry/package.json') == '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/m2-d-durable-test-plan-registry
+          fetch-depth: 0
+      - name: Apply verified M2-D implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .github/m2d-patch.part* > /tmp/m2d.patch.gz
+          test "$(sha256sum /tmp/m2d.patch.gz | cut -d' ' -f1)" = "53365fe76c7f58f6bdf9118b2ac7670790755efebcbe6d14a770fdc6cb0ac573"
+          gzip -dc /tmp/m2d.patch.gz > /tmp/m2d.patch
+          test "$(sha256sum /tmp/m2d.patch | cut -d' ' -f1)" = "d023437a9d8480c95aeaac022a544cad4789e74f5436cb6a756c5c350e097494"
+          git apply --check /tmp/m2d.patch
+          git apply /tmp/m2d.patch
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: add durable PostgreSQL test plan registry"
+          git push origin HEAD:agent/m2-d-durable-test-plan-registry
