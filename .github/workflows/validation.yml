@@ -16,13 +16,22 @@ jobs:
         with:
           ref: agent/m2-f-planning-orchestration
           fetch-depth: 0
-      - name: Extract verified M2-F implementation chunks
+      - name: Assemble M2-F archive
+        shell: bash
+        run: cat .github/m2f.part* > /tmp/m2f-files.tar.gz
+      - name: Verify M2-F archive digest
+        shell: bash
+        run: test "$(sha256sum /tmp/m2f-files.tar.gz | cut -d' ' -f1)" = "945a044602afdfdb39a4a12b881b25513e4d5e17c94993dd3df52c384675a2bf"
+      - name: Verify M2-F archive structure
+        shell: bash
+        run: tar -tzf /tmp/m2f-files.tar.gz >/tmp/m2f-files.list
+      - name: Extract M2-F implementation
+        shell: bash
+        run: tar -xzf /tmp/m2f-files.tar.gz
+      - name: Commit M2-F implementation
         shell: bash
         run: |
           set -euo pipefail
-          cat .github/m2f.part* > /tmp/m2f-files.tar.gz
-          test "$(sha256sum /tmp/m2f-files.tar.gz | cut -d' ' -f1)" = "945a044602afdfdb39a4a12b881b25513e4d5e17c94993dd3df52c384675a2bf"
-          tar -xzf /tmp/m2f-files.tar.gz
           rm -f .github/m2f.part*
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
