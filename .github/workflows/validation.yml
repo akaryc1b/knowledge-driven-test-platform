@@ -119,3 +119,16 @@ jobs:
           if-no-files-found: error
       - run: npm run --silent example:governance:postgres > /tmp/postgres-governance.json
       - run: npm run --silent example:planning-orchestration:postgres > /tmp/postgres-planning-orchestration.json
+
+  snapshot-post-merge-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive source workspace
+        shell: bash
+        run: tar --exclude=.git -czf /tmp/post-merge-source.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: post-merge-source-workspace
+          path: /tmp/post-merge-source.tar.gz
+          if-no-files-found: error
