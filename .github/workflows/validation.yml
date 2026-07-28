@@ -2,36 +2,132 @@ name: validation
 
 on:
   pull_request:
+  push:
+    branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  materialize-post-merge:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          ref: agent/m2-rc1-post-merge-acceptance
-          fetch-depth: 0
-      - name: Assemble verified post-merge archive
+          node-version: 22
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - name: Run repository validation
         shell: bash
         run: |
-          set -euo pipefail
-          cat .github/m2-post.part* | base64 -d > /tmp/m2-post-merge-final.tar.gz
-          test "$(sha256sum /tmp/m2-post-merge-final.tar.gz | cut -d' ' -f1)" = "602c2a84dbfbbf0612c0b07edfcd1c6ee3b5f5b257ce82d4bfed658c5ae6331c"
-          tar -tzf /tmp/m2-post-merge-final.tar.gz > /tmp/m2-post-merge-final.list
-      - name: Extract and commit post-merge acceptance
+          set -o pipefail
+          npm run validate 2>&1 | tee /tmp/repository-validation.log
+      - name: Upload repository validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-validation-log
+          path: /tmp/repository-validation.log
+          if-no-files-found: error
+      - run: npm run --silent example:approval > /tmp/approval-snapshot.json
+      - run: npm run --silent example:registry > /tmp/registry-record.json
+      - run: npm run --silent example:governance > /tmp/governance-evidence.json
+      - run: npm run --silent example:query > /tmp/read-only-query.json
+      - run: npm run --silent example:access > /tmp/project-membership-access.json
+      - run: npm run --silent example:http > /tmp/read-only-http.json
+      - run: npm run --silent example:oidc > /tmp/oidc-authentication.json
+      - run: npm run --silent example:service > /tmp/read-only-service.json
+      - run: npm run validate:deployment
+      - run: npm run --silent example:deployment > /tmp/deployment-acceptance.json
+      - run: npm run --silent example:planning-orchestration > /tmp/planning-orchestration.json
+      - run: npm run --silent example:plan-query > /tmp/read-only-test-plan-query.json
+      - run: npm run --silent example:plan-http > /tmp/read-only-test-plan-http.json
+      - run: npm run --silent example:planning-service > /tmp/read-only-planning-service.json
+      - run: npm run validate:release
+      - run: npm run validate:m2-release
+      - run: npm run validate:m2-post-merge
+      - name: Build non-root read-only service image
+        run: docker build -f apps/read-only-governance-service/Dockerfile -t kdtp-read-only-service:test .
+      - name: Verify container user
+        run: test "$(docker image inspect kdtp-read-only-service:test --format '{{.Config.User}}')" = "node"
+      - name: Verify hardened container runtime
+        run: docker run --rm --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cap-drop=ALL --security-opt no-new-privileges kdtp-read-only-service:test node --version
+      - name: Capture release evidence metadata
         shell: bash
         run: |
-          set -euo pipefail
-          tar -xzf /tmp/m2-post-merge-final.tar.gz
-          git restore --source=HEAD -- .github/workflows/validation.yml
-          rm -f .github/m2-post.part*
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --stat
-          test -n "$(git diff --cached --name-only)"
-          git commit -m "fix: add M2-RC1 post-merge acceptance"
-          git push origin HEAD:agent/m2-rc1-post-merge-acceptance
+          echo "KDTP_RELEASE_IMAGE_ID=$(docker image inspect kdtp-read-only-service:test --format '{{.Id}}')" >> "$GITHUB_ENV"
+          echo "KDTP_RELEASE_GENERATED_AT=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+      - name: Generate M1 release candidate evidence
+        env:
+          KDTP_RELEASE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          KDTP_RELEASE_SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: npm run --silent example:release > /tmp/m1-release-evidence.json
+      - name: Upload M1 release candidate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m1-release-candidate-evidence
+          path: /tmp/m1-release-evidence.json
+          if-no-files-found: error
+      - name: Generate M2 release candidate evidence
+        env:
+          KDTP_RELEASE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          KDTP_RELEASE_SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: npm run --silent example:m2-release > /tmp/m2-release-evidence.json
+      - name: Upload M2 release candidate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-release-candidate-evidence
+          path: /tmp/m2-release-evidence.json
+          if-no-files-found: error
+      - name: Generate M2 post-merge acceptance evidence
+        env:
+          KDTP_RELEASE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          KDTP_RELEASE_SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: npm run --silent example:m2-post-merge > /tmp/m2-post-merge-evidence.json
+      - name: Upload M2 post-merge acceptance evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-post-merge-acceptance-evidence
+          path: /tmp/m2-post-merge-evidence.json
+          if-no-files-found: error
+
+  postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: kdtp_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kdtp_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --ignore-scripts
+      - run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
+      - name: Run PostgreSQL integration and M1/M2 release E2E tests
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:postgres 2>&1 | tee /tmp/postgres-test.log
+      - name: Upload PostgreSQL test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-test-log
+          path: /tmp/postgres-test.log
+          if-no-files-found: error
+      - run: npm run --silent example:governance:postgres > /tmp/postgres-governance.json
+      - run: npm run --silent example:planning-orchestration:postgres > /tmp/postgres-planning-orchestration.json
