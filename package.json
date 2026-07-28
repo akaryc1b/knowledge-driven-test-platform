@@ -11,7 +11,7 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "node --test packages/knowledge-core/test/*.test.js packages/knowledge-registry/test/*.test.js packages/knowledge-registry-postgres/test/*.test.js packages/knowledge-governance/test/*.test.js packages/knowledge-governance-postgres/test/*.test.js packages/governance-query/test/*.test.js packages/project-membership/test/*.test.js packages/project-membership-postgres/test/*.test.js packages/governance-http/test/*.test.js packages/governance-auth-oidc/test/*.test.js apps/knowledge-cli/test/*.test.js apps/read-only-governance-service/test/*.test.js packages/test-plan/test/*.test.js packages/test-capability/test/*.test.js packages/test-planner/test/*.test.js packages/test-plan-registry/test/*.test.js packages/test-plan-postgres/test/*.test.js",
+    "test": "node --test packages/knowledge-core/test/*.test.js packages/knowledge-registry/test/*.test.js packages/knowledge-registry-postgres/test/*.test.js packages/knowledge-governance/test/*.test.js packages/knowledge-governance-postgres/test/*.test.js packages/governance-query/test/*.test.js packages/project-membership/test/*.test.js packages/project-membership-postgres/test/*.test.js packages/governance-http/test/*.test.js packages/governance-auth-oidc/test/*.test.js apps/knowledge-cli/test/*.test.js apps/read-only-governance-service/test/*.test.js packages/test-plan/test/*.test.js packages/test-capability/test/*.test.js packages/test-planner/test/*.test.js packages/test-plan-registry/test/*.test.js packages/test-plan-postgres/test/*.test.js packages/test-plan-governance/test/*.test.js",
     "validate": "node scripts/validate-repository.js",
     "validate:deployment": "node scripts/validate-kubernetes-manifests.js",
     "validate:release": "node scripts/validate-release-candidate.js",
@@ -33,6 +33,7 @@
     "example:capability-catalog": "node examples/capability-catalog.js",
     "example:deterministic-plan": "node examples/deterministic-test-plan.js",
     "example:plan-registry": "node examples/test-plan-registry.js",
-    "example:plan-registry:postgres": "node examples/postgres-test-plan-registry.js"
+    "example:plan-registry:postgres": "node examples/postgres-test-plan-registry.js",
+    "example:plan-governance": "node examples/test-plan-governance.js"
   }
 }
