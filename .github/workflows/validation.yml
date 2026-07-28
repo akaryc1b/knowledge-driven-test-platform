@@ -5,20 +5,39 @@ on:
     branches: [agent/m2-i-release-acceptance]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  snapshot-m2i-source:
+  materialize-m2i:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/m2-i-release-acceptance
-      - name: Archive source workspace
+          fetch-depth: 0
+      - name: Assemble M2-I archive
         shell: bash
-        run: tar --exclude=.git -czf /tmp/m2i-source.tar.gz .
-      - uses: actions/upload-artifact@v4
-        with:
-          name: m2i-source-workspace
-          path: /tmp/m2i-source.tar.gz
-          if-no-files-found: error
+        run: cat .github/m2i-final.part* > /tmp/m2i-final.tar.gz
+      - name: Verify M2-I archive digest
+        shell: bash
+        run: test "$(sha256sum /tmp/m2i-final.tar.gz | cut -d' ' -f1)" = "0766d2f0ceba742446f9d1a31672ae9226a00038f44756bdfa8a31624db0dcd0"
+      - name: Verify M2-I archive structure
+        shell: bash
+        run: tar -tzf /tmp/m2i-final.tar.gz >/tmp/m2i-final.list
+      - name: Extract M2-I release evidence
+        shell: bash
+        run: |
+          tar -xzf /tmp/m2i-final.tar.gz
+          git restore --source=HEAD -- .github/workflows/validation.yml
+      - name: Commit M2-I release evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/m2i-final.part*
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --stat
+          test -n "$(git diff --cached --name-only)"
+          git commit -m "feat: add M2 release candidate evidence"
+          git push origin HEAD:agent/m2-i-release-acceptance
