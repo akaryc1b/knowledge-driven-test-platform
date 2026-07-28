@@ -10,7 +10,8 @@
 - checksum migration、幂等、整体回滚和外部 transaction client 绑定；
 - 数据库触发器保护生命周期、FROZEN 内容、身份绑定和历史证据；
 - 并发创建、并发状态转换和防篡改合同测试；
-- 本地干净安装回归为 228 项测试、223 通过、5 项仅因未配置 PostgreSQL URL 跳过；
+- PostgreSQL JSONB 对象键重排通过 canonical JSON 校验，不会误判 Coverage Summary；
+- 本地干净安装回归为 229 项测试、224 通过、5 项仅因未配置 PostgreSQL URL 跳过；
 - M1 全量回归、部署和 Release Validator 保持不变。
 
 ## 当前边界
