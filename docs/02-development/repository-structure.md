@@ -18,7 +18,9 @@ knowledge-driven-test-platform/
 │   ├── governance-auth-oidc/
 │   ├── test-plan/
 │   ├── test-capability/
-│   └── test-planner/
+│   ├── test-planner/
+│   ├── test-plan-registry/
+│   └── test-plan-postgres/
 ├── schemas/
 │   ├── knowledge/
 │   ├── registry/
@@ -106,6 +108,8 @@ examples/read-only-deployment-acceptance.js
 release-candidates/
 packages/test-capability/
 packages/test-planner/
+packages/test-plan-registry/
+packages/test-plan-postgres/
 packages/k6-adapter/
 packages/evidence-model/
 apps/quality-console/
@@ -129,3 +133,16 @@ examples/deterministic-test-plan.js
 ```
 
 Planner 只依赖 `test-plan`、`test-capability` 和纯领域合同；不得依赖 PostgreSQL、HTTP、执行器或应用组合根。
+
+
+## M2-D 新增结构
+
+```text
+packages/test-plan-registry/
+packages/test-plan-postgres/
+├── migrations/0001_create_test_plan_registry.sql
+├── src/
+└── test/
+```
+
+`test-plan-registry` 定义执行器无关的耐久计划生命周期与共享 Adapter Contract；`test-plan-postgres` 只负责 PostgreSQL 事务、锁、唯一约束、checksum migration 和追加式证据。规划逻辑仍由 `test-planner` 提供。

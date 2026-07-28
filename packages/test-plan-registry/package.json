@@ -1,0 +1,12 @@
+{
+  "name": "@kdtp/test-plan-registry",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.js",
+  "dependencies": {
+    "@kdtp/knowledge-core": "0.1.0",
+    "@kdtp/test-plan": "0.1.0",
+    "@kdtp/test-planner": "0.1.0"
+  }
+}

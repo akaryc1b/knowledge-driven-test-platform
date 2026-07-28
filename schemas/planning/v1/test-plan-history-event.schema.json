@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/planning/v1/test-plan-history-event.schema.json",
+  "title": "Test Plan History Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "planId", "revision", "type", "fromStatus", "toStatus", "previousContentDigest", "contentDigest", "actor", "at", "reason"],
+  "properties": {
+    "schemaVersion": { "const": "test-plan-history-event/v1" },
+    "planId": { "type": "string", "pattern": "^tp-[a-z0-9-]+-[a-f0-9]{12}$" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "type": { "enum": ["PLAN_CREATED", "PLAN_CONTENT_REPLACED", "PLAN_STATUS_TRANSITIONED"] },
+    "fromStatus": { "type": ["string", "null"], "enum": [null, "DRAFT", "REVIEWING", "APPROVED", "FROZEN", "SUPERSEDED", "ARCHIVED"] },
+    "toStatus": { "enum": ["DRAFT", "REVIEWING", "APPROVED", "FROZEN", "SUPERSEDED", "ARCHIVED"] },
+    "previousContentDigest": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "contentDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "actor": { "type": "string", "minLength": 3, "maxLength": 256 },
+    "at": { "type": "string", "format": "date-time" },
+    "reason": { "type": "string", "minLength": 1, "maxLength": 1024 }
+  }
+}
