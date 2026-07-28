@@ -172,3 +172,17 @@ examples/read-only-test-plan-http.js
 ```
 
 `test-plan-query` 只提供项目隔离、稳定 DTO、过滤、排序和 cursor；`test-plan-http` 复用现有认证、限流、Request ID、安全 Header 和错误脱敏边界。两者都不得调用计划写入或测试执行能力。
+
+## M2-H 服务组合
+
+```text
+apps/read-only-governance-service/
+  → governance-query + governance-http
+  → test-plan-query + test-plan-http
+  → knowledge/postgres adapters
+  → test-plan-postgres
+  → shared project-membership-postgres
+  → shared OIDC/JWKS and PostgreSQL Pool
+```
+
+组合根只增加只读 Adapter、第四组 migration 和确定性业务路由分派；不注入 Planner、计划治理命令或执行器。
