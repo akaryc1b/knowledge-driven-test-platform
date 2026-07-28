@@ -1,0 +1,11 @@
+{
+  "name": "@kdtp/test-planner",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": "./src/index.js",
+  "dependencies": {
+    "@kdtp/knowledge-core": "0.1.0",
+    "@kdtp/test-capability": "0.1.0",
+    "@kdtp/test-plan": "0.1.0"
+  }
+}

@@ -17,7 +17,8 @@ knowledge-driven-test-platform/
 │   ├── governance-http/
 │   ├── governance-auth-oidc/
 │   ├── test-plan/
-│   └── test-capability/
+│   ├── test-capability/
+│   └── test-planner/
 ├── schemas/
 │   ├── knowledge/
 │   ├── registry/
@@ -119,3 +120,12 @@ examples/capability-catalog.js
 ```
 
 Capability Catalog 是规划输入，不包含执行器实现。目录版本和 digest 必须共同绑定，所有解析使用精确 capability ID/version。
+
+## M2-C 新增结构
+
+```text
+packages/test-planner/
+examples/deterministic-test-plan.js
+```
+
+Planner 只依赖 `test-plan`、`test-capability` 和纯领域合同；不得依赖 PostgreSQL、HTTP、执行器或应用组合根。

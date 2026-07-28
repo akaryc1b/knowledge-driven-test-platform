@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/planning/v1/test-planning-result.schema.json",
+  "title": "Test Planning Result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "plan", "coverageMatrix", "provenanceGraph", "dependencyDag", "unsupportedObligations", "digest"],
+  "properties": {
+    "schemaVersion": { "const": "test-planning-result/v1" },
+    "plan": { "$ref": "test-plan.schema.json" },
+    "coverageMatrix": { "$ref": "test-coverage-matrix.schema.json" },
+    "provenanceGraph": { "$ref": "test-provenance-graph.schema.json" },
+    "dependencyDag": { "$ref": "test-dependency-dag.schema.json" },
+    "unsupportedObligations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["obligationId", "code", "reason", "mandatory", "targetId", "capabilityId", "capabilityVersion", "knowledgeId", "knowledgeVersion", "policyEntryId"],
+        "properties": {
+          "obligationId": { "type": "string" },
+          "code": { "type": "string" },
+          "reason": { "type": "string" },
+          "mandatory": { "type": "boolean" },
+          "targetId": { "type": "string" },
+          "capabilityId": { "type": "string" },
+          "capabilityVersion": { "type": "string" },
+          "knowledgeId": { "type": "string" },
+          "knowledgeVersion": { "type": "string" },
+          "policyEntryId": { "type": "string" }
+        }
+      }
+    },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

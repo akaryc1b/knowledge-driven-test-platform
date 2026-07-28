@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/planning/v1/test-dependency-dag.schema.json",
+  "title": "Test Dependency DAG v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "nodes", "edges", "topologicalOrder", "digest"],
+  "properties": {
+    "schemaVersion": { "const": "test-dependency-dag/v1" },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["intentId", "targetId", "capabilityId", "capabilityVersion"],
+        "properties": {
+          "intentId": { "type": "string" },
+          "targetId": { "type": "string" },
+          "capabilityId": { "type": "string" },
+          "capabilityVersion": { "type": "string" }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "to"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" }
+        }
+      }
+    },
+    "topologicalOrder": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/planning/v1/test-coverage-matrix.schema.json",
+  "title": "Test Coverage Matrix v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "cells", "summary", "digest"],
+  "properties": {
+    "schemaVersion": { "const": "test-coverage-matrix/v1" },
+    "cells": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["targetId", "capabilityId", "capabilityVersion", "mandatory", "status", "obligationIds", "intentIds"],
+        "properties": {
+          "targetId": { "type": "string" },
+          "capabilityId": { "type": "string" },
+          "capabilityVersion": { "type": "string" },
+          "mandatory": { "type": "boolean" },
+          "status": { "enum": ["COVERED", "PARTIAL", "UNPLANNED", "EXEMPT"] },
+          "obligationIds": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+          "intentIds": { "type": "array", "uniqueItems": true, "items": { "type": "string" } }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "mandatory", "covered", "partial", "unplanned", "exempt"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "mandatory": { "type": "integer", "minimum": 0 },
+        "covered": { "type": "integer", "minimum": 0 },
+        "partial": { "type": "integer", "minimum": 0 },
+        "unplanned": { "type": "integer", "minimum": 0 },
+        "exempt": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/planning/v1/test-provenance-graph.schema.json",
+  "title": "Test Provenance Graph v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "nodes", "edges", "digest"],
+  "properties": {
+    "schemaVersion": { "const": "test-provenance-graph/v1" },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["nodeId", "kind", "ref"],
+        "properties": {
+          "nodeId": { "type": "string", "pattern": "^node-[a-f0-9]{16}$" },
+          "kind": { "type": "string" },
+          "ref": { "type": "object" }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["edgeId", "kind", "from", "to"],
+        "properties": {
+          "edgeId": { "type": "string", "pattern": "^edge-[a-f0-9]{16}$" },
+          "kind": { "type": "string" },
+          "from": { "type": "string" },
+          "to": { "type": "string" }
+        }
+      }
+    },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

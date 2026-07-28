@@ -32,6 +32,10 @@ import {
   createBaseCapabilityCatalog,
   validateCapabilityCatalog,
 } from '../packages/test-capability/src/index.js';
+import {
+  DeterministicTestPlanner,
+  validatePlanningResult,
+} from '../packages/test-planner/src/index.js';
 import { loadProjectInput } from '../apps/knowledge-cli/src/project-loader.js';
 import { validateKubernetesManifests } from './validate-kubernetes-manifests.js';
 import { validateReleaseCandidate } from './validate-release-candidate.js';
@@ -65,6 +69,8 @@ const required = [
   'packages/test-plan/test/schema.test.js',
   'packages/test-capability/src/index.js',
   'packages/test-capability/test/schema.test.js',
+  'packages/test-planner/src/index.js',
+  'packages/test-planner/test/schema.test.js',
   'deploy/postgres/compose.yaml',
   'schemas/knowledge/schema-catalog.json',
   'schemas/registry/v1/knowledge-registry-record.schema.json',
@@ -86,6 +92,10 @@ const required = [
   'schemas/planning/v1/test-intent.schema.json',
   'schemas/planning/v1/test-coverage-obligation.schema.json',
   'schemas/planning/v1/test-plan.schema.json',
+  'schemas/planning/v1/test-planning-result.schema.json',
+  'schemas/planning/v1/test-coverage-matrix.schema.json',
+  'schemas/planning/v1/test-provenance-graph.schema.json',
+  'schemas/planning/v1/test-dependency-dag.schema.json',
   'schemas/capability/schema-catalog.json',
   'schemas/capability/v1/test-capability.schema.json',
   'schemas/capability/v1/capability-catalog.schema.json',
@@ -100,6 +110,7 @@ const required = [
   'examples/read-only-release-candidate.js',
   'examples/test-plan-contracts.js',
   'examples/capability-catalog.js',
+  'examples/deterministic-test-plan.js',
 ];
 for (const path of required) await stat(join(root, path));
 
@@ -148,6 +159,10 @@ if (planningCatalog.currentTargetInventory !== 'test-target-inventory/v1') throw
 if (planningCatalog.currentTestIntent !== 'test-intent/v1') throw new Error('Planning catalog must identify test-intent/v1 as current');
 if (planningCatalog.currentCoverageObligation !== 'test-coverage-obligation/v1') throw new Error('Planning catalog must identify test-coverage-obligation/v1 as current');
 if (planningCatalog.currentTestPlan !== 'test-plan/v1') throw new Error('Planning catalog must identify test-plan/v1 as current');
+if (planningCatalog.currentPlanningResult !== 'test-planning-result/v1') throw new Error('Planning catalog must identify test-planning-result/v1 as current');
+if (planningCatalog.currentCoverageMatrix !== 'test-coverage-matrix/v1') throw new Error('Planning catalog must identify test-coverage-matrix/v1 as current');
+if (planningCatalog.currentProvenanceGraph !== 'test-provenance-graph/v1') throw new Error('Planning catalog must identify test-provenance-graph/v1 as current');
+if (planningCatalog.currentDependencyDag !== 'test-dependency-dag/v1') throw new Error('Planning catalog must identify test-dependency-dag/v1 as current');
 const capabilitySchemaCatalog = JSON.parse(await readFile(join(root, 'schemas/capability/schema-catalog.json'), 'utf8'));
 if (capabilitySchemaCatalog.currentCapability !== 'test-capability/v1') throw new Error('Capability catalog must identify test-capability/v1 as current');
 if (capabilitySchemaCatalog.currentCapabilityCatalog !== 'capability-catalog/v1') throw new Error('Capability catalog must identify capability-catalog/v1 as current');
@@ -312,7 +327,18 @@ const planningPlan = validateTestPlan(createTestPlan({
 if (planningPlan.coverage.summary.covered !== 1 || planningPlan.provenance.length !== 1) {
   throw new Error('M2-A planning contracts are not deterministic');
 }
-console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}; release ${releaseEvidence.releaseId}; catalog ${capabilityCatalog.digest.slice(0, 12)}; plan ${planningPlan.planId}`);
+const deterministicPlanner = new DeterministicTestPlanner({
+  capabilityCatalogPort: capabilityAdapter,
+});
+const planningResult = validatePlanningResult(await deterministicPlanner.plan({ planningRequest }));
+if (planningResult.plan.planId !== planningPlan.planId
+    || planningResult.plan.coverage.summary.covered !== 1
+    || planningResult.coverageMatrix.cells[0]?.status !== 'COVERED'
+    || planningResult.provenanceGraph.edges.length === 0
+    || planningResult.dependencyDag.topologicalOrder.length !== 1) {
+  throw new Error('M2-C deterministic planning result is incomplete');
+}
+console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}; release ${releaseEvidence.releaseId}; catalog ${capabilityCatalog.digest.slice(0, 12)}; plan ${planningResult.plan.planId}; planning ${planningResult.digest.slice(0, 12)}`);
 
 function isKnowledgeRuleFile(path) {
   const normalized = path.replaceAll('\\', '/');
