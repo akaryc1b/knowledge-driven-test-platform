@@ -6,6 +6,7 @@ import {
   publicServiceConfig,
 } from '../apps/read-only-governance-service/src/index.js';
 import { matchReadOnlyRoute } from '../packages/governance-http/src/index.js';
+import { matchReadOnlyTestPlanRoute } from '../packages/test-plan-http/src/index.js';
 import { buildKnowledgeSnapshot, resolveKnowledge } from '../packages/knowledge-core/src/index.js';
 import { createSnapshotEnvelope, validateSnapshotEnvelope } from '../packages/knowledge-governance/src/index.js';
 import { loadGovernancePostgresMigrations } from '../packages/knowledge-governance-postgres/src/index.js';
@@ -81,11 +82,16 @@ const required = [
   'packages/test-plan-registry/test/schema.test.js',
   'packages/test-plan-postgres/src/index.js',
   'packages/test-plan-postgres/migrations/0001_create_test_plan_registry.sql',
+  'packages/test-plan-query/src/index.js',
+  'packages/test-plan-query/test/schema.test.js',
+  'packages/test-plan-http/src/index.js',
   'deploy/postgres/compose.yaml',
   'schemas/knowledge/schema-catalog.json',
   'schemas/registry/v1/knowledge-registry-record.schema.json',
   'schemas/governance/schema-catalog.json',
   'schemas/query/schema-catalog.json',
+  'schemas/query/v1/test-plan-response-envelope.schema.json',
+  'schemas/query/v1/test-plan-page.schema.json',
   'schemas/access/schema-catalog.json',
   'schemas/authentication/schema-catalog.json',
   'schemas/operations/schema-catalog.json',
@@ -126,6 +132,8 @@ const required = [
   'examples/deterministic-test-plan.js',
   'examples/test-plan-registry.js',
   'examples/postgres-test-plan-registry.js',
+  'examples/read-only-test-plan-query.js',
+  'examples/read-only-test-plan-http.js',
 ];
 for (const path of required) await stat(join(root, path));
 
@@ -155,6 +163,8 @@ if (governanceCatalog.currentSnapshotEnvelope !== 'knowledge-snapshot-envelope/v
 const queryCatalog = JSON.parse(await readFile(join(root, 'schemas/query/schema-catalog.json'), 'utf8'));
 if (queryCatalog.currentResponseEnvelope !== 'governance-query-response/v1') throw new Error('Query catalog must identify governance-query-response/v1 as current');
 if (queryCatalog.currentPage !== 'governance-query-page/v1') throw new Error('Query catalog must identify governance-query-page/v1 as current');
+if (queryCatalog.currentPlanResponseEnvelope !== 'test-plan-query-response/v1') throw new Error('Query catalog must identify test-plan-query-response/v1 as current');
+if (queryCatalog.currentPlanPage !== 'test-plan-query-page/v1') throw new Error('Query catalog must identify test-plan-query-page/v1 as current');
 const accessCatalog = JSON.parse(await readFile(join(root, 'schemas/access/schema-catalog.json'), 'utf8'));
 if (accessCatalog.currentProjectDirectoryRecord !== 'project-directory-record/v1') throw new Error('Access catalog must identify project-directory-record/v1 as current');
 if (accessCatalog.currentProjectMembershipRecord !== 'project-membership-record/v1') throw new Error('Access catalog must identify project-membership-record/v1 as current');
@@ -216,6 +226,15 @@ validateMembershipRecord(createMembershipRecord({
 const httpRoute = matchReadOnlyRoute('GET', '/v1/projects/approval-platform/knowledge');
 if (httpRoute.handler !== 'listKnowledge' || httpRoute.projectId !== 'approval-platform') {
   throw new Error('Read-only HTTP route catalog is not deterministic');
+}
+const planHttpRoute = matchReadOnlyTestPlanRoute(
+  'GET',
+  '/v1/projects/approval-platform/test-plans/tp-approval-platform-123456789abc/coverage',
+);
+if (planHttpRoute.handler !== 'getCoverage'
+    || planHttpRoute.projectId !== 'approval-platform'
+    || planHttpRoute.params.planId !== 'tp-approval-platform-123456789abc') {
+  throw new Error('Read-only Test Plan HTTP route catalog is not deterministic');
 }
 const config = loadServiceConfig({
   KDTP_DATABASE_URL: 'postgresql://validator:password@postgres.example/kdtp',

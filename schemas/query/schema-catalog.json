@@ -1,6 +1,8 @@
 {
   "currentResponseEnvelope": "governance-query-response/v1",
   "currentPage": "governance-query-page/v1",
+  "currentPlanResponseEnvelope": "test-plan-query-response/v1",
+  "currentPlanPage": "test-plan-query-page/v1",
   "schemas": [
     {
       "schemaVersion": "governance-query-response/v1",
@@ -9,6 +11,14 @@
     {
       "schemaVersion": "governance-query-page/v1",
       "path": "schemas/query/v1/page.schema.json"
+    },
+    {
+      "schemaVersion": "test-plan-query-response/v1",
+      "path": "schemas/query/v1/test-plan-response-envelope.schema.json"
+    },
+    {
+      "schemaVersion": "test-plan-query-page/v1",
+      "path": "schemas/query/v1/test-plan-page.schema.json"
     }
   ]
 }
