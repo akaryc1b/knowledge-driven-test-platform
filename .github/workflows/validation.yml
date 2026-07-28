@@ -41,6 +41,8 @@ jobs:
       - run: npm run validate:deployment
       - run: npm run --silent example:deployment > /tmp/deployment-acceptance.json
       - run: npm run --silent example:planning-orchestration > /tmp/planning-orchestration.json
+      - run: npm run --silent example:plan-query > /tmp/read-only-test-plan-query.json
+      - run: npm run --silent example:plan-http > /tmp/read-only-test-plan-http.json
       - run: npm run validate:release
       - name: Build non-root read-only service image
         run: docker build -f apps/read-only-governance-service/Dockerfile -t kdtp-read-only-service:test .

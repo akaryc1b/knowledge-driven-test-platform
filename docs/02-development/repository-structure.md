@@ -23,7 +23,9 @@ knowledge-driven-test-platform/
 │   ├── test-plan-registry/
 │   ├── test-plan-postgres/
 │   ├── test-plan-governance/
-│   └── test-planning-orchestration/
+│   ├── test-planning-orchestration/
+│   ├── test-plan-query/
+│   └── test-plan-http/
 ├── schemas/
 │   ├── knowledge/
 │   ├── registry/
@@ -54,9 +56,12 @@ read-only-governance-service
   → governance-auth-oidc
   → governance-http
   → governance-query
+  → test-plan-http
+  → test-plan-query
   → knowledge-registry-postgres
   → knowledge-governance-postgres
   → project-membership-postgres
+  → test-plan-postgres
   → pg
 ```
 
@@ -109,10 +114,6 @@ examples/read-only-deployment-acceptance.js
 
 ```text
 release-candidates/
-packages/test-capability/
-packages/test-planner/
-packages/test-plan-registry/
-packages/test-plan-postgres/
 packages/k6-adapter/
 packages/evidence-model/
 apps/quality-console/
@@ -137,7 +138,6 @@ examples/deterministic-test-plan.js
 
 Planner 只依赖 `test-plan`、`test-capability` 和纯领域合同；不得依赖 PostgreSQL、HTTP、执行器或应用组合根。
 
-
 ## M2-D 新增结构
 
 ```text
@@ -150,7 +150,6 @@ packages/test-plan-postgres/
 
 `test-plan-registry` 定义执行器无关的耐久计划生命周期与共享 Adapter Contract；`test-plan-postgres` 只负责 PostgreSQL 事务、锁、唯一约束、checksum migration 和追加式证据。规划逻辑仍由 `test-planner` 提供。
 
-
 ## M2-E 与 M2-F 新增结构
 
 ```text
@@ -162,3 +161,14 @@ examples/postgres-planning-orchestration.js
 ```
 
 治理包只定义授权、职责分离和 Gate；Orchestration 包负责有界 PostgreSQL Unit of Work。CLI 只调用应用服务，不复制 Planner 或治理逻辑。
+
+## M2-G 新增结构
+
+```text
+packages/test-plan-query/
+packages/test-plan-http/
+examples/read-only-test-plan-query.js
+examples/read-only-test-plan-http.js
+```
+
+`test-plan-query` 只提供项目隔离、稳定 DTO、过滤、排序和 cursor；`test-plan-http` 复用现有认证、限流、Request ID、安全 Header 和错误脱敏边界。两者都不得调用计划写入或测试执行能力。
