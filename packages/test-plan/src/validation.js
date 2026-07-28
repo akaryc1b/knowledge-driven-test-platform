@@ -637,7 +637,8 @@ export function validateTestPlan(input) {
       expectedId: recreated.planId,
       actualId: input.planId,
     });
-  planInvariant(JSON.stringify(input.coverage.summary) === JSON.stringify(recreated.coverage.summary),
+  planInvariant(JSON.stringify(canonicalize(input.coverage.summary))
+      === JSON.stringify(canonicalize(recreated.coverage.summary)),
     'COVERAGE_SUMMARY_MISMATCH', 'Coverage summary does not match obligations');
   validateDigest(input.digest, 'plan.digest');
   planInvariant(input.digest === recreated.digest,
