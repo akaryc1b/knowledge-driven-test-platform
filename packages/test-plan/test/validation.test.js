@@ -175,3 +175,12 @@ test('plan digest and coverage summary tampering are detected', () => {
   coverageTampered.coverage.summary.covered = 0;
   assert.throws(() => validateTestPlan(coverageTampered), assertCode('COVERAGE_SUMMARY_MISMATCH'));
 });
+
+test('plan validation accepts canonical coverage summary key reordering', () => {
+  const plan = completePlan();
+  const reordered = structuredClone(plan);
+  reordered.coverage.summary = Object.fromEntries(
+    Object.entries(reordered.coverage.summary).reverse(),
+  );
+  assert.equal(validateTestPlan(reordered).digest, plan.digest);
+});
