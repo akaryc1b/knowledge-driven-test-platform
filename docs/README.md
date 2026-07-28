@@ -40,7 +40,7 @@
 - [M2-C Deterministic Planner and Coverage](03-roadmap/m2-c-deterministic-planner.md)
 - [M2-D Durable Test Plan Registry](03-roadmap/m2-d-durable-test-plan-registry.md)
 - [M2-E Plan Governance and Review](03-roadmap/m2-e-plan-governance.md)
-- [M2-D Durable Test Plan Registry](03-roadmap/m2-d-durable-test-plan-registry.md)
+- [M2-F Durable Planning Orchestration](03-roadmap/m2-f-planning-orchestration.md)
 
 ## 发布与治理
 
@@ -70,3 +70,4 @@
 - [ADR-0017：确定性 Planner、Coverage、Provenance 与 DAG](05-adr/ADR-0017-deterministic-planner-coverage-provenance-dag.md)
 - [ADR-0018：PostgreSQL Durable Test Plan Registry](05-adr/ADR-0018-durable-test-plan-registry.md)
 - [ADR-0019：Revision-Bound Plan Governance and Freeze Gate](05-adr/ADR-0019-revision-bound-plan-governance.md)
+- [ADR-0020：Single-Transaction Durable Planning Orchestration](05-adr/ADR-0020-single-transaction-planning-orchestration.md)

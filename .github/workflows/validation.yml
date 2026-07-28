@@ -40,6 +40,7 @@ jobs:
       - run: npm run --silent example:service > /tmp/read-only-service.json
       - run: npm run validate:deployment
       - run: npm run --silent example:deployment > /tmp/deployment-acceptance.json
+      - run: npm run --silent example:planning-orchestration > /tmp/planning-orchestration.json
       - run: npm run validate:release
       - name: Build non-root read-only service image
         run: docker build -f apps/read-only-governance-service/Dockerfile -t kdtp-read-only-service:test .
@@ -102,3 +103,4 @@ jobs:
           path: /tmp/postgres-test.log
           if-no-files-found: error
       - run: npm run --silent example:governance:postgres > /tmp/postgres-governance.json
+      - run: npm run --silent example:planning-orchestration:postgres > /tmp/postgres-planning-orchestration.json

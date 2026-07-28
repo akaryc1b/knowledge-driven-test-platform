@@ -1,0 +1,21 @@
+{
+  "name": "@kdtp/test-planning-orchestration",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.js",
+  "dependencies": {
+    "@kdtp/knowledge-registry-postgres": "0.1.0",
+    "@kdtp/test-plan": "0.1.0",
+    "@kdtp/test-plan-governance": "0.1.0",
+    "@kdtp/test-plan-postgres": "0.1.0",
+    "@kdtp/test-plan-registry": "0.1.0",
+    "@kdtp/test-planner": "0.1.0"
+  },
+  "peerDependencies": {
+    "pg": ">=8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "pg": { "optional": true }
+  }
+}
