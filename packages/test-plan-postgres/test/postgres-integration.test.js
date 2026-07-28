@@ -8,6 +8,7 @@ import { defineTestPlanRegistryContractTests } from '../../test-plan-registry/te
 import {
   T1,
   createCommand,
+  reviewDecision,
   transitionCommand,
 } from '../../test-plan-registry/test/test-helpers.js';
 import {
