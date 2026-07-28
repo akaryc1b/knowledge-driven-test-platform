@@ -26,6 +26,7 @@ jobs:
         run: |
           set -euo pipefail
           tar -xzf /tmp/m2-post-merge-final.tar.gz
+          git restore --source=HEAD -- .github/workflows/validation.yml
           rm -f .github/m2-post.part*
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
