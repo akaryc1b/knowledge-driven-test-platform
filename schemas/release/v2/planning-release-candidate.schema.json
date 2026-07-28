@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/release/v2/planning-release-candidate.schema.json",
+  "title": "M2 Governed Planning Release Candidate v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion","releaseId","version","status","candidateBranch","predecessorHeadSha","stack","requiredChecks","businessRoutes","lifecycleEvidence","decision"],
+  "properties": {
+    "schemaVersion": { "const": "m2-governed-planning-release-candidate/v1" },
+    "releaseId": { "const": "M2-RC1" },
+    "version": { "const": "0.12.0" },
+    "status": { "const": "CANDIDATE" },
+    "candidateBranch": { "const": "agent/m2-i-release-acceptance" },
+    "predecessorHeadSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "stack": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "$ref": "#/$defs/stackEntry" } },
+    "requiredChecks": { "type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true, "items": { "type": "string" } },
+    "businessRoutes": { "type": "array", "minItems": 10, "maxItems": 10, "uniqueItems": true, "items": { "type": "string" } },
+    "lifecycleEvidence": { "type": "array", "minItems": 7, "maxItems": 7, "uniqueItems": true, "items": { "type": "string" } },
+    "decision": {
+      "type": "object", "additionalProperties": false, "required": ["productionEligible","blockers"],
+      "properties": { "productionEligible": { "const": false }, "blockers": { "type": "array", "minItems": 7, "uniqueItems": true, "items": { "type": "string" } } }
+    }
+  },
+  "$defs": {
+    "stackEntry": {
+      "type": "object", "additionalProperties": false, "required": ["slice","pr","base","head","headSha"],
+      "properties": {
+        "slice": { "type": "string", "pattern": "^M2-[A-H]$" },
+        "pr": { "type": "integer", "minimum": 12, "maximum": 19 },
+        "base": { "type": "string", "minLength": 1 },
+        "head": { "type": "string", "pattern": "^agent/m2-[a-z0-9-]+$" },
+        "headSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+      }
+    }
+  }
+}
