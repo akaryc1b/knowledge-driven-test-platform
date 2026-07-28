@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "m2-production-promotion/v1",
+  "releaseId": "M2-RC1",
+  "version": "0.12.0",
+  "phase": "PRODUCTION_PROMOTION",
+  "sourceEvidence": {
+    "candidate": {
+      "path": "releases/m2/planning-release-candidate.json",
+      "digest": "5ab9439d357921119d7ca9387e661cf3f28b8420a27b3dd201df57c6419b6697"
+    },
+    "postMergeAcceptance": {
+      "path": "releases/m2/post-merge-acceptance.json",
+      "digest": "d073efec5aa587caf7f54eedd219a494b876d2913cb8e110981c374e79501e25"
+    }
+  },
+  "promotionSource": {
+    "branch": "main",
+    "mainSha": "991b5f0f9cfa3a382f9aff3c600f98b76aed9c08"
+  },
+  "mainBranchFinalCi": {
+    "status": "UNVERIFIED",
+    "event": "push",
+    "sourceSha": "991b5f0f9cfa3a382f9aff3c600f98b76aed9c08",
+    "runId": null,
+    "artifacts": {
+      "m1ReleaseEvidence": null,
+      "m2ReleaseEvidence": null,
+      "m2PostMergeEvidence": null,
+      "postgresValidation": null,
+      "repositoryValidation": null,
+      "deploymentValidation": null
+    }
+  },
+  "imageRelease": {
+    "status": "MISSING",
+    "repository": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service",
+    "immutableReference": null,
+    "registryDigest": null,
+    "sourceSha": null,
+    "buildRunId": null,
+    "sbom": {
+      "status": "MISSING",
+      "format": null,
+      "digest": null
+    },
+    "provenanceAttestation": {
+      "status": "MISSING",
+      "attestationId": null,
+      "url": null,
+      "bundleDigest": null
+    },
+    "sbomAttestation": {
+      "status": "MISSING",
+      "attestationId": null,
+      "url": null,
+      "bundleDigest": null
+    },
+    "pullVerification": {
+      "status": "NOT_RUN",
+      "verifiedReference": null,
+      "resolvedDigest": null,
+      "verifiedAt": null
+    }
+  },
+  "secrets": {
+    "status": "NOT_CONFIGURED",
+    "provider": null,
+    "references": [],
+    "configuredAt": null
+  },
+  "targetClusterValidation": {
+    "status": "NOT_RUN",
+    "clusterRef": null,
+    "validationRunId": null,
+    "sourceSha": null,
+    "imageDigest": null,
+    "deploymentManifestDigest": null,
+    "validatedAt": null
+  },
+  "approvals": {
+    "change": {
+      "status": "MISSING",
+      "system": null,
+      "approvalId": null,
+      "approvedAt": null
+    },
+    "releaseOwner": {
+      "status": "MISSING",
+      "system": null,
+      "approvalId": null,
+      "approvedAt": null
+    }
+  },
+  "decision": {
+    "productionEligible": false,
+    "resolvedBlockers": [],
+    "openBlockers": [
+      "main-branch-final-ci-not-verified",
+      "external-registry-digest-missing",
+      "production-secrets-not-configured",
+      "target-cluster-validation-not-run",
+      "change-approval-missing",
+      "release-owner-approval-missing"
+    ]
+  }
+}
