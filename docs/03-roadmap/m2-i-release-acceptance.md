@@ -46,3 +46,5 @@ M2-H Service Composition and Operations
 - 计划写入 HTTP API；
 - k6/xk6、Playwright、Worker、Queue、Scheduler、Kubernetes Job；
 - 测试执行、结果采集、Allure 或 M3。
+
+文档提交完成后进入独立 M2-RC1 实现与验收。
