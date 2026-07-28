@@ -36,6 +36,12 @@ import {
   DeterministicTestPlanner,
   validatePlanningResult,
 } from '../packages/test-planner/src/index.js';
+import {
+  InMemoryTestPlanRegistry,
+  createPlanReviewDecision,
+  validatePlanRecord,
+} from '../packages/test-plan-registry/src/index.js';
+import { loadTestPlanMigrations } from '../packages/test-plan-postgres/src/index.js';
 import { loadProjectInput } from '../apps/knowledge-cli/src/project-loader.js';
 import { validateKubernetesManifests } from './validate-kubernetes-manifests.js';
 import { validateReleaseCandidate } from './validate-release-candidate.js';
@@ -71,6 +77,10 @@ const required = [
   'packages/test-capability/test/schema.test.js',
   'packages/test-planner/src/index.js',
   'packages/test-planner/test/schema.test.js',
+  'packages/test-plan-registry/src/index.js',
+  'packages/test-plan-registry/test/schema.test.js',
+  'packages/test-plan-postgres/src/index.js',
+  'packages/test-plan-postgres/migrations/0001_create_test_plan_registry.sql',
   'deploy/postgres/compose.yaml',
   'schemas/knowledge/schema-catalog.json',
   'schemas/registry/v1/knowledge-registry-record.schema.json',
@@ -96,6 +106,9 @@ const required = [
   'schemas/planning/v1/test-coverage-matrix.schema.json',
   'schemas/planning/v1/test-provenance-graph.schema.json',
   'schemas/planning/v1/test-dependency-dag.schema.json',
+  'schemas/planning/v1/test-plan-record.schema.json',
+  'schemas/planning/v1/test-plan-history-event.schema.json',
+  'schemas/planning/v1/test-plan-review-decision.schema.json',
   'schemas/capability/schema-catalog.json',
   'schemas/capability/v1/test-capability.schema.json',
   'schemas/capability/v1/capability-catalog.schema.json',
@@ -111,6 +124,8 @@ const required = [
   'examples/test-plan-contracts.js',
   'examples/capability-catalog.js',
   'examples/deterministic-test-plan.js',
+  'examples/test-plan-registry.js',
+  'examples/postgres-test-plan-registry.js',
 ];
 for (const path of required) await stat(join(root, path));
 
@@ -163,6 +178,9 @@ if (planningCatalog.currentPlanningResult !== 'test-planning-result/v1') throw n
 if (planningCatalog.currentCoverageMatrix !== 'test-coverage-matrix/v1') throw new Error('Planning catalog must identify test-coverage-matrix/v1 as current');
 if (planningCatalog.currentProvenanceGraph !== 'test-provenance-graph/v1') throw new Error('Planning catalog must identify test-provenance-graph/v1 as current');
 if (planningCatalog.currentDependencyDag !== 'test-dependency-dag/v1') throw new Error('Planning catalog must identify test-dependency-dag/v1 as current');
+if (planningCatalog.currentPlanRecord !== 'test-plan-record/v1') throw new Error('Planning catalog must identify test-plan-record/v1 as current');
+if (planningCatalog.currentPlanHistoryEvent !== 'test-plan-history-event/v1') throw new Error('Planning catalog must identify test-plan-history-event/v1 as current');
+if (planningCatalog.currentPlanReviewDecision !== 'test-plan-review-decision/v1') throw new Error('Planning catalog must identify test-plan-review-decision/v1 as current');
 const capabilitySchemaCatalog = JSON.parse(await readFile(join(root, 'schemas/capability/schema-catalog.json'), 'utf8'));
 if (capabilitySchemaCatalog.currentCapability !== 'test-capability/v1') throw new Error('Capability catalog must identify test-capability/v1 as current');
 if (capabilitySchemaCatalog.currentCapabilityCatalog !== 'capability-catalog/v1') throw new Error('Capability catalog must identify capability-catalog/v1 as current');
@@ -182,6 +200,8 @@ const governanceMigrations = await loadGovernancePostgresMigrations();
 if (governanceMigrations.map((item) => item.version).join(',') !== '0001_create_governance_evidence') throw new Error('Governance PostgreSQL migration catalog is not deterministic');
 const accessMigrations = await loadProjectAccessPostgresMigrations();
 if (accessMigrations.map((item) => item.version).join(',') !== '0001_create_project_access') throw new Error('Project access PostgreSQL migration catalog is not deterministic');
+const testPlanMigrations = await loadTestPlanMigrations();
+if (testPlanMigrations.map((item) => item.version).join(',') !== '0001_create_test_plan_registry') throw new Error('Test Plan PostgreSQL migration catalog is not deterministic');
 
 const project = validateProjectRecord(createProjectRecord({
   projectId: 'approval-platform', name: 'Approval Platform', actor: 'repository-validator',
@@ -338,7 +358,37 @@ if (planningResult.plan.planId !== planningPlan.planId
     || planningResult.dependencyDag.topologicalOrder.length !== 1) {
   throw new Error('M2-C deterministic planning result is incomplete');
 }
-console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}; release ${releaseEvidence.releaseId}; catalog ${capabilityCatalog.digest.slice(0, 12)}; plan ${planningResult.plan.planId}; planning ${planningResult.digest.slice(0, 12)}`);
+const planRegistry = new InMemoryTestPlanRegistry();
+let planRecord = validatePlanRecord(await planRegistry.create({
+  planningResult,
+  actor: 'repository-validator',
+  at: '2026-07-27T12:01:00.000Z',
+  reason: 'validate durable Test Plan Registry contract',
+}));
+planRecord = await planRegistry.transition({
+  planId: planRecord.planId,
+  expectedRevision: planRecord.revision,
+  toStatus: 'REVIEWING',
+  actor: 'repository-validator',
+  at: '2026-07-27T12:02:00.000Z',
+  reason: 'validate revision CAS and lifecycle',
+});
+await planRegistry.appendReviewDecision(createPlanReviewDecision({
+  planId: planRecord.planId,
+  projectId: planRecord.projectId,
+  planRevision: planRecord.revision,
+  decision: 'APPROVE',
+  reviewer: 'repository-reviewer',
+  at: '2026-07-27T12:03:00.000Z',
+  reason: 'validate exact revision evidence',
+  evidence: { validator: true },
+}));
+if (planRecord.status !== 'REVIEWING'
+    || planRecord.history.length !== 2
+    || (await planRegistry.listReviewDecisions({ planId: planRecord.planId })).length !== 1) {
+  throw new Error('M2-D Test Plan Registry contract is incomplete');
+}
+console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}; release ${releaseEvidence.releaseId}; catalog ${capabilityCatalog.digest.slice(0, 12)}; plan ${planningResult.plan.planId}; planning ${planningResult.digest.slice(0, 12)}; registry ${planRecord.revision}`);
 
 function isKnowledgeRuleFile(path) {
   const normalized = path.replaceAll('\\', '/');

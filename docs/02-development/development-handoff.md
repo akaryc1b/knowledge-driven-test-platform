@@ -1,39 +1,33 @@
 # M2-D 当前开发交接
 
-## 第一批已完成
+## M2-D 已完成
 
-- M2-A：版本化 Test Planning 合同、确定性身份、canonical JSON 和 Secret/脚本拒绝；
-- M2-B：版本化 Capability Catalog、精确解析、兼容性和 Catalog digest；
-- M2-C：确定性 Planner、Coverage Matrix、Provenance Graph、Dependency DAG 和稳定 result digest；
-- 三个 Draft PR 均通过 Node、Docker、M1 Release 与 PostgreSQL 18 CI；
-- M1-RC1 未被覆盖，仍保持 `productionEligible=false`。
+- 执行器无关 Test Plan Registry Port 与内存 Adapter；
+- DRAFT、REVIEWING、APPROVED、FROZEN、SUPERSEDED、ARCHIVED 生命周期；
+- DRAFT 内容替换、revision CAS 与不可变 Snapshot/Catalog binding；
+- append-only history 和精确 plan revision review decision；
+- PostgreSQL 18 Adapter、行锁、输入 fingerprint 唯一约束和 restart recovery；
+- checksum migration、幂等、整体回滚和外部 transaction client 绑定；
+- 数据库触发器保护生命周期、FROZEN 内容、身份绑定和历史证据；
+- 并发创建、并发状态转换和防篡改合同测试；
+- M1 全量回归、部署和 Release Validator 保持不变。
 
-## M2-D 允许
+## 当前边界
 
-- `packages/test-plan-postgres/`；
-- Durable Test Plan Registry Port/Adapter；
-- DRAFT、REVIEWING、APPROVED、FROZEN、SUPERSEDED、ARCHIVED 生命周期原语；
-- revision CAS、行锁和唯一约束；
-- append-only history 与 review decision 结构；
-- checksum migration、幂等、回滚和 restart recovery；
-- FROZEN 内容与 Snapshot/Catalog binding 防篡改；
-- PostgreSQL 18 并发集成测试。
+- Registry 只提供低层状态原语，不决定谁可以审核、批准或冻结；
+- Review Decision 已耐久绑定精确 revision，但职责分离与 Coverage Gate 尚未应用；
+- 没有 HTTP 写路由、执行器、Worker、Queue、Scheduler、Kubernetes Job 或 M3。
 
-## M2-D 不允许
+## 同批次下一切片
 
-- 审批角色映射或职责分离策略；
-- Coverage Approval/Freeze Gate；
-- HTTP 写路由；
-- k6、xk6、Playwright、Worker、Queue、Scheduler、Kubernetes Job、结果采集或 M3。
+`M2-E — Plan Governance and Review`
 
-## 同批次后续
+只允许：
 
-M2-D 通过后自动继续：
+- 计划治理动作和项目角色映射；
+- 作者、审核人、冻结人职责分离；
+- revision-bound review decision 和失效规则；
+- Mandatory Coverage、EXEMPT evidence、风险双审核与 Freeze Gate；
+- 治理审计时间线与共享合同测试。
 
-```text
-M2-E Plan Governance and Review
-  ↓
-M2-F Durable Planning Orchestration
-```
-
-只有第二批全部完成后统一汇报。
+M2-E 通过后自动继续 M2-F。
