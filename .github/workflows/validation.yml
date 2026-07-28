@@ -16,7 +16,7 @@ jobs:
         with:
           ref: agent/m2-h-planning-service-composition
           fetch-depth: 0
-      - name: Assemble and verify M2-H implementation
+      - name: Assemble and verify M2-H implementation after chunk repair
         shell: bash
         run: |
           set -euo pipefail
