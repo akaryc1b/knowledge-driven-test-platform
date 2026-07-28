@@ -36,6 +36,7 @@
 - [M1-K Release Acceptance and Stack Consolidation](03-roadmap/m1-k-read-only-release-acceptance.md)
 - [M2 Governed Deterministic Test Planning](03-roadmap/m2-governed-deterministic-test-planning.md)
 - [M2-A Test Planning Contracts and Identity](03-roadmap/m2-a-test-planning-contracts.md)
+- [M2-B Versioned Capability Catalog](03-roadmap/m2-b-versioned-capability-catalog.md)
 
 ## 发布与治理
 
@@ -61,3 +62,4 @@
 - [ADR-0013：安全 Kubernetes 只读部署基线](05-adr/ADR-0013-secure-kubernetes-read-only-baseline.md)
 - [ADR-0014：堆叠合并前先生成发布证据](05-adr/ADR-0014-evidence-before-stack-merge.md)
 - [ADR-0015：确定性测试计划身份](05-adr/ADR-0015-deterministic-test-plan-identity.md)
+- [ADR-0016：版本化 Capability Catalog](05-adr/ADR-0016-versioned-capability-catalog.md)

@@ -1,55 +1,37 @@
-# M2-A 当前开发交接
-
-## M1 已完成并合并
-
-- M1-A～M1-K 已合并到 `main`；
-- 当前版本为 `0.12.0`；
-- PostgreSQL Registry、治理证据、项目成员、OIDC/JWKS、只读服务和 Kubernetes 基线已经存在；
-- M1-RC1 候选证据独立保留，生产资格仍受外部镜像 digest、生产 Secret、目标集群和发布批准阻断；
-- 当前业务 HTTP 仍只有五条只读知识查询路由。
+# M2-B 当前开发交接
 
 ## M2-A 已完成
 
-- `@kdtp/test-plan` 执行器无关领域模型；
-- 五个 `schemas/planning` v1 合同；
-- canonical JSON、SHA-256 fingerprint、确定性 Plan/Intent/Obligation/Provenance ID；
-- 不可变 Snapshot ID 与 digest 双绑定；
-- Target Inventory、Planning Policy、Coverage、Provenance 和 DRAFT Test Plan；
-- defensive copy、敏感数据拒绝和执行器脚本拒绝；
-- 规划合同示例、Schema 测试和仓库验证。
+- 执行器无关 Test Planning v1 合同；
+- Target Inventory 与 Planning Policy；
+- Snapshot ID + digest 双绑定；
+- canonical JSON、SHA-256、确定性 plan/intent/coverage/provenance identity；
+- PUBLISHED-only 知识约束；
+- Secret 与执行器脚本拒绝；
+- defensive copy 与稳定错误码；
+- M1 全量回归和 PostgreSQL 18 CI 已通过。
 
-## M2-A 文档决策
+## M2-B 允许
 
-- 正式计划只消费 `PUBLISHED` Knowledge 的不可变 Snapshot Envelope；
-- Snapshot ID 与 SHA-256 digest 必须同时绑定；
-- `planId` 与 `intentId` 使用 canonical JSON 和 SHA-256 确定性派生；
-- 时间、随机数、数据库序列和对象插入顺序不得参与正式身份；
-- Test Intent 保持执行器无关；
-- Secret、Token、私钥、连接串和运行节点信息在合同入口拒绝；
-- 所有输入和输出 defensive copy；
-- JSON Schema 与运行时验证共享版本化合同和稳定错误码。
+- `packages/test-capability/`；
+- `schemas/capability/`；
+- `CapabilityCatalogPort` 与内存 Adapter；
+- 精确 ID/version 解析；
+- Target Kind 兼容性；
+- 禁用和重复能力拒绝；
+- 稳定排序、Catalog version/digest；
+- 共享 Contract 测试和基础能力数据示例。
 
-## 本切片允许
+## M2-B 不允许
 
-- `packages/test-plan/` 领域模型；
-- `schemas/planning/` 五个 v1 合同；
-- canonical JSON、SHA-256、规划 fingerprint、plan ID 与 intent ID；
-- Target Inventory、Planning Policy、Intent、Coverage Obligation、Provenance 与 Test Plan 验证；
-- 内存测试、Schema 测试、示例和仓库校验扩展；
-- M1 全量回归。
-
-## 本切片不允许
-
-- Capability Catalog 实现；
-- Deterministic Planner；
-- PostgreSQL 计划 Registry；
-- 计划审核、批准或冻结；
-- HTTP 写接口；
-- k6、xk6、Playwright、Worker、Queue、Scheduler 或生产测试执行；
-- M3。
+- k6、xk6、Playwright、SQL 或 WebSocket 执行脚本；
+- Planner、Coverage Matrix 或 Provenance DAG；
+- PostgreSQL 计划持久化；
+- 审核、批准、冻结或写入 HTTP API；
+- Worker、Queue、Scheduler、Kubernetes Job、测试执行或 M3。
 
 ## 下一安全切片
 
-`M2-B — Versioned Capability Catalog`
+`M2-C — Deterministic Planner and Coverage`
 
-只允许建立执行器无关、版本化、可解析、可校验和可计算 digest 的 Capability Catalog，并继续禁止任何实际执行器代码。
+只允许把不可变 Snapshot、Target Inventory、Capability Catalog 和 Planning Policy 转换为稳定 Test Plan、Coverage、Provenance 与无环依赖 DAG。

@@ -27,6 +27,11 @@ import {
   createTestPlan,
   validateTestPlan,
 } from '../packages/test-plan/src/index.js';
+import {
+  InMemoryCapabilityCatalog,
+  createBaseCapabilityCatalog,
+  validateCapabilityCatalog,
+} from '../packages/test-capability/src/index.js';
 import { loadProjectInput } from '../apps/knowledge-cli/src/project-loader.js';
 import { validateKubernetesManifests } from './validate-kubernetes-manifests.js';
 import { validateReleaseCandidate } from './validate-release-candidate.js';
@@ -58,6 +63,8 @@ const required = [
   'packages/governance-auth-oidc/src/index.js',
   'packages/test-plan/src/index.js',
   'packages/test-plan/test/schema.test.js',
+  'packages/test-capability/src/index.js',
+  'packages/test-capability/test/schema.test.js',
   'deploy/postgres/compose.yaml',
   'schemas/knowledge/schema-catalog.json',
   'schemas/registry/v1/knowledge-registry-record.schema.json',
@@ -79,6 +86,9 @@ const required = [
   'schemas/planning/v1/test-intent.schema.json',
   'schemas/planning/v1/test-coverage-obligation.schema.json',
   'schemas/planning/v1/test-plan.schema.json',
+  'schemas/capability/schema-catalog.json',
+  'schemas/capability/v1/test-capability.schema.json',
+  'schemas/capability/v1/capability-catalog.schema.json',
   'releases/m1/read-only-release-candidate.json',
   'deploy/kubernetes/read-only-governance-service/deployment.yaml',
   'deploy/kubernetes/read-only-governance-service/service.yaml',
@@ -89,6 +99,7 @@ const required = [
   'examples/read-only-service-operational.js',
   'examples/read-only-release-candidate.js',
   'examples/test-plan-contracts.js',
+  'examples/capability-catalog.js',
 ];
 for (const path of required) await stat(join(root, path));
 
@@ -137,6 +148,9 @@ if (planningCatalog.currentTargetInventory !== 'test-target-inventory/v1') throw
 if (planningCatalog.currentTestIntent !== 'test-intent/v1') throw new Error('Planning catalog must identify test-intent/v1 as current');
 if (planningCatalog.currentCoverageObligation !== 'test-coverage-obligation/v1') throw new Error('Planning catalog must identify test-coverage-obligation/v1 as current');
 if (planningCatalog.currentTestPlan !== 'test-plan/v1') throw new Error('Planning catalog must identify test-plan/v1 as current');
+const capabilitySchemaCatalog = JSON.parse(await readFile(join(root, 'schemas/capability/schema-catalog.json'), 'utf8'));
+if (capabilitySchemaCatalog.currentCapability !== 'test-capability/v1') throw new Error('Capability catalog must identify test-capability/v1 as current');
+if (capabilitySchemaCatalog.currentCapabilityCatalog !== 'capability-catalog/v1') throw new Error('Capability catalog must identify capability-catalog/v1 as current');
 await validateKubernetesManifests();
 const releaseEvidence = await validateReleaseCandidate({
   generatedAt: '2026-07-27T12:30:00.000Z',
@@ -212,6 +226,15 @@ const planningTargetInventory = createTargetInventory({
 });
 const planningKnowledge = snapshot.rules.find((rule) => rule.boundaryKey === 'workflow.approval-submit')
   ?? snapshot.rules[0];
+const capabilityCatalog = validateCapabilityCatalog(createBaseCapabilityCatalog('1.0.0'));
+const capabilityAdapter = new InMemoryCapabilityCatalog(capabilityCatalog);
+const resolvedCapability = await capabilityAdapter.assertCompatible(
+  { capabilityId: 'api-functional', version: '1.0.0' },
+  'api',
+);
+if (resolvedCapability.intentKind !== 'api-functional') {
+  throw new Error('M2-B capability resolution is not deterministic');
+}
 const planningRequest = createPlanningRequest({
   projectId: snapshot.context.projectId,
   environmentId: snapshot.context.environmentId,
@@ -220,8 +243,8 @@ const planningRequest = createPlanningRequest({
   knowledgeSnapshotDigest: envelope.digest,
   knowledgeSnapshot: envelope,
   plannerVersion: '1.0.0',
-  capabilityCatalogVersion: '1.0.0',
-  capabilityCatalogDigest: 'a'.repeat(64),
+  capabilityCatalogVersion: capabilityCatalog.version,
+  capabilityCatalogDigest: capabilityCatalog.digest,
   targetInventory: planningTargetInventory,
   planningPolicy: {
     policyId: 'policy:repository-validation',
@@ -289,7 +312,7 @@ const planningPlan = validateTestPlan(createTestPlan({
 if (planningPlan.coverage.summary.covered !== 1 || planningPlan.provenance.length !== 1) {
   throw new Error('M2-A planning contracts are not deterministic');
 }
-console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}; release ${releaseEvidence.releaseId}; plan ${planningPlan.planId}`);
+console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}; release ${releaseEvidence.releaseId}; catalog ${capabilityCatalog.digest.slice(0, 12)}; plan ${planningPlan.planId}`);
 
 function isKnowledgeRuleFile(path) {
   const normalized = path.replaceAll('\\', '/');

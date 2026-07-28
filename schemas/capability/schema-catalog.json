@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "currentCapability": "test-capability/v1",
+  "currentCapabilityCatalog": "capability-catalog/v1",
+  "schemas": {
+    "test-capability/v1": "schemas/capability/v1/test-capability.schema.json",
+    "capability-catalog/v1": "schemas/capability/v1/capability-catalog.schema.json"
+  }
+}
