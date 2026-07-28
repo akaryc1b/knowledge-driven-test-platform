@@ -16,14 +16,14 @@ jobs:
         with:
           ref: agent/m2-f-planning-orchestration
           fetch-depth: 0
-      - name: Extract verified M2-F implementation
+      - name: Extract verified M2-F implementation chunks
         shell: bash
         run: |
           set -euo pipefail
-          test "$(sha256sum .github/m2f-files.tar.gz | cut -d' ' -f1)" = "945a044602afdfdb39a4a12b881b25513e4d5e17c94993dd3df52c384675a2bf"
-          tar -xzf .github/m2f-files.tar.gz
-          git show HEAD^:.github/workflows/validation.yml > .github/workflows/validation.yml
-          rm -f .github/m2f-files.tar.gz
+          cat .github/m2f.part* > /tmp/m2f-files.tar.gz
+          test "$(sha256sum /tmp/m2f-files.tar.gz | cut -d' ' -f1)" = "945a044602afdfdb39a4a12b881b25513e4d5e17c94993dd3df52c384675a2bf"
+          tar -xzf /tmp/m2f-files.tar.gz
+          rm -f .github/m2f.part*
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
