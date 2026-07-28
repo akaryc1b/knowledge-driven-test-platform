@@ -4,6 +4,7 @@
 knowledge-driven-test-platform/
 ├── apps/
 │   ├── knowledge-cli/
+│   ├── test-plan-cli/
 │   └── read-only-governance-service/
 ├── packages/
 │   ├── knowledge-core/
@@ -20,7 +21,9 @@ knowledge-driven-test-platform/
 │   ├── test-capability/
 │   ├── test-planner/
 │   ├── test-plan-registry/
-│   └── test-plan-postgres/
+│   ├── test-plan-postgres/
+│   ├── test-plan-governance/
+│   └── test-planning-orchestration/
 ├── schemas/
 │   ├── knowledge/
 │   ├── registry/
@@ -146,3 +149,16 @@ packages/test-plan-postgres/
 ```
 
 `test-plan-registry` 定义执行器无关的耐久计划生命周期与共享 Adapter Contract；`test-plan-postgres` 只负责 PostgreSQL 事务、锁、唯一约束、checksum migration 和追加式证据。规划逻辑仍由 `test-planner` 提供。
+
+
+## M2-E 与 M2-F 新增结构
+
+```text
+packages/test-plan-governance/
+packages/test-planning-orchestration/
+apps/test-plan-cli/
+examples/planning-orchestration.js
+examples/postgres-planning-orchestration.js
+```
+
+治理包只定义授权、职责分离和 Gate；Orchestration 包负责有界 PostgreSQL Unit of Work。CLI 只调用应用服务，不复制 Planner 或治理逻辑。

@@ -1,0 +1,12 @@
+{
+  "name": "@kdtp/test-plan-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "kdtp-plan": "./src/main.js"
+  },
+  "dependencies": {
+    "@kdtp/test-planning-orchestration": "0.1.0"
+  }
+}
