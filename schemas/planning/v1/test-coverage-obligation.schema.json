@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/planning/v1/test-coverage-obligation.schema.json",
+  "title": "Test Coverage Obligation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "obligationId",
+    "planInputFingerprint",
+    "targetId",
+    "capability",
+    "sourceKnowledge",
+    "policyEntryId",
+    "mandatory",
+    "status",
+    "intentIds"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "test-coverage-obligation/v1"
+    },
+    "obligationId": {
+      "type": "string",
+      "pattern": "^co-[a-f0-9]{16}$"
+    },
+    "planInputFingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "targetId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._:-]{2,255}$"
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capabilityId",
+        "version"
+      ],
+      "properties": {
+        "capabilityId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._:-]{2,255}$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+        }
+      }
+    },
+    "sourceKnowledge": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "knowledgeId",
+          "version",
+          "boundaryKey",
+          "snapshotId",
+          "snapshotDigest"
+        ],
+        "properties": {
+          "knowledgeId": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9]{1,31}(?:-[A-Z0-9][A-Z0-9]{0,31}){2,7}$"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+          },
+          "boundaryKey": {
+            "type": "string"
+          },
+          "snapshotId": {
+            "type": "string",
+            "pattern": "^kb-[a-z0-9-]+-[a-f0-9]{12}$"
+          },
+          "snapshotDigest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    },
+    "policyEntryId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._:-]{2,255}$"
+    },
+    "mandatory": {
+      "type": "boolean"
+    },
+    "status": {
+      "enum": [
+        "COVERED",
+        "PARTIAL",
+        "UNPLANNED",
+        "EXEMPT"
+      ]
+    },
+    "intentIds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^intent-[a-f0-9]{16}$"
+      }
+    },
+    "exemption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reason",
+        "owner"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "EXEMPT"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "exemption"
+        ]
+      }
+    }
+  ]
+}

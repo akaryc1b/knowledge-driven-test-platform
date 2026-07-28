@@ -15,7 +15,8 @@ knowledge-driven-test-platform/
 │   ├── project-membership/
 │   ├── project-membership-postgres/
 │   ├── governance-http/
-│   └── governance-auth-oidc/
+│   ├── governance-auth-oidc/
+│   └── test-plan/
 ├── schemas/
 │   ├── knowledge/
 │   ├── registry/
@@ -24,7 +25,8 @@ knowledge-driven-test-platform/
 │   ├── access/
 │   ├── authentication/
 │   ├── operations/
-│   └── deployment/
+│   ├── deployment/
+│   └── planning/
 ├── deploy/
 │   ├── postgres/
 │   └── kubernetes/read-only-governance-service/
@@ -51,6 +53,21 @@ read-only-governance-service
 ```
 
 应用组合根可以读取环境变量、创建 Pool、执行 migrations、监听端口和处理进程信号。Package 不得反向依赖应用或部署层。
+
+## M2-A 新增结构
+
+```text
+packages/test-plan/
+├── src/
+├── test/
+└── README.md
+
+schemas/planning/
+├── schema-catalog.json
+└── v1/
+```
+
+`test-plan` 只依赖知识核心与治理快照合同；它不依赖数据库、HTTP、执行器或应用组合根。
 
 ## M1-J 新增结构
 
@@ -84,6 +101,7 @@ examples/read-only-deployment-acceptance.js
 
 ```text
 release-candidates/
+packages/test-capability/
 packages/test-planner/
 packages/k6-adapter/
 packages/evidence-model/

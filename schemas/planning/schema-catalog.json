@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "currentPlanningRequest": "test-planning-request/v1",
+  "currentTargetInventory": "test-target-inventory/v1",
+  "currentTestIntent": "test-intent/v1",
+  "currentCoverageObligation": "test-coverage-obligation/v1",
+  "currentTestPlan": "test-plan/v1",
+  "schemas": {
+    "test-planning-request/v1": "schemas/planning/v1/test-planning-request.schema.json",
+    "test-target-inventory/v1": "schemas/planning/v1/test-target-inventory.schema.json",
+    "test-intent/v1": "schemas/planning/v1/test-intent.schema.json",
+    "test-coverage-obligation/v1": "schemas/planning/v1/test-coverage-obligation.schema.json",
+    "test-plan/v1": "schemas/planning/v1/test-plan.schema.json"
+  }
+}
