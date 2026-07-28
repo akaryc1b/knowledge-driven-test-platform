@@ -61,5 +61,8 @@ export function mapTestPlanPostgresError(error, operation) {
 
 function withCause(mapped, cause) {
   mapped.cause = cause;
+  if (process.env.CI === 'true') {
+    mapped.stack = `${mapped.stack}\nINTERNAL_CAUSE ${cause?.name ?? 'Error'} ${cause?.code ?? ''}: ${cause?.message ?? String(cause)}`;
+  }
   return mapped;
 }
