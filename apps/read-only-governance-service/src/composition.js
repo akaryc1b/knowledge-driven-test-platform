@@ -27,6 +27,19 @@ import {
   PostgresProjectMembershipAuthorization,
   applyProjectAccessPostgresMigrations,
 } from '@kdtp/project-membership-postgres';
+import {
+  ReadOnlyTestPlanHttpTransport,
+  createReadOnlyTestPlanNodeHttpHandler,
+} from '@kdtp/test-plan-http';
+import {
+  ReadOnlyTestPlanQueryHandlers,
+  ReadOnlyTestPlanQueryService,
+} from '@kdtp/test-plan-query';
+import {
+  PostgresTestPlanRegistry,
+  applyTestPlanMigrations,
+} from '@kdtp/test-plan-postgres';
+import { createCompositeReadOnlyNodeHttpHandler } from './business-http.js';
 import { createOperationalNodeHttpHandler } from './operational-http.js';
 import {
   ReadinessCoordinator,
@@ -49,6 +62,7 @@ export async function createReadOnlyServiceComposition(options) {
     applyPostgresMigrations,
     applyGovernancePostgresMigrations,
     applyProjectAccessPostgresMigrations,
+    applyTestPlanMigrations,
   ];
   await safeRecordRuntimeEvent(runtimeEvents, createRuntimeEvent({
     type: 'SERVICE_STARTING', service: config.serviceName,
@@ -92,24 +106,48 @@ export async function createReadOnlyServiceComposition(options) {
     pool,
     clock: { async now() { return new Date(clock()).toISOString(); } },
   });
-  const queryService = new ReadOnlyGovernanceQueryService({ registry, authorization, reviewStore, snapshotStore });
-  const handlers = new ReadOnlyGovernanceQueryHandlers({
-    service: queryService,
-    identityContext: new AuthenticatedRequestIdentityContext(),
+  const identityContext = options.identityContext ?? new AuthenticatedRequestIdentityContext();
+  const rateLimiter = options.rateLimiter ?? new InMemoryFixedWindowRateLimiter({
+    ...config.rateLimit,
+    clock,
   });
+  const queryService = new ReadOnlyGovernanceQueryService({ registry, authorization, reviewStore, snapshotStore });
+  const handlers = new ReadOnlyGovernanceQueryHandlers({ service: queryService, identityContext });
   const transport = new ReadOnlyGovernanceHttpTransport({
     handlers,
     authentication,
-    rateLimiter: options.rateLimiter ?? new InMemoryFixedWindowRateLimiter({
-      ...config.rateLimit,
-      clock,
-    }),
+    rateLimiter,
     maxBodyBytes: config.http.maxBodyBytes,
     maxUrlLength: config.http.maxUrlLength,
     clock,
     requestIdFactory: options.requestIdFactory,
   });
-  const businessHandler = createReadOnlyNodeHttpHandler({ transport });
+  const testPlanRegistry = options.testPlanRegistry ?? new PostgresTestPlanRegistry({ pool });
+  const testPlanQueryService = new ReadOnlyTestPlanQueryService({
+    registry: testPlanRegistry,
+    authorization,
+  });
+  const testPlanHandlers = new ReadOnlyTestPlanQueryHandlers({
+    service: testPlanQueryService,
+    identityContext,
+  });
+  const testPlanTransport = new ReadOnlyTestPlanHttpTransport({
+    handlers: testPlanHandlers,
+    authentication,
+    rateLimiter,
+    maxBodyBytes: config.http.maxBodyBytes,
+    maxUrlLength: config.http.maxUrlLength,
+    clock,
+    requestIdFactory: options.requestIdFactory,
+  });
+  const knowledgeBusinessHandler = createReadOnlyNodeHttpHandler({ transport });
+  const testPlanBusinessHandler = createReadOnlyTestPlanNodeHttpHandler({
+    transport: testPlanTransport,
+  });
+  const businessHandler = createCompositeReadOnlyNodeHttpHandler({
+    knowledgeHandler: knowledgeBusinessHandler,
+    testPlanHandler: testPlanBusinessHandler,
+  });
   const readiness = new ReadinessCoordinator({
     serviceName: config.serviceName,
     checks: [createPostgresReadinessCheck(pool), createJwksReadinessCheck(jwksProvider)],
@@ -134,9 +172,15 @@ export async function createReadOnlyServiceComposition(options) {
       registry,
       reviewStore,
       snapshotStore,
+      testPlanRegistry,
       queryService,
+      testPlanQueryService,
       handlers,
+      testPlanHandlers,
       transport,
+      testPlanTransport,
+      rateLimiter,
+      identityContext,
       readiness,
       server,
     },
