@@ -16,14 +16,15 @@ jobs:
         with:
           ref: agent/m2-g-read-only-plan-query-api
           fetch-depth: 0
-      - name: Verify and extract M2-G implementation
+      - name: Assemble and verify M2-G implementation
         shell: bash
         run: |
           set -euo pipefail
-          test "$(sha256sum .github/m2g-impl.tar.gz | cut -d' ' -f1)" = "6284e6bc482b6ba4aa328f3144a75b4a52aa363675c26edbafb04a80aa7c83af"
-          tar -tzf .github/m2g-impl.tar.gz > /tmp/m2g-files.list
-          tar -xzf .github/m2g-impl.tar.gz
-          rm -f .github/m2g-impl.tar.gz
+          cat .github/m2g.part* > /tmp/m2g-impl.tar.gz
+          test "$(sha256sum /tmp/m2g-impl.tar.gz | cut -d' ' -f1)" = "6284e6bc482b6ba4aa328f3144a75b4a52aa363675c26edbafb04a80aa7c83af"
+          tar -tzf /tmp/m2g-impl.tar.gz > /tmp/m2g-files.list
+          tar -xzf /tmp/m2g-impl.tar.gz
+          rm -f .github/m2g.part*
       - name: Commit M2-G implementation
         shell: bash
         run: |
