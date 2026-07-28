@@ -32,3 +32,10 @@ test('M2-RC1 rejects stack drift and production eligibility while preserving M1-
   assert.equal(m1.releaseId, 'M1-RC1');
   assert.equal(m1.decision.productionEligible, false);
 });
+
+test('M2-RC1 candidate validation rejects nested sensitive material', async () => {
+  const candidate = await loadM2ReleaseCandidate();
+  const leaked = structuredClone(candidate);
+  leaked.decision.databaseUrl = 'postgresql://release:secret@database.example/kdtp';
+  await assert.rejects(validateM2ReleaseCandidate({ candidate: leaked }), /sensitive material/);
+});

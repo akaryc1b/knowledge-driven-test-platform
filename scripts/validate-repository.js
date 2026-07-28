@@ -47,6 +47,7 @@ import { loadTestPlanMigrations } from '../packages/test-plan-postgres/src/index
 import { loadProjectInput } from '../apps/knowledge-cli/src/project-loader.js';
 import { validateKubernetesManifests } from './validate-kubernetes-manifests.js';
 import { validateReleaseCandidate } from './validate-release-candidate.js';
+import { validateM2PostMergeAcceptance } from './validate-m2-post-merge-acceptance.js';
 
 const root = process.cwd();
 const required = [
@@ -55,6 +56,10 @@ const required = [
   '.dockerignore',
   'docs/README.md',
   'docs/releases/M1-RC1.md',
+  'docs/releases/M2-RC1.md',
+  'docs/releases/M2-RC1-main-acceptance.md',
+  'docs/03-roadmap/m2-rc1-post-merge-acceptance.md',
+  'docs/05-adr/ADR-0024-post-merge-release-acceptance.md',
   'docs/03-roadmap/m2-h-planning-service-composition.md',
   'docs/05-adr/ADR-0022-unified-read-only-planning-service-composition.md',
   'apps/read-only-governance-service/package.json',
@@ -107,6 +112,8 @@ const required = [
   'schemas/release/schema-catalog.json',
   'schemas/release/v1/release-candidate.schema.json',
   'schemas/release/v1/release-evidence.schema.json',
+  'schemas/release/v2/planning-post-merge-acceptance.schema.json',
+  'schemas/release/v2/planning-post-merge-evidence.schema.json',
   'schemas/planning/schema-catalog.json',
   'schemas/planning/v1/test-planning-request.schema.json',
   'schemas/planning/v1/test-target-inventory.schema.json',
@@ -124,14 +131,17 @@ const required = [
   'schemas/capability/v1/test-capability.schema.json',
   'schemas/capability/v1/capability-catalog.schema.json',
   'releases/m1/read-only-release-candidate.json',
+  'releases/m2/post-merge-acceptance.json',
   'deploy/kubernetes/read-only-governance-service/deployment.yaml',
   'deploy/kubernetes/read-only-governance-service/service.yaml',
   'deploy/kubernetes/read-only-governance-service/pdb.yaml',
   'deploy/kubernetes/read-only-governance-service/kustomization.yaml',
   'scripts/validate-kubernetes-manifests.js',
   'scripts/validate-release-candidate.js',
+  'scripts/validate-m2-post-merge-acceptance.js',
   'examples/read-only-service-operational.js',
   'examples/read-only-release-candidate.js',
+  'examples/m2-post-merge-acceptance.js',
   'examples/test-plan-contracts.js',
   'examples/capability-catalog.js',
   'examples/deterministic-test-plan.js',
@@ -184,6 +194,8 @@ if (deploymentCatalog.currentFaultAcceptance !== 'deployment-fault-acceptance/v1
 const releaseCatalog = JSON.parse(await readFile(join(root, 'schemas/release/schema-catalog.json'), 'utf8'));
 if (releaseCatalog.currentReleaseCandidate !== 'm1-read-only-release-candidate/v1') throw new Error('Release catalog must identify the M1 candidate schema');
 if (releaseCatalog.currentReleaseEvidence !== 'm1-read-only-release-evidence/v1') throw new Error('Release catalog must identify the M1 evidence schema');
+if (releaseCatalog.m2PostMergeAcceptance !== 'm2-governed-planning-post-merge-acceptance/v1') throw new Error('Release catalog must identify the M2 post-merge acceptance schema');
+if (releaseCatalog.m2PostMergeEvidence !== 'm2-governed-planning-post-merge-evidence/v1') throw new Error('Release catalog must identify the M2 post-merge evidence schema');
 const planningCatalog = JSON.parse(await readFile(join(root, 'schemas/planning/schema-catalog.json'), 'utf8'));
 if (planningCatalog.currentPlanningRequest !== 'test-planning-request/v1') throw new Error('Planning catalog must identify test-planning-request/v1 as current');
 if (planningCatalog.currentTargetInventory !== 'test-target-inventory/v1') throw new Error('Planning catalog must identify test-target-inventory/v1 as current');
@@ -208,6 +220,16 @@ const releaseEvidence = await validateReleaseCandidate({
 });
 if (releaseEvidence.decision.productionEligible !== false || releaseEvidence.stack.continuous !== true) {
   throw new Error('M1 release candidate decision or stack continuity changed');
+}
+const postMergeEvidence = await validateM2PostMergeAcceptance({
+  generatedAt: '2026-07-28T10:30:00.000Z',
+  commitSha: 'local',
+  branch: 'agent/m2-rc1-post-merge-acceptance',
+});
+if (postMergeEvidence.decision.productionEligible !== false
+    || postMergeEvidence.merge.fileDeltaCount !== 0
+    || !postMergeEvidence.decision.resolvedBlockers.includes('m2-stack-prs-not-merged')) {
+  throw new Error('M2 post-merge acceptance decision or merge evidence changed');
 }
 
 const postgresMigrations = await loadPostgresMigrations();
@@ -423,7 +445,7 @@ if (planRecord.status !== 'REVIEWING'
     || (await planRegistry.listReviewDecisions({ planId: planRecord.planId })).length !== 1) {
   throw new Error('M2-D Test Plan Registry contract is incomplete');
 }
-console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}; release ${releaseEvidence.releaseId}; catalog ${capabilityCatalog.digest.slice(0, 12)}; plan ${planningResult.plan.planId}; planning ${planningResult.digest.slice(0, 12)}; registry ${planRecord.revision}`);
+console.log(`Validated ${files.length} files; snapshot ${snapshot.snapshotId}; release ${releaseEvidence.releaseId}; post-merge ${postMergeEvidence.merge.mainSha.slice(0, 12)}; catalog ${capabilityCatalog.digest.slice(0, 12)}; plan ${planningResult.plan.planId}; planning ${planningResult.digest.slice(0, 12)}; registry ${planRecord.revision}`);
 
 function isKnowledgeRuleFile(path) {
   const normalized = path.replaceAll('\\', '/');

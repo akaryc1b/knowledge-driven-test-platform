@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/release/v2/planning-post-merge-acceptance.schema.json",
+  "title": "M2 Governed Planning Post-Merge Acceptance v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "releaseId",
+    "version",
+    "phase",
+    "sourceCandidate",
+    "merge",
+    "verification",
+    "decision"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "m2-governed-planning-post-merge-acceptance/v1"
+    },
+    "releaseId": {
+      "const": "M2-RC1"
+    },
+    "version": {
+      "const": "0.12.0"
+    },
+    "phase": {
+      "const": "POST_MERGE_ACCEPTANCE"
+    },
+    "sourceCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "digest",
+        "headSha"
+      ],
+      "properties": {
+        "path": {
+          "const": "releases/m2/planning-release-candidate.json"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "headSha": {
+          "$ref": "#/$defs/sha"
+        }
+      }
+    },
+    "merge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mainSha",
+        "fileTreeMatchesCandidateHead",
+        "fileDeltaCount",
+        "pullRequests"
+      ],
+      "properties": {
+        "mainSha": {
+          "$ref": "#/$defs/sha"
+        },
+        "fileTreeMatchesCandidateHead": {
+          "const": true
+        },
+        "fileDeltaCount": {
+          "const": 0
+        },
+        "pullRequests": {
+          "type": "array",
+          "minItems": 9,
+          "maxItems": 9,
+          "items": {
+            "$ref": "#/$defs/mergeEntry"
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "preMergeValidation",
+        "mainBranchFinalCi"
+      ],
+      "properties": {
+        "preMergeValidation": {
+          "$ref": "#/$defs/passedCi"
+        },
+        "mainBranchFinalCi": {
+          "$ref": "#/$defs/mainCi"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "productionEligible",
+        "resolvedBlockers",
+        "supersededBlockers",
+        "openBlockers"
+      ],
+      "properties": {
+        "productionEligible": {
+          "const": false
+        },
+        "resolvedBlockers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "supersededBlockers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "to"
+            ],
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "openBlockers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "artifactDigest": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "mergeEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pr",
+        "status",
+        "mergeCommitSha"
+      ],
+      "properties": {
+        "pr": {
+          "type": "integer",
+          "minimum": 12,
+          "maximum": 20
+        },
+        "status": {
+          "const": "MERGED"
+        },
+        "mergeCommitSha": {
+          "$ref": "#/$defs/sha"
+        }
+      }
+    },
+    "passedCi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "runId",
+        "sourceSha",
+        "m2EvidenceArtifactDigest",
+        "postgresArtifactDigest"
+      ],
+      "properties": {
+        "status": {
+          "const": "PASSED"
+        },
+        "runId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sourceSha": {
+          "$ref": "#/$defs/sha"
+        },
+        "m2EvidenceArtifactDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "postgresArtifactDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        }
+      }
+    },
+    "mainCi": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "commitSha",
+        "runId",
+        "m2EvidenceArtifactDigest",
+        "postgresArtifactDigest"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "UNVERIFIED",
+            "PASSED"
+          ]
+        },
+        "commitSha": {
+          "$ref": "#/$defs/sha"
+        },
+        "runId": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "m2EvidenceArtifactDigest": {
+          "$ref": "#/$defs/artifactDigest"
+        },
+        "postgresArtifactDigest": {
+          "$ref": "#/$defs/artifactDigest"
+        }
+      }
+    }
+  }
+}
