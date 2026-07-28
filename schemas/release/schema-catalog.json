@@ -9,6 +9,16 @@
     {
       "schemaVersion": "m1-read-only-release-evidence/v1",
       "path": "schemas/release/v1/release-evidence.schema.json"
+    },
+    {
+      "schemaVersion": "m2-governed-planning-release-candidate/v1",
+      "path": "schemas/release/v2/planning-release-candidate.schema.json"
+    },
+    {
+      "schemaVersion": "m2-governed-planning-release-evidence/v1",
+      "path": "schemas/release/v2/planning-release-evidence.schema.json"
     }
-  ]
+  ],
+  "m2ReleaseCandidate": "m2-governed-planning-release-candidate/v1",
+  "m2ReleaseEvidence": "m2-governed-planning-release-evidence/v1"
 }

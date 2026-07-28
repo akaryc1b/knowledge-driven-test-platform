@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/release/v2/planning-release-evidence.schema.json",
+  "title": "M2 Governed Planning Release Evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion","releaseId","version","generatedAt","source","digests","stack","verification","artifacts","decision"],
+  "properties": {
+    "schemaVersion": { "const": "m2-governed-planning-release-evidence/v1" },
+    "releaseId": { "const": "M2-RC1" },
+    "version": { "const": "0.12.0" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "source": { "type": "object", "additionalProperties": false, "required": ["branch","commitSha"], "properties": { "branch": { "type": "string" }, "commitSha": { "type": "string", "pattern": "^(?:local|[a-f0-9]{40})$" } } },
+    "digests": { "type": "object", "additionalProperties": false, "required": ["candidate","planningSchemas","capabilitySchemas","querySchemas","releaseSchemas","deploymentManifests"], "properties": { "candidate": { "$ref": "#/$defs/digest" }, "planningSchemas": { "$ref": "#/$defs/digest" }, "capabilitySchemas": { "$ref": "#/$defs/digest" }, "querySchemas": { "$ref": "#/$defs/digest" }, "releaseSchemas": { "$ref": "#/$defs/digest" }, "deploymentManifests": { "$ref": "#/$defs/digest" } } },
+    "stack": { "type": "object", "additionalProperties": false, "required": ["slices","pullRequests","continuous"], "properties": { "slices": { "const": 8 }, "pullRequests": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "type": "integer" } }, "continuous": { "const": true } } },
+    "verification": { "type": "object", "additionalProperties": false, "required": ["requiredChecks","businessRoutes","lifecycleEvidence"], "properties": { "requiredChecks": { "type": "array", "minItems": 8, "maxItems": 8, "items": { "type": "string" } }, "businessRoutes": { "type": "array", "minItems": 10, "maxItems": 10, "items": { "type": "string" } }, "lifecycleEvidence": { "type": "array", "minItems": 7, "maxItems": 7, "items": { "type": "string" } } } },
+    "artifacts": { "type": "object", "additionalProperties": false, "required": ["image","deployment"], "properties": { "image": { "type": "object", "additionalProperties": false, "required": ["reference","localImageId","registryDigest"], "properties": { "reference": { "type": "string" }, "localImageId": { "type": ["string","null"], "pattern": "^sha256:[a-f0-9]{64}$" }, "registryDigest": { "type": ["string","null"], "pattern": "^sha256:[a-f0-9]{64}$" } } }, "deployment": { "type": "object", "additionalProperties": false, "required": ["resourceCount","namespace"], "properties": { "resourceCount": { "const": 7 }, "namespace": { "const": "kdtp-system" } } } } },
+    "decision": { "type": "object", "additionalProperties": false, "required": ["status","productionEligible","blockers"], "properties": { "status": { "const": "CANDIDATE" }, "productionEligible": { "const": false }, "blockers": { "type": "array", "minItems": 7, "items": { "type": "string" } } } }
+  },
+  "$defs": { "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "m2-governed-planning-release-candidate/v1",
+  "releaseId": "M2-RC1",
+  "version": "0.12.0",
+  "status": "CANDIDATE",
+  "candidateBranch": "agent/m2-i-release-acceptance",
+  "predecessorHeadSha": "5b939f24b42a425057262b748476385c9df30ca6",
+  "stack": [
+    { "slice": "M2-A", "pr": 12, "base": "main", "head": "agent/m2-a-test-planning-contracts", "headSha": "375a71e9c8a657bdbc01e59c41b9f9ea7c1b11b0" },
+    { "slice": "M2-B", "pr": 13, "base": "agent/m2-a-test-planning-contracts", "head": "agent/m2-b-capability-catalog", "headSha": "995516ac499b0a6b714aa32f164c07dcc52ddec9" },
+    { "slice": "M2-C", "pr": 14, "base": "agent/m2-b-capability-catalog", "head": "agent/m2-c-deterministic-planner", "headSha": "6c96816e4bc2f1825ab354ed4d8ae7680f9524e8" },
+    { "slice": "M2-D", "pr": 15, "base": "agent/m2-c-deterministic-planner", "head": "agent/m2-d-durable-test-plan-registry", "headSha": "ce90e09ee7c7a1c731d959b3ad04dab155669899" },
+    { "slice": "M2-E", "pr": 16, "base": "agent/m2-d-durable-test-plan-registry", "head": "agent/m2-e-plan-governance", "headSha": "3dc0643c4b92dd93e059c86f0f6b1816666446a3" },
+    { "slice": "M2-F", "pr": 17, "base": "agent/m2-e-plan-governance", "head": "agent/m2-f-planning-orchestration", "headSha": "167965fdd816283fe4dd8a3f39c394c64c3243d8" },
+    { "slice": "M2-G", "pr": 18, "base": "agent/m2-f-planning-orchestration", "head": "agent/m2-g-read-only-plan-query-api", "headSha": "34a10fadac8c1769694afb61c76a77e34f6c98d3" },
+    { "slice": "M2-H", "pr": 19, "base": "agent/m2-g-read-only-plan-query-api", "head": "agent/m2-h-planning-service-composition", "headSha": "5b939f24b42a425057262b748476385c9df30ca6" }
+  ],
+  "requiredChecks": [
+    "node-workspace",
+    "repository-validation",
+    "postgresql-18",
+    "deterministic-planning",
+    "governed-plan-lifecycle",
+    "unified-read-only-e2e",
+    "deployment-manifests",
+    "hardened-container"
+  ],
+  "businessRoutes": [
+    "GET /v1/projects/{projectId}/knowledge",
+    "GET /v1/projects/{projectId}/knowledge/{id}/versions/{version}",
+    "GET /v1/projects/{projectId}/knowledge/{id}/versions/{version}/timeline",
+    "GET /v1/projects/{projectId}/snapshots",
+    "GET /v1/projects/{projectId}/snapshots/{snapshotId}",
+    "GET /v1/projects/{projectId}/test-plans",
+    "GET /v1/projects/{projectId}/test-plans/{planId}",
+    "GET /v1/projects/{projectId}/test-plans/{planId}/coverage",
+    "GET /v1/projects/{projectId}/test-plans/{planId}/provenance",
+    "GET /v1/projects/{projectId}/test-plans/{planId}/timeline"
+  ],
+  "lifecycleEvidence": [
+    "PUBLISHED_SNAPSHOT",
+    "GENERATED",
+    "SUBMITTED",
+    "REVIEWED",
+    "APPROVED",
+    "FROZEN",
+    "RELOADED"
+  ],
+  "decision": {
+    "productionEligible": false,
+    "blockers": [
+      "external-registry-digest-missing",
+      "production-secrets-not-configured",
+      "target-cluster-validation-not-run",
+      "m2-stack-prs-not-merged",
+      "main-branch-final-ci-not-run",
+      "change-approval-missing",
+      "release-owner-approval-missing"
+    ]
+  }
+}
