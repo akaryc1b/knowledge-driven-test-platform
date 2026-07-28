@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "m2-governed-planning-post-merge-acceptance/v1",
+  "releaseId": "M2-RC1",
+  "version": "0.12.0",
+  "phase": "POST_MERGE_ACCEPTANCE",
+  "sourceCandidate": {
+    "path": "releases/m2/planning-release-candidate.json",
+    "digest": "5ab9439d357921119d7ca9387e661cf3f28b8420a27b3dd201df57c6419b6697",
+    "headSha": "e0ee22c30df06e676a9f677d38f57e974018e2e2"
+  },
+  "merge": {
+    "mainSha": "8b004fa0617a470fb777bbd58b3cf8600e661a5c",
+    "fileTreeMatchesCandidateHead": true,
+    "fileDeltaCount": 0,
+    "pullRequests": [
+      {
+        "pr": 12,
+        "status": "MERGED",
+        "mergeCommitSha": "1fa1e5deac9883416f1d33b12a6135a9db81b8db"
+      },
+      {
+        "pr": 13,
+        "status": "MERGED",
+        "mergeCommitSha": "2076209b0088d845b8aa483335a1fcdd561c5d70"
+      },
+      {
+        "pr": 14,
+        "status": "MERGED",
+        "mergeCommitSha": "7aec919fcf474b4558b74fa98a11ec8b29bed45a"
+      },
+      {
+        "pr": 15,
+        "status": "MERGED",
+        "mergeCommitSha": "d66e8ed82de78d7799a189a45f1a39878b3d5b1f"
+      },
+      {
+        "pr": 16,
+        "status": "MERGED",
+        "mergeCommitSha": "59a7d4c40667473d278fdf5efd38d1f3b9efcc7a"
+      },
+      {
+        "pr": 17,
+        "status": "MERGED",
+        "mergeCommitSha": "ec4607b96ecdeadf15c310dc133ee5f01fcd2010"
+      },
+      {
+        "pr": 18,
+        "status": "MERGED",
+        "mergeCommitSha": "349481f13107161f4a00862e84e9e256f6f602ea"
+      },
+      {
+        "pr": 19,
+        "status": "MERGED",
+        "mergeCommitSha": "91c42351c6fb03892cd90dc2c545a8d59542e2f7"
+      },
+      {
+        "pr": 20,
+        "status": "MERGED",
+        "mergeCommitSha": "8b004fa0617a470fb777bbd58b3cf8600e661a5c"
+      }
+    ]
+  },
+  "verification": {
+    "preMergeValidation": {
+      "status": "PASSED",
+      "runId": 30336009261,
+      "sourceSha": "e0ee22c30df06e676a9f677d38f57e974018e2e2",
+      "m2EvidenceArtifactDigest": "sha256:d728b86929732f2dc5f4db01247fa8994d7af07b9d3ead7687368de3a26edba5",
+      "postgresArtifactDigest": "sha256:6d2073de319c9a8aee9ddf026079f168bddd8e886fe2542a5ac9b7af6099aeee"
+    },
+    "mainBranchFinalCi": {
+      "status": "UNVERIFIED",
+      "commitSha": "8b004fa0617a470fb777bbd58b3cf8600e661a5c",
+      "runId": null,
+      "m2EvidenceArtifactDigest": null,
+      "postgresArtifactDigest": null
+    }
+  },
+  "decision": {
+    "productionEligible": false,
+    "resolvedBlockers": [
+      "m2-stack-prs-not-merged"
+    ],
+    "supersededBlockers": [
+      {
+        "from": "main-branch-final-ci-not-run",
+        "to": "main-branch-final-ci-not-verified"
+      }
+    ],
+    "openBlockers": [
+      "main-branch-final-ci-not-verified",
+      "external-registry-digest-missing",
+      "production-secrets-not-configured",
+      "target-cluster-validation-not-run",
+      "change-approval-missing",
+      "release-owner-approval-missing"
+    ]
+  }
+}

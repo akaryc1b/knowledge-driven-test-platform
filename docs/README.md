@@ -43,10 +43,14 @@
 - [M2-F Durable Planning Orchestration](03-roadmap/m2-f-planning-orchestration.md)
 - [M2-G Read-Only Plan Query API](03-roadmap/m2-g-read-only-plan-query-api.md)
 - [M2-H Planning Service Composition and Operations](03-roadmap/m2-h-planning-service-composition.md)
+- [M2-I M2 Release Acceptance](03-roadmap/m2-i-release-acceptance.md)
+- [M2-RC1 Post-Merge Acceptance Closure](03-roadmap/m2-rc1-post-merge-acceptance.md)
 
 ## 发布与治理
 
 - [M1-RC1 发布候选说明](releases/M1-RC1.md)
+- [M2-RC1 发布候选说明](releases/M2-RC1.md)
+- [M2-RC1 合并后验收](releases/M2-RC1-main-acceptance.md)
 - [M1 发布验收矩阵](04-governance/m1-release-acceptance-matrix.md)
 - [知识治理](04-governance/knowledge-governance.md)
 - [多项目安全与隔离](04-governance/security-and-isolation.md)
@@ -75,3 +79,5 @@
 - [ADR-0020：Single-Transaction Durable Planning Orchestration](05-adr/ADR-0020-single-transaction-planning-orchestration.md)
 - [ADR-0021：Project-Isolated Read-Only Test Plan Queries](05-adr/ADR-0021-read-only-test-plan-queries.md)
 - [ADR-0022：Unified Read-Only Knowledge and Test Plan Service Composition](05-adr/ADR-0022-unified-read-only-planning-service-composition.md)
+- [ADR-0023：M2 堆叠合并前先固定发布证据](05-adr/ADR-0023-evidence-before-m2-stack-merge.md)
+- [ADR-0024：保留候选证据并追加合并后验收](05-adr/ADR-0024-post-merge-release-acceptance.md)

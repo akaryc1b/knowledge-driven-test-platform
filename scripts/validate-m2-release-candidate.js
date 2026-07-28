@@ -1,7 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { canonicalize, sha256 } from '../packages/knowledge-core/src/index.js';
+import { canonicalize, canonicalStringify, sha256 } from '../packages/knowledge-core/src/index.js';
 
 export const M2_RELEASE_CANDIDATE_SCHEMA_VERSION = 'm2-governed-planning-release-candidate/v1';
 export const M2_RELEASE_EVIDENCE_SCHEMA_VERSION = 'm2-governed-planning-release-evidence/v1';
@@ -115,7 +115,7 @@ async function readDeploymentManifests(directory) {
   return manifests;
 }
 function assertNoSensitiveMaterial(value) {
-  const text = canonicalize(value);
+  const text = canonicalStringify(value);
   for (const pattern of [/postgres(?:ql)?:\/\//i, /-----BEGIN [A-Z ]*PRIVATE KEY-----/, /Bearer\s+[A-Za-z0-9._~-]+/i, /"(?:token|password|privateKey|databaseUrl|connectionString|subjectMappings)"\s*:/i]) {
     assert(!pattern.test(text), 'M2 release evidence contains sensitive material');
   }
