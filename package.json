@@ -26,7 +26,7 @@
     "example:deployment": "node examples/read-only-deployment-acceptance.js",
     "example:release": "node examples/read-only-release-candidate.js",
     "start:read-only": "node apps/read-only-governance-service/src/main.js",
-    "test:postgres": "node --test --test-concurrency=1 packages/knowledge-registry-postgres/test/postgres-integration.test.js packages/knowledge-governance-postgres/test/postgres-integration.test.js packages/project-membership-postgres/test/postgres-integration.test.js apps/read-only-governance-service/test/release-candidate-integration.test.js packages/test-plan-postgres/test/postgres-integration.test.js packages/test-planning-orchestration/test/postgres-integration.test.js",
+    "test:postgres": "node --test --test-concurrency=1 packages/knowledge-registry-postgres/test/postgres-integration.test.js packages/knowledge-governance-postgres/test/postgres-integration.test.js packages/project-membership-postgres/test/postgres-integration.test.js apps/read-only-governance-service/test/release-candidate-integration.test.js packages/test-plan-postgres/test/postgres-integration.test.js packages/test-planning-orchestration/test/postgres-integration.test.js apps/read-only-governance-service/test/planning-service-integration.test.js",
     "example:postgres": "node examples/postgres-registry.js",
     "example:governance:postgres": "node examples/postgres-governance.js",
     "example:planning-contracts": "node examples/test-plan-contracts.js",
@@ -38,6 +38,7 @@
     "example:planning-orchestration": "node examples/planning-orchestration.js",
     "example:planning-orchestration:postgres": "node examples/postgres-planning-orchestration.js",
     "example:plan-query": "node examples/read-only-test-plan-query.js",
-    "example:plan-http": "node examples/read-only-test-plan-http.js"
+    "example:plan-http": "node examples/read-only-test-plan-http.js",
+    "example:planning-service": "node examples/read-only-planning-service.js"
   }
 }

@@ -34,3 +34,7 @@ npm run validate:deployment
 kubectl apply -f your-production-secret.yaml
 kubectl apply -k deploy/kubernetes/read-only-governance-service
 ```
+
+## M2-H 只读计划查询
+
+同一 Deployment 和 ClusterIP Service 还提供五条 Test Plan GET 路由。应用继续只使用 `KDTP_DATABASE_URL`，启动时在同一 Pool 中应用 Test Plan Registry migration；无需第二数据库、第二 Service 或新增写权限。

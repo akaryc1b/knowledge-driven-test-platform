@@ -2,6 +2,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import {
   createRuntimeEvent,
+  isReadOnlyTestPlanPath,
   loadServiceConfig,
   publicServiceConfig,
 } from '../apps/read-only-governance-service/src/index.js';
@@ -54,9 +55,13 @@ const required = [
   '.dockerignore',
   'docs/README.md',
   'docs/releases/M1-RC1.md',
+  'docs/03-roadmap/m2-h-planning-service-composition.md',
+  'docs/05-adr/ADR-0022-unified-read-only-planning-service-composition.md',
   'apps/read-only-governance-service/package.json',
   'apps/read-only-governance-service/src/main.js',
   'apps/read-only-governance-service/src/composition.js',
+  'apps/read-only-governance-service/src/business-http.js',
+  'apps/read-only-governance-service/test/planning-service-integration.test.js',
   'apps/read-only-governance-service/Dockerfile',
   'apps/read-only-governance-service/service.env.example',
   'packages/knowledge-core/src/index.js',
@@ -134,6 +139,7 @@ const required = [
   'examples/postgres-test-plan-registry.js',
   'examples/read-only-test-plan-query.js',
   'examples/read-only-test-plan-http.js',
+  'examples/read-only-planning-service.js',
 ];
 for (const path of required) await stat(join(root, path));
 
@@ -235,6 +241,16 @@ if (planHttpRoute.handler !== 'getCoverage'
     || planHttpRoute.projectId !== 'approval-platform'
     || planHttpRoute.params.planId !== 'tp-approval-platform-123456789abc') {
   throw new Error('Read-only Test Plan HTTP route catalog is not deterministic');
+}
+if (!isReadOnlyTestPlanPath('/v1/projects/approval-platform/test-plans')
+    || isReadOnlyTestPlanPath('/v1/projects/approval-platform/knowledge')) {
+  throw new Error('Unified read-only business route dispatch is not deterministic');
+}
+const servicePackage = JSON.parse(await readFile(join(root, 'apps/read-only-governance-service/package.json'), 'utf8'));
+for (const dependency of ['@kdtp/test-plan-http', '@kdtp/test-plan-postgres', '@kdtp/test-plan-query']) {
+  if (servicePackage.dependencies?.[dependency] !== '0.1.0') {
+    throw new Error(`Read-only service composition is missing dependency ${dependency}`);
+  }
 }
 const config = loadServiceConfig({
   KDTP_DATABASE_URL: 'postgresql://validator:password@postgres.example/kdtp',

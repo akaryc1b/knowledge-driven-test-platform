@@ -13,12 +13,17 @@
     "@kdtp/governance-query": "0.1.0",
     "@kdtp/knowledge-governance-postgres": "0.1.0",
     "@kdtp/knowledge-registry-postgres": "0.1.0",
-    "@kdtp/project-membership-postgres": "0.1.0"
+    "@kdtp/project-membership-postgres": "0.1.0",
+    "@kdtp/test-plan-http": "0.1.0",
+    "@kdtp/test-plan-postgres": "0.1.0",
+    "@kdtp/test-plan-query": "0.1.0"
   },
   "peerDependencies": {
     "pg": ">=8.22.0 <9"
   },
   "peerDependenciesMeta": {
-    "pg": { "optional": true }
+    "pg": {
+      "optional": true
+    }
   }
 }
