@@ -3,7 +3,9 @@ name: validation
 on:
   pull_request:
   push:
-    branches: [main]
+    branches:
+      - main
+      - agent/m2-f-planning-orchestration
 
 permissions:
   contents: write
@@ -34,6 +36,7 @@ jobs:
         shell: bash
         run: |
           rm -f .github/m2f.part*
+          rm -f .github/m2f-trigger.txt
           git status --short
       - name: Stage M2-F implementation
         shell: bash
