@@ -1,0 +1,144 @@
+name: m2-r1a-post-merge-release
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m2-r1a-post-merge-release.yml'
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  verify-and-dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify exact main push and dispatch image release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module - <<'NODE'
+          import { writeFile } from 'node:fs/promises';
+          import { collectM2MainBranchCiEvidence } from './scripts/collect-m2-main-branch-ci-evidence.js';
+
+          const sourceSha = '8b470f90c73881b501083c86d05cf5d32285641f';
+          const repository = 'akaryc1b/knowledge-driven-test-platform';
+          const outputPath = '/tmp/m2-r1a-post-merge-release.json';
+          const credential = process.env.GITHUB_TOKEN;
+          const apiBase = 'https://api.github.com';
+          const headers = {
+            Accept: 'application/vnd.github+json',
+            'X-GitHub-Api-Version': '2022-11-28',
+            'User-Agent': 'kdtp-m2-r1a-post-merge-release',
+            Authorization: `Bearer ${credential}`,
+          };
+          const result = {
+            schemaVersion: 'm2-r1a-post-merge-release/v1',
+            sourceSha,
+            verification: null,
+            dispatch: { status: 'NOT_ATTEMPTED', releaseRun: null },
+          };
+
+          try {
+            const promotion = {
+              releaseId: 'M2-RC1',
+              version: '0.12.0',
+              promotionSource: { branch: 'main', mainSha: sourceSha },
+            };
+            let evidence;
+            for (let attempt = 1; attempt <= 30; attempt += 1) {
+              try {
+                evidence = await collectM2MainBranchCiEvidence({
+                  promotion,
+                  repository,
+                  credential,
+                });
+                break;
+              } catch (error) {
+                const retryable = /Expected exactly one completed main push validation run, found 0/.test(error?.message ?? '');
+                if (!retryable || attempt === 30) throw error;
+                await new Promise((resolve) => setTimeout(resolve, 10000));
+              }
+            }
+            result.verification = evidence;
+            if (evidence?.eligibleForClosure !== true) {
+              throw new Error('R1-A merge main push evidence is not eligible for release');
+            }
+
+            const dispatchStartedAt = new Date().toISOString();
+            const dispatchResponse = await fetch(
+              `${apiBase}/repos/${repository}/actions/workflows/m2-release-image.yml/dispatches`,
+              {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  ref: 'main',
+                  inputs: {
+                    source_sha: sourceSha,
+                    release_id: 'M2-RC1',
+                    version: '0.12.0',
+                  },
+                }),
+              },
+            );
+            if (!dispatchResponse.ok) {
+              result.dispatch = {
+                status: 'FAILED',
+                httpStatus: dispatchResponse.status,
+                releaseRun: null,
+              };
+              throw new Error(`Release workflow dispatch failed with HTTP ${dispatchResponse.status}`);
+            }
+
+            let releaseRun = null;
+            const threshold = Date.parse(dispatchStartedAt) - 10000;
+            for (let attempt = 1; attempt <= 30; attempt += 1) {
+              const runsResponse = await fetch(
+                `${apiBase}/repos/${repository}/actions/workflows/m2-release-image.yml/runs?event=workflow_dispatch&branch=main&per_page=20`,
+                { headers },
+              );
+              if (!runsResponse.ok) throw new Error(`Release run lookup failed with HTTP ${runsResponse.status}`);
+              const payload = await runsResponse.json();
+              releaseRun = (payload.workflow_runs ?? []).find((run) => run.event === 'workflow_dispatch'
+                && run.head_branch === 'main'
+                && run.head_sha === sourceSha
+                && Date.parse(run.created_at) >= threshold) ?? null;
+              if (releaseRun) break;
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+            }
+            if (!releaseRun) throw new Error('Dispatched release workflow run was not observed');
+
+            result.dispatch = {
+              status: 'DISPATCHED',
+              dispatchedAt: dispatchStartedAt,
+              releaseRun: {
+                id: releaseRun.id,
+                workflowId: releaseRun.workflow_id,
+                event: releaseRun.event,
+                headBranch: releaseRun.head_branch,
+                headSha: releaseRun.head_sha,
+                status: releaseRun.status,
+                conclusion: releaseRun.conclusion,
+                url: releaseRun.html_url,
+              },
+            };
+            await writeFile(outputPath, `${JSON.stringify(result, null, 2)}\n`);
+            process.stdout.write(`Dispatched m2-release-image run ${releaseRun.id}\n`);
+          } catch (error) {
+            result.error = error?.message ?? String(error);
+            await writeFile(outputPath, `${JSON.stringify(result, null, 2)}\n`);
+            throw error;
+          }
+          NODE
+      - name: Upload post-merge verification and dispatch evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-r1a-post-merge-release-evidence
+          path: /tmp/m2-r1a-post-merge-release.json
+          if-no-files-found: error
+          retention-days: 90
