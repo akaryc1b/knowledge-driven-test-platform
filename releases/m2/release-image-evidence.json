@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "m2-release-image-evidence/v1",
+  "releaseId": "M2-RC1",
+  "version": "0.12.0",
+  "generatedAt": "2026-07-29T09:43:25.000Z",
+  "source": {
+    "branch": "main",
+    "sha": "6bef789da58bbb7f2edd2a2024ba9a0bbf8e22a7"
+  },
+  "build": {
+    "repository": "akaryc1b/knowledge-driven-test-platform",
+    "workflow": ".github/workflows/m2-release-image.yml",
+    "runId": 30440674461
+  },
+  "image": {
+    "repository": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service",
+    "immutableReference": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service@sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13",
+    "registryDigest": "sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13",
+    "tags": [
+      "0.12.0",
+      "m2-rc1",
+      "sha-6bef789da58b"
+    ],
+    "pullVerification": {
+      "status": "PASSED",
+      "verifiedReference": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service@sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13",
+      "resolvedDigest": "sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13",
+      "verifiedAt": "2026-07-29T09:43:00.000Z"
+    }
+  },
+  "sbom": {
+    "format": "spdx-json",
+    "digest": "sha256:94a4a77a76f4802c9ff4a238e63854e1619d2ce46fd6a5eaef1e2698eb033702"
+  },
+  "attestations": {
+    "provenance": {
+      "attestationId": "37705043",
+      "url": "https://github.com/akaryc1b/knowledge-driven-test-platform/attestations/37705043",
+      "bundleDigest": "sha256:9713617e86d763075dff8e5b1394a1c7a97c0f8ef4d05a2310670daa5d90b6be"
+    },
+    "sbom": {
+      "attestationId": "37705058",
+      "url": "https://github.com/akaryc1b/knowledge-driven-test-platform/attestations/37705058",
+      "bundleDigest": "sha256:0191ec23424d1e0128ded4a3a57dc2f489b6ab07629210d84de27e008d5cdc84"
+    }
+  },
+  "decision": {
+    "externalRegistryDigestAvailable": true,
+    "eligibleForDigestBinding": true
+  }
+}
