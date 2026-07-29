@@ -1,0 +1,79 @@
+{
+  "schemaVersion": "m2-main-branch-ci-evidence/v1",
+  "releaseId": "M2-RC1",
+  "version": "0.12.0",
+  "collectedAt": "2026-07-29T05:05:55.762Z",
+  "repository": "akaryc1b/knowledge-driven-test-platform",
+  "promotionSourceSha": "edf09333d9be9ea6839b8cf4d18efed95cfba821",
+  "run": {
+    "id": 30423781549,
+    "workflowId": 321111055,
+    "workflowName": "validation",
+    "attempt": 1,
+    "event": "push",
+    "headBranch": "main",
+    "headSha": "edf09333d9be9ea6839b8cf4d18efed95cfba821",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/akaryc1b/knowledge-driven-test-platform/actions/runs/30423781549"
+  },
+  "jobs": {
+    "validate": {
+      "id": 90485717866,
+      "name": "validate",
+      "status": "completed",
+      "conclusion": "success",
+      "deploymentValidationStep": {
+        "number": 16,
+        "name": "Run deployment validation",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    },
+    "postgresIntegration": {
+      "id": 90485717817,
+      "name": "postgres-integration",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  },
+  "artifacts": {
+    "m1ReleaseEvidence": {
+      "id": 8712830165,
+      "name": "m1-release-candidate-evidence",
+      "digest": "sha256:5fd6a0a992fc5042ec24e22ec5a9dbd83c73fd8f41179676b2cc0d0ec3b7c27b",
+      "expired": false
+    },
+    "m2ReleaseEvidence": {
+      "id": 8712830487,
+      "name": "m2-release-candidate-evidence",
+      "digest": "sha256:52fa0384bf868e7dbe4115fcb5755eed971f624346d70f201c0c52e7530ba0c1",
+      "expired": false
+    },
+    "m2PostMergeEvidence": {
+      "id": 8712830783,
+      "name": "m2-post-merge-acceptance-evidence",
+      "digest": "sha256:5b5cd301970cddd6aeea29b70108a128983262480a79d39d6371f3c5ef48b6ae",
+      "expired": false
+    },
+    "postgresValidation": {
+      "id": 8712828716,
+      "name": "postgres-test-log",
+      "digest": "sha256:8008931c382ed28db60829d7ae729c3fb35547ec546dd5357c01498eac6dcd42",
+      "expired": false
+    },
+    "repositoryValidation": {
+      "id": 8712825672,
+      "name": "repository-validation-log",
+      "digest": "sha256:1fd29192b102e0767a91d11649c6056f4a6261e8159f8dee34698a3ffd849cf1",
+      "expired": false
+    },
+    "deploymentValidation": {
+      "id": 8712826341,
+      "name": "deployment-validation-log",
+      "digest": "sha256:99a28a45d3841ac234b05ca22442980871a9534ee2d92247b1d16b116b49d5a6",
+      "expired": false
+    }
+  },
+  "eligibleForClosure": true
+}
