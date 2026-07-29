@@ -54,6 +54,7 @@
 - [M2-RC1 合并后验收](releases/M2-RC1-main-acceptance.md)
 - [M2-RC1 Production Promotion](releases/M2-RC1-production-promotion.md)
 - [M2-RC1 R0 Main CI Closure](releases/M2-RC1-r0-main-ci-closure.md)
+- [M2-RC1 Immutable GHCR Image Release](releases/M2-RC1-ghcr-image-release.md)
 - [M1 发布验收矩阵](04-governance/m1-release-acceptance-matrix.md)
 - [M2 Production Promotion 验收矩阵](04-governance/m2-production-promotion-acceptance-matrix.md)
 - [知识治理](04-governance/knowledge-governance.md)
@@ -86,3 +87,4 @@
 - [ADR-0023：M2 堆叠合并前先固定发布证据](05-adr/ADR-0023-evidence-before-m2-stack-merge.md)
 - [ADR-0024：保留候选证据并追加合并后验收](05-adr/ADR-0024-post-merge-release-acceptance.md)
 - [ADR-0025：以追加证据而非改写历史完成生产晋级](05-adr/ADR-0025-production-promotion-evidence.md)
+- [ADR-0026：以精确 main SHA 和 Registry digest 发布 GHCR 镜像](05-adr/ADR-0026-immutable-ghcr-release-image.md)
