@@ -60,7 +60,7 @@ const artifacts = [
   artifact(8700000006, 'deployment-validation-log', digest('r0-deployment')),
 ];
 
-test('R0 closure collector queries the exact merged main SHA and requires complete evidence', async () => {
+test('R0 closure collector queries main push runs and matches the exact merged SHA client-side', async () => {
   const requested = [];
   const evidence = await collectM2R0MainCiClosureEvidence({
     promotion: {
@@ -87,7 +87,7 @@ test('R0 closure collector queries the exact merged main SHA and requires comple
   assert.equal(evidence.artifacts.deploymentValidation.name, 'deployment-validation-log');
   assert.equal(evidence.eligibleForClosure, true);
   assert.equal(requested.length, 3);
-  assert(requested[0].url.includes(`head_sha=${M2_R0_MAIN_SHA}`));
+  assert(requested[0].url.includes('branch=main&event=push'));
   assert(requested.every((item) => item.authorization === 'Bearer masked-runtime-token'));
   assert(!JSON.stringify(evidence).includes('masked-runtime-token'));
 });
