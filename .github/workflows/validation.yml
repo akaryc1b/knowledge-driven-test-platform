@@ -60,6 +60,7 @@ jobs:
       - run: npm run validate:m2-release
       - run: npm run validate:m2-post-merge
       - run: npm run validate:m2-production-promotion
+      - run: npm run validate:m2-main-ci-evidence
       - name: Collect immutable main push CI evidence
         env:
           GITHUB_TOKEN: ${{ github.token }}
