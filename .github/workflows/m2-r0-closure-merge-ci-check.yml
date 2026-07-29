@@ -1,0 +1,74 @@
+name: m2-r0-closure-merge-ci-check
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m2-r0-closure-merge-ci-check.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Collect exact R0 closure merge push evidence
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node --input-type=module - <<'NODE' > /tmp/m2-r0-closure-merge-ci.json
+          import { collectM2MainBranchCiEvidence } from './scripts/collect-m2-main-branch-ci-evidence.js';
+
+          const promotion = {
+            releaseId: 'M2-RC1',
+            version: '0.12.0',
+            promotionSource: {
+              branch: 'main',
+              mainSha: '84eb7027e804f834fa297ff2643d0d26610a345a',
+            },
+          };
+
+          let evidence;
+          let lastError;
+          for (let attempt = 1; attempt <= 18; attempt += 1) {
+            try {
+              evidence = await collectM2MainBranchCiEvidence({ promotion });
+              break;
+            } catch (error) {
+              lastError = error;
+              const retryable = /Expected exactly one completed main push validation run, found 0/.test(error?.message ?? '');
+              if (!retryable || attempt === 18) throw error;
+              await new Promise((resolve) => setTimeout(resolve, 10000));
+            }
+          }
+          if (!evidence) throw lastError;
+          process.stdout.write(`${JSON.stringify(evidence, null, 2)}\n`);
+          NODE
+      - name: Upload R0 closure merge push evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-r0-closure-merge-ci-evidence
+          path: /tmp/m2-r0-closure-merge-ci.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Require successful exact main push evidence
+        run: |
+          node --input-type=module - <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const evidence = JSON.parse(readFileSync('/tmp/m2-r0-closure-merge-ci.json', 'utf8'));
+          if (evidence.promotionSourceSha !== '84eb7027e804f834fa297ff2643d0d26610a345a') {
+            throw new Error('R0 closure merge source SHA is invalid');
+          }
+          if (evidence.run?.event !== 'push' || evidence.run?.headBranch !== 'main') {
+            throw new Error('R0 closure merge evidence is not a main push run');
+          }
+          if (evidence.run?.conclusion !== 'success' || evidence.eligibleForClosure !== true) {
+            throw new Error('R0 closure merge push evidence is not successful and complete');
+          }
+          NODE
