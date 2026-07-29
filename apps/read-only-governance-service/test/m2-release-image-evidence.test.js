@@ -122,5 +122,14 @@ test('M2 GHCR workflow is manual, exact-SHA, closure-gated and evidence-producin
   assert.match(workflow, /--cap-drop=ALL/);
   assert.match(workflow, /no-new-privileges/);
   assert.match(workflow, /m2-release-image-evidence/);
+
+  const exampleStepStart = workflow.indexOf('- name: Run non-PostgreSQL examples');
+  const exampleStepEnd = workflow.indexOf('- name: Install PostgreSQL driver for integration validation');
+  assert(exampleStepStart >= 0 && exampleStepEnd > exampleStepStart);
+  const exampleStep = workflow.slice(exampleStepStart, exampleStepEnd);
+  assert.match(exampleStep, /KDTP_RELEASE_SOURCE_SHA:\s*\$\{\{ inputs\.source_sha \}\}/);
+  assert.match(exampleStep, /KDTP_RELEASE_SOURCE_BRANCH:\s*main/);
+  assert.match(exampleStep, /export KDTP_RELEASE_GENERATED_AT=/);
+
   assert.doesNotMatch(workflow, /secrets\.[A-Z0-9_]*(?:TOKEN|PASSWORD|KEY)/);
 });
