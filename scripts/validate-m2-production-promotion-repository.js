@@ -2,15 +2,18 @@ import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { validateM2MainBranchCiObservation } from './validate-m2-main-branch-ci-evidence.js';
 import { validateM2ProductionPromotion } from './validate-m2-production-promotion-entry.js';
+import { validateM2R0MainCiClosure } from './validate-m2-r0-main-ci-closure.js';
 
 const ROOT = process.cwd();
 const REQUIRED = Object.freeze([
   'docs/releases/M2-RC1-production-promotion.md',
+  'docs/releases/M2-RC1-r0-main-ci-closure.md',
   'docs/03-roadmap/m2-rc1-production-promotion.md',
   'docs/04-governance/m2-production-promotion-acceptance-matrix.md',
   'docs/05-adr/ADR-0025-production-promotion-evidence.md',
   'releases/m2/production-promotion.json',
   'releases/m2/main-branch-ci-observation.json',
+  'releases/m2/r0-main-ci-closure.json',
   'schemas/release/v3/m2-production-promotion.schema.json',
   'schemas/release/v3/m2-production-promotion-evidence.schema.json',
   'schemas/release/v3/m2-main-branch-ci-evidence.schema.json',
@@ -18,14 +21,18 @@ const REQUIRED = Object.freeze([
   'scripts/validate-m2-production-promotion.js',
   'scripts/validate-m2-production-promotion-entry.js',
   'scripts/validate-m2-main-branch-ci-evidence.js',
+  'scripts/validate-m2-r0-main-ci-closure.js',
   'scripts/collect-m2-main-branch-ci-evidence.js',
+  'scripts/collect-m2-r0-main-ci-closure.js',
   'examples/m2-production-promotion.js',
   'apps/read-only-governance-service/test/m2-production-promotion.test.js',
   'apps/read-only-governance-service/test/m2-production-promotion-integration.test.js',
   'apps/read-only-governance-service/test/m2-main-branch-ci-evidence.test.js',
   'apps/read-only-governance-service/test/m2-main-branch-ci-observation.test.js',
+  'apps/read-only-governance-service/test/m2-r0-main-ci-closure.test.js',
   'apps/read-only-governance-service/test/release-evidence-environment.test.js',
   '.github/workflows/validation.yml',
+  '.github/workflows/m2-r0-main-ci-closure.yml',
 ]);
 
 for (const path of REQUIRED) await stat(join(ROOT, path));
@@ -59,6 +66,16 @@ for (const requiredText of [
 ]) {
   if (!workflow.includes(requiredText)) throw new Error(`Validation workflow is missing ${requiredText}`);
 }
+const closureWorkflow = await readFile(join(ROOT, '.github/workflows/m2-r0-main-ci-closure.yml'), 'utf8');
+for (const requiredText of [
+  'contents: read',
+  'actions: read',
+  'node scripts/collect-m2-r0-main-ci-closure.js',
+  'name: m2-r0-main-ci-closure-evidence',
+  'eligibleForClosure !== true',
+]) {
+  if (!closureWorkflow.includes(requiredText)) throw new Error(`R0 closure workflow is missing ${requiredText}`);
+}
 
 const collector = await readFile(join(ROOT, 'scripts/collect-m2-main-branch-ci-evidence.js'), 'utf8');
 for (const requiredText of [
@@ -73,25 +90,30 @@ for (const requiredText of [
   if (!collector.includes(requiredText)) throw new Error(`Main CI collector is missing ${requiredText}`);
 }
 
-const mainCiObservation = await validateM2MainBranchCiObservation();
-if (mainCiObservation.run.conclusion !== 'failure' || mainCiObservation.eligibleForClosure !== false) {
-  throw new Error('Final main push failure observation is not preserved safely');
+const failedObservation = await validateM2MainBranchCiObservation();
+if (failedObservation.run.conclusion !== 'failure' || failedObservation.eligibleForClosure !== false) {
+  throw new Error('Original final main push failure observation is not preserved safely');
+}
+const closure = await validateM2R0MainCiClosure();
+if (closure.run.conclusion !== 'success' || closure.eligibleForClosure !== true) {
+  throw new Error('R0 main CI closure evidence is incomplete');
 }
 
 const evidence = await validateM2ProductionPromotion({
-  generatedAt: '2026-07-29T00:00:00.000Z',
+  generatedAt: '2026-07-29T05:10:00.000Z',
   commitSha: 'local',
-  branch: 'agent/m2-rc1-production-promotion-contract',
+  branch: 'agent/m2-rc1-r0-main-ci-closure',
 });
 if (evidence.decision.productionEligible !== false) {
   throw new Error('M2 production promotion cannot be eligible while external blockers remain');
 }
-const mainCiResolved = evidence.mainBranchFinalCi.status === 'PASSED';
-if (mainCiResolved === evidence.decision.openBlockers.includes('main-branch-final-ci-not-verified')) {
-  throw new Error('M2 main CI blocker is inconsistent with its evidence');
+if (evidence.mainBranchFinalCi.status !== 'PASSED'
+    || !evidence.decision.resolvedBlockers.includes('main-branch-final-ci-not-verified')
+    || evidence.decision.openBlockers.includes('main-branch-final-ci-not-verified')) {
+  throw new Error('M2 main CI blocker is inconsistent with closure evidence');
 }
 if (!evidence.decision.openBlockers.includes('external-registry-digest-missing')) {
   throw new Error('M2 Registry digest blocker was closed without R1-A evidence');
 }
 
-console.log(`Validated M2 production promotion repository contract; main CI observation ${mainCiObservation.run.conclusion}; promotion ${evidence.mainBranchFinalCi.status}; blockers ${evidence.decision.openBlockers.length}`);
+console.log(`Validated M2 production promotion repository contract; historical main CI ${failedObservation.run.conclusion}; R0 closure ${closure.run.id}; promotion ${evidence.mainBranchFinalCi.status}; blockers ${evidence.decision.openBlockers.length}`);
