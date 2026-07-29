@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/release/v3/m2-main-branch-ci-evidence.schema.json",
+  "title": "M2 Main Branch Final CI Evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "releaseId",
+    "version",
+    "collectedAt",
+    "repository",
+    "promotionSourceSha",
+    "run",
+    "jobs",
+    "artifacts"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "m2-main-branch-ci-evidence/v1"
+    },
+    "releaseId": {
+      "const": "M2-RC1"
+    },
+    "version": {
+      "const": "0.12.0"
+    },
+    "collectedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "repository": {
+      "const": "akaryc1b/knowledge-driven-test-platform"
+    },
+    "promotionSourceSha": {
+      "$ref": "#/$defs/sha"
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "workflowId",
+        "workflowName",
+        "attempt",
+        "event",
+        "headBranch",
+        "headSha",
+        "status",
+        "conclusion",
+        "url"
+      ],
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "workflowId": { "type": "integer", "minimum": 1 },
+        "workflowName": { "const": "validation" },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "event": { "const": "push" },
+        "headBranch": { "const": "main" },
+        "headSha": { "$ref": "#/$defs/sha" },
+        "status": { "const": "completed" },
+        "conclusion": { "const": "success" },
+        "url": { "$ref": "#/$defs/httpsUrl" }
+      }
+    },
+    "jobs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validate", "postgresIntegration"],
+      "properties": {
+        "validate": {
+          "allOf": [
+            { "$ref": "#/$defs/successfulJob" },
+            {
+              "type": "object",
+              "required": ["deploymentValidationStep"],
+              "properties": {
+                "deploymentValidationStep": {
+                  "$ref": "#/$defs/successfulStep"
+                }
+              }
+            }
+          ]
+        },
+        "postgresIntegration": {
+          "$ref": "#/$defs/successfulJob"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "m1ReleaseEvidence",
+        "m2ReleaseEvidence",
+        "m2PostMergeEvidence",
+        "postgresValidation",
+        "repositoryValidation",
+        "deploymentValidation"
+      ],
+      "properties": {
+        "m1ReleaseEvidence": { "$ref": "#/$defs/artifact" },
+        "m2ReleaseEvidence": { "$ref": "#/$defs/artifact" },
+        "m2PostMergeEvidence": { "$ref": "#/$defs/artifact" },
+        "postgresValidation": { "$ref": "#/$defs/artifact" },
+        "repositoryValidation": { "$ref": "#/$defs/artifact" },
+        "deploymentValidation": {
+          "oneOf": [
+            { "$ref": "#/$defs/artifact" },
+            { "type": "null" }
+          ]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "httpsUrl": {
+      "type": "string",
+      "pattern": "^https://"
+    },
+    "successfulStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["number", "name", "conclusion"],
+      "properties": {
+        "number": { "type": "integer", "minimum": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "conclusion": { "const": "success" }
+      }
+    },
+    "successfulJob": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "status", "conclusion"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "status": { "const": "completed" },
+        "conclusion": { "const": "success" },
+        "deploymentValidationStep": {
+          "$ref": "#/$defs/successfulStep"
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "digest", "expired"],
+      "properties": {
+        "id": { "type": "integer", "minimum": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" },
+        "expired": { "const": false }
+      }
+    }
+  }
+}
