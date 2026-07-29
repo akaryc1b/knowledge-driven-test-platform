@@ -41,6 +41,14 @@
     {
       "schemaVersion": "m2-release-image-evidence/v1",
       "path": "schemas/release/v3/m2-release-image-evidence.schema.json"
+    },
+    {
+      "schemaVersion": "m2-r1b-image-binding/v1",
+      "path": "schemas/release/v3/m2-r1b-image-binding.schema.json"
+    },
+    {
+      "schemaVersion": "m2-r1b-image-binding-evidence/v1",
+      "path": "schemas/release/v3/m2-r1b-image-binding-evidence.schema.json"
     }
   ],
   "m2ReleaseCandidate": "m2-governed-planning-release-candidate/v1",
@@ -50,5 +58,7 @@
   "m2ProductionPromotion": "m2-production-promotion/v1",
   "m2ProductionPromotionEvidence": "m2-production-promotion-evidence/v1",
   "m2MainBranchCiEvidence": "m2-main-branch-ci-evidence/v1",
-  "m2ReleaseImageEvidence": "m2-release-image-evidence/v1"
+  "m2ReleaseImageEvidence": "m2-release-image-evidence/v1",
+  "m2R1BImageBinding": "m2-r1b-image-binding/v1",
+  "m2R1BImageBindingEvidence": "m2-r1b-image-binding-evidence/v1"
 }
