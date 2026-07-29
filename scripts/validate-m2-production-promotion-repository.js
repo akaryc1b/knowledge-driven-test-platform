@@ -16,6 +16,7 @@ const REQUIRED = Object.freeze([
   'docs/05-adr/ADR-0025-production-promotion-evidence.md',
   'docs/05-adr/ADR-0026-immutable-ghcr-release-image.md',
   'releases/m2/production-promotion.json',
+  'releases/m2/r0-production-promotion.json',
   'releases/m2/main-branch-ci-observation.json',
   'releases/m2/r0-main-ci-closure.json',
   'releases/m2/release-image-evidence.json',
@@ -92,6 +93,7 @@ const closureWorkflow = await readFile(join(ROOT, '.github/workflows/m2-r0-main-
 for (const requiredText of [
   'contents: read',
   'actions: read',
+  'releases/m2/r0-production-promotion.json',
   'node scripts/collect-m2-r0-main-ci-closure.js',
   'name: m2-r0-main-ci-closure-evidence',
   'eligibleForClosure !== true',
