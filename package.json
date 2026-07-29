@@ -17,7 +17,7 @@
     "validate:release": "node scripts/validate-release-candidate.js",
     "validate:m2-release": "node scripts/validate-m2-release-candidate.js",
     "validate:m2-post-merge": "node scripts/validate-m2-post-merge-acceptance.js",
-    "validate:m2-production-promotion": "node scripts/validate-m2-production-promotion.js",
+    "validate:m2-production-promotion": "node scripts/validate-m2-production-promotion-entry.js",
     "example:approval": "node apps/knowledge-cli/src/cli.js resolve examples/approval-platform",
     "example:registry": "node examples/registry-lifecycle.js",
     "example:governance": "node examples/governance-lifecycle.js",
