@@ -1,0 +1,327 @@
+name: m2-release-image
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact main commit SHA to release
+        required: true
+        type: string
+      release_id:
+        description: Governed release identifier
+        required: true
+        default: M2-RC1
+        type: string
+      version:
+        description: Governed release version
+        required: true
+        default: 0.12.0
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: m2-release-image-${{ inputs.source_sha }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: kdtp_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kdtp_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      IMAGE_REPOSITORY: ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service
+    steps:
+      - name: Validate dispatch inputs
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          RELEASE_ID: ${{ inputs.release_id }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[a-f0-9]{40}$ ]]
+          test "$RELEASE_ID" = "M2-RC1"
+          test "$RELEASE_VERSION" = "0.12.0"
+
+      - name: Check out exact source SHA
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify source is governed main history
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          RELEASE_ID: ${{ inputs.release_id }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          git merge-base --is-ancestor "$SOURCE_SHA" refs/remotes/origin/main
+          test -f releases/m2/production-promotion.json
+          test -f releases/m2/main-branch-ci-observation.json
+          test -f releases/m2/r0-main-ci-closure.json
+          test -f scripts/validate-m2-production-promotion-entry.js
+          test -f scripts/validate-m2-main-branch-ci-evidence.js
+          test -f scripts/validate-m2-r0-main-ci-closure.js
+          test -f scripts/generate-m2-release-image-evidence.js
+          test -f .github/workflows/m2-release-image.yml
+          PROMOTION_RELEASE_ID="$(node --input-type=module -e "import { readFileSync } from 'node:fs'; const p=JSON.parse(readFileSync('releases/m2/production-promotion.json','utf8')); process.stdout.write(p.releaseId)")"
+          PROMOTION_VERSION="$(node --input-type=module -e "import { readFileSync } from 'node:fs'; const p=JSON.parse(readFileSync('releases/m2/production-promotion.json','utf8')); process.stdout.write(p.version)")"
+          test "$RELEASE_ID" = "$PROMOTION_RELEASE_ID"
+          test "$RELEASE_VERSION" = "$PROMOTION_VERSION"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run full Node test suite
+        run: npm test
+
+      - name: Run repository and deployment validators
+        run: |
+          set -euo pipefail
+          npm run validate
+          npm run validate:deployment
+
+      - name: Run all release validators
+        run: |
+          set -euo pipefail
+          npm run validate:release
+          npm run validate:m2-release
+          npm run validate:m2-post-merge
+          npm run validate:m2-production-promotion
+          npm run validate:m2-main-ci-evidence
+          npm run validate:m2-r0-main-ci-closure
+
+      - name: Run non-PostgreSQL examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run --silent example:approval > /tmp/approval-snapshot.json
+          npm run --silent example:registry > /tmp/registry-record.json
+          npm run --silent example:governance > /tmp/governance-evidence.json
+          npm run --silent example:query > /tmp/read-only-query.json
+          npm run --silent example:access > /tmp/project-membership-access.json
+          npm run --silent example:http > /tmp/read-only-http.json
+          npm run --silent example:oidc > /tmp/oidc-authentication.json
+          npm run --silent example:service > /tmp/read-only-service.json
+          npm run --silent example:deployment > /tmp/deployment-acceptance.json
+          npm run --silent example:release > /tmp/m1-release-evidence.json
+          npm run --silent example:m2-release > /tmp/m2-release-evidence.json
+          npm run --silent example:m2-post-merge > /tmp/m2-post-merge-evidence.json
+          npm run --silent example:m2-production-promotion > /tmp/m2-production-promotion-evidence.json
+          npm run --silent example:planning-contracts > /tmp/test-plan-contracts.json
+          npm run --silent example:capability-catalog > /tmp/capability-catalog.json
+          npm run --silent example:deterministic-plan > /tmp/deterministic-plan.json
+          npm run --silent example:plan-registry > /tmp/test-plan-registry.json
+          npm run --silent example:plan-governance > /tmp/test-plan-governance.json
+          npm run --silent example:planning-orchestration > /tmp/planning-orchestration.json
+          npm run --silent example:plan-query > /tmp/read-only-test-plan-query.json
+          npm run --silent example:plan-http > /tmp/read-only-test-plan-http.json
+          npm run --silent example:planning-service > /tmp/read-only-planning-service.json
+
+      - name: Install PostgreSQL driver for integration validation
+        run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
+
+      - name: Run PostgreSQL 18 integration tests
+        env:
+          KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+        run: npm run test:postgres
+
+      - name: Run PostgreSQL examples
+        env:
+          KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run --silent example:postgres > /tmp/postgres-registry.json
+          npm run --silent example:governance:postgres > /tmp/postgres-governance.json
+          npm run --silent example:plan-registry:postgres > /tmp/postgres-test-plan-registry.json
+          npm run --silent example:planning-orchestration:postgres > /tmp/postgres-planning-orchestration.json
+
+      - name: Build local release validation image
+        run: docker build -f apps/read-only-governance-service/Dockerfile -t kdtp-read-only-service:release-validation .
+
+      - name: Verify local image runs as non-root
+        run: test "$(docker image inspect kdtp-read-only-service:release-validation --format '{{.Config.User}}')" = "node"
+
+      - name: Verify local hardened runtime
+        run: docker run --rm --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cap-drop=ALL --security-opt no-new-privileges kdtp-read-only-service:release-validation node --version
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Prepare immutable image metadata
+        id: release-metadata
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          echo "short_sha=${SOURCE_SHA:0:12}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate image labels and tags
+        id: metadata
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE_REPOSITORY }}
+          tags: |
+            type=raw,value=${{ inputs.version }}
+            type=raw,value=m2-rc1
+            type=raw,value=sha-${{ steps.release-metadata.outputs.short_sha }}
+
+      - name: Build and push immutable GHCR image
+        id: push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/read-only-governance-service/Dockerfile
+          push: true
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+
+      - name: Validate Registry digest and immutable reference
+        id: immutable-image
+        shell: bash
+        env:
+          REGISTRY_DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          set -euo pipefail
+          [[ "$REGISTRY_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          DIGEST_BODY="${REGISTRY_DIGEST#sha256:}"
+          test "$(printf '%s' "$DIGEST_BODY" | fold -w1 | sort -u | wc -l)" -gt 2
+          IMMUTABLE_REFERENCE="${IMAGE_REPOSITORY}@${REGISTRY_DIGEST}"
+          echo "registry_digest=$REGISTRY_DIGEST" >> "$GITHUB_OUTPUT"
+          echo "immutable_reference=$IMMUTABLE_REFERENCE" >> "$GITHUB_OUTPUT"
+
+      - name: Pull and verify immutable image
+        id: pull-verification
+        shell: bash
+        env:
+          IMMUTABLE_REFERENCE: ${{ steps.immutable-image.outputs.immutable_reference }}
+          REGISTRY_DIGEST: ${{ steps.immutable-image.outputs.registry_digest }}
+        run: |
+          set -euo pipefail
+          docker pull "$IMMUTABLE_REFERENCE"
+          docker image inspect "$IMMUTABLE_REFERENCE" --format '{{range .RepoDigests}}{{println .}}{{end}}' | grep -Fx "$IMMUTABLE_REFERENCE"
+          docker run --rm --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cap-drop=ALL --security-opt no-new-privileges "$IMMUTABLE_REFERENCE" node --version
+          echo "verified_at=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+          echo "resolved_digest=$REGISTRY_DIGEST" >> "$GITHUB_OUTPUT"
+
+      - name: Generate SPDX JSON SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ steps.immutable-image.outputs.immutable_reference }}
+          format: spdx-json
+          output-file: /tmp/image.sbom.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Compute SBOM digest
+        id: sbom-digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s /tmp/image.sbom.spdx.json
+          echo "digest=sha256:$(sha256sum /tmp/image.sbom.spdx.json | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Attest build provenance
+        id: provenance
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.IMAGE_REPOSITORY }}
+          subject-digest: ${{ steps.immutable-image.outputs.registry_digest }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Attest SBOM
+        id: sbom-attestation
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.IMAGE_REPOSITORY }}
+          subject-digest: ${{ steps.immutable-image.outputs.registry_digest }}
+          sbom-path: /tmp/image.sbom.spdx.json
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Compute attestation bundle digests
+        id: attestation-digests
+        shell: bash
+        env:
+          PROVENANCE_BUNDLE_PATH: ${{ steps.provenance.outputs.bundle-path }}
+          SBOM_BUNDLE_PATH: ${{ steps.sbom-attestation.outputs.bundle-path }}
+        run: |
+          set -euo pipefail
+          test -s "$PROVENANCE_BUNDLE_PATH"
+          test -s "$SBOM_BUNDLE_PATH"
+          echo "provenance_bundle_digest=sha256:$(sha256sum "$PROVENANCE_BUNDLE_PATH" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          echo "sbom_bundle_digest=sha256:$(sha256sum "$SBOM_BUNDLE_PATH" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      - name: Generate immutable image release evidence
+        shell: bash
+        env:
+          KDTP_RELEASE_ID: ${{ inputs.release_id }}
+          KDTP_RELEASE_VERSION: ${{ inputs.version }}
+          KDTP_RELEASE_SOURCE_SHA: ${{ inputs.source_sha }}
+          KDTP_RELEASE_BUILD_RUN_ID: ${{ github.run_id }}
+          KDTP_RELEASE_IMAGE_REPOSITORY: ${{ env.IMAGE_REPOSITORY }}
+          KDTP_RELEASE_IMAGE_DIGEST: ${{ steps.immutable-image.outputs.registry_digest }}
+          KDTP_RELEASE_IMAGE_REFERENCE: ${{ steps.immutable-image.outputs.immutable_reference }}
+          KDTP_RELEASE_SBOM_DIGEST: ${{ steps.sbom-digest.outputs.digest }}
+          KDTP_RELEASE_PROVENANCE_ATTESTATION_ID: ${{ steps.provenance.outputs.attestation-id }}
+          KDTP_RELEASE_PROVENANCE_ATTESTATION_URL: ${{ steps.provenance.outputs.attestation-url }}
+          KDTP_RELEASE_PROVENANCE_BUNDLE_DIGEST: ${{ steps.attestation-digests.outputs.provenance_bundle_digest }}
+          KDTP_RELEASE_SBOM_ATTESTATION_ID: ${{ steps.sbom-attestation.outputs.attestation-id }}
+          KDTP_RELEASE_SBOM_ATTESTATION_URL: ${{ steps.sbom-attestation.outputs.attestation-url }}
+          KDTP_RELEASE_SBOM_BUNDLE_DIGEST: ${{ steps.attestation-digests.outputs.sbom_bundle_digest }}
+          KDTP_RELEASE_PULL_VERIFIED_AT: ${{ steps.pull-verification.outputs.verified_at }}
+        run: |
+          set -euo pipefail
+          export KDTP_RELEASE_GENERATED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          node scripts/generate-m2-release-image-evidence.js > /tmp/m2-release-image-evidence.json
+
+      - name: Upload immutable image release evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-release-image-evidence-${{ steps.release-metadata.outputs.short_sha }}
+          path: |
+            /tmp/m2-release-image-evidence.json
+            /tmp/image.sbom.spdx.json
+            ${{ steps.provenance.outputs.bundle-path }}
+            ${{ steps.sbom-attestation.outputs.bundle-path }}
+          if-no-files-found: error
+          retention-days: 90

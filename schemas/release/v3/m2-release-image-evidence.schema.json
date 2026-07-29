@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/release/v3/m2-release-image-evidence.schema.json",
+  "title": "M2 Immutable Release Image Evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "releaseId",
+    "version",
+    "generatedAt",
+    "source",
+    "build",
+    "image",
+    "sbom",
+    "attestations",
+    "decision"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "m2-release-image-evidence/v1"
+    },
+    "releaseId": {
+      "const": "M2-RC1"
+    },
+    "version": {
+      "const": "0.12.0"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch",
+        "sha"
+      ],
+      "properties": {
+        "branch": {
+          "const": "main"
+        },
+        "sha": {
+          "$ref": "#/$defs/sha"
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "workflow",
+        "runId"
+      ],
+      "properties": {
+        "repository": {
+          "const": "akaryc1b/knowledge-driven-test-platform"
+        },
+        "workflow": {
+          "const": ".github/workflows/m2-release-image.yml"
+        },
+        "runId": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "immutableReference",
+        "registryDigest",
+        "tags",
+        "pullVerification"
+      ],
+      "properties": {
+        "repository": {
+          "const": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service"
+        },
+        "immutableReference": {
+          "type": "string",
+          "pattern": "^ghcr\\.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service@sha256:[a-f0-9]{64}$"
+        },
+        "registryDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "tags": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "pullVerification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "verifiedReference",
+            "resolvedDigest",
+            "verifiedAt"
+          ],
+          "properties": {
+            "status": {
+              "const": "PASSED"
+            },
+            "verifiedReference": {
+              "type": "string"
+            },
+            "resolvedDigest": {
+              "$ref": "#/$defs/digest"
+            },
+            "verifiedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        }
+      }
+    },
+    "sbom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "digest"
+      ],
+      "properties": {
+        "format": {
+          "const": "spdx-json"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "attestations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provenance",
+        "sbom"
+      ],
+      "properties": {
+        "provenance": {
+          "$ref": "#/$defs/attestation"
+        },
+        "sbom": {
+          "$ref": "#/$defs/attestation"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "externalRegistryDigestAvailable",
+        "eligibleForDigestBinding"
+      ],
+      "properties": {
+        "externalRegistryDigestAvailable": {
+          "const": true
+        },
+        "eligibleForDigestBinding": {
+          "const": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attestationId",
+        "url",
+        "bundleDigest"
+      ],
+      "properties": {
+        "attestationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://"
+        },
+        "bundleDigest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    }
+  }
+}
