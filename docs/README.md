@@ -53,6 +53,7 @@
 - [M2-RC1 发布候选说明](releases/M2-RC1.md)
 - [M2-RC1 合并后验收](releases/M2-RC1-main-acceptance.md)
 - [M2-RC1 Production Promotion](releases/M2-RC1-production-promotion.md)
+- [M2-RC1 R0 Main CI Closure](releases/M2-RC1-r0-main-ci-closure.md)
 - [M1 发布验收矩阵](04-governance/m1-release-acceptance-matrix.md)
 - [M2 Production Promotion 验收矩阵](04-governance/m2-production-promotion-acceptance-matrix.md)
 - [知识治理](04-governance/knowledge-governance.md)
