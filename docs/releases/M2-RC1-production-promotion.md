@@ -4,7 +4,7 @@
 
 本阶段在不改写 M2 合并前候选与合并后验收记录的前提下，追加第三阶段、独立、可审计的生产晋级契约。
 
-生产晋级记录只声明仓库中已经存在的证据，不主动查询或推断 GitHub Actions、GHCR、Secret Provider、目标集群或审批系统状态。
+Production Promotion Validator 只验证仓库中已经存在的声明，不主动查询或推断 GitHub Actions、GHCR、Secret Provider、目标集群或审批系统状态。外部查询由独立、只读 collector 执行，并把结果固化为可审计证据。
 
 ## 不可变前置证据
 
@@ -36,20 +36,20 @@
 
 ## 安全默认值
 
-仓库中的初始记录必须保持：
+仓库中的 Production Promotion 主记录保持：
 
-- 所有外部状态为 `UNVERIFIED`、`MISSING`、`NOT_CONFIGURED` 或 `NOT_RUN`；
-- 所有尚不存在的外部标识和 digest 为 `null`；
+- 未通过的外部域为 `UNVERIFIED`、`MISSING`、`NOT_CONFIGURED` 或 `NOT_RUN`；
+- 不存在的外部标识和 digest 为 `null`；
 - `openBlockers` 保留全部生产阻断项；
 - `productionEligible=false`。
 
-不得使用示例 SHA、重复字符 digest、本地 Docker Image ID、占位审批号或可变镜像标签关闭 blocker。
+失败的 CI 观测通过独立追加证据表达，不把主记录改写成 `PASSED`。不得使用示例 SHA、重复字符 digest、本地 Docker Image ID、占位审批号或可变镜像标签关闭 blocker。
 
 ## Blocker 关闭规则
 
 | Blocker | 唯一允许的关闭证据 |
 |---|---|
-| `main-branch-final-ci-not-verified` | 精确 `main` SHA、真实 push run ID、成功的 Validate/PostgreSQL jobs、成功的 Deployment Validator step，以及该历史 run 实际生成的 M1/M2/post-merge/PostgreSQL/Repository Validation Artifact digest |
+| `main-branch-final-ci-not-verified` | 精确 `main` SHA、真实 push run ID、成功的 Validate/PostgreSQL jobs、成功的 Deployment Validator step，以及该 run 实际生成的 M1/M2/post-merge/PostgreSQL/Repository/Deployment Validation Artifact digest |
 | `external-registry-digest-missing` | GHCR `@sha256:` 不可变引用、同值 Registry digest、build run ID、source SHA、SBOM digest、provenance 与 SBOM attestation、digest pull verification |
 | `production-secrets-not-configured` | 已允许的 Secret Provider、至少一个版本化 Secret 引用、配置时间；不得包含 Secret 值 |
 | `target-cluster-validation-not-run` | 非占位 cluster reference、验证 run ID、source SHA、镜像 digest、deployment manifest digest 与通过时间 |
@@ -60,19 +60,37 @@
 
 ## Main push CI 证据采集
 
-Production Promotion Validator 本身不得访问 GitHub。独立的只读 collector 可以在 GitHub Actions runner 中使用 `actions: read` 查询 Actions API，并生成 `m2-main-branch-ci-evidence/v1` Artifact。
+独立 collector 在 GitHub Actions runner 中使用最小 `actions: read` 权限查询 Actions API，并生成 `m2-main-branch-ci-evidence/v1`。
 
 Collector 必须：
 
-- 只查询 `promotionSource.mainSha` 对应的 `push` run；
-- 要求 run 已完成且结论为 `success`；
-- 要求 Validate 与 PostgreSQL jobs 成功；
-- 要求 Deployment Validator step 成功；
-- 记录该历史 run 实际存在的全部发布与验证 Artifact digest；
+- 只选择 `promotionSource.mainSha` 对应的、已完成的 `main` push run；
+- 如实记录 run、Validate job、PostgreSQL job 与 Deployment Validator step 的状态和结论；
+- 如实记录该历史 run 实际存在的 Artifact，缺失项保持 `null`；
+- 只有 run、两个 jobs、Deployment Validator step 与全部强制 Artifact 均成功/存在时才设置 `eligibleForClosure=true`；
+- 失败、取消、跳过或缺失证据时仍生成 observation，但固定 `eligibleForClosure=false`；
 - 不把 PR run、当前 collector run 或缺失 Artifact 推断成历史 `main` run；
 - 不写入 `GITHUB_TOKEN`、请求头或其他认证材料。
 
-历史 `main` run 在新增 Deployment Validation Artifact 之前已经执行，因此不得伪造一个不存在的 deployment Artifact digest。该验证由成功的 job/step ID 和结论证明；后续新的主分支 run 仍继续生成独立 deployment validation Artifact。
+## 已确认的最终 main push 结果
+
+只读 collector 已确认精确结果：
+
+- run ID：`30356400001`；
+- event：`push`；
+- branch：`main`；
+- head SHA：`991b5f0f9cfa3a382f9aff3c600f98b76aed9c08`；
+- workflow conclusion：`failure`；
+- Validate job：`90265505895`，`failure`；
+- PostgreSQL job：`90265505920`，`success`；
+- Deployment Validator step：`skipped`；
+- 唯一实际生成的 Artifact：`postgres-test-log`；
+- PostgreSQL Artifact digest：`sha256:ff900fd49517bbc469891017e741d9bcff8b8389b6a9d0881759f42f6a6dbfff`；
+- `eligibleForClosure=false`。
+
+失败根因是 Post-Merge evidence generator 在 push 环境中把空字符串 `GITHUB_HEAD_REF` 当成有效分支，导致 `M2 post-merge source branch is invalid`。R0 已增加统一的非空分支归一化和 push 环境回归测试。
+
+因此 `main-branch-final-ci-not-verified` 继续开放。PR Validation、成功的 PostgreSQL job 或此前成功的 M2-I 主分支 run 均不得替代该精确 SHA 的最终成功 push CI。
 
 ## 明确不在范围内
 
