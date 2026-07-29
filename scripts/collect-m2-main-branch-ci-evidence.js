@@ -44,16 +44,27 @@ export async function collectM2MainBranchCiEvidence(options = {}) {
 
   const runs = await fetchJson(
     fetchImpl,
-    `${apiBase}/repos/${repository}/actions/runs?head_sha=${sourceSha}&event=push&status=completed&per_page=100`,
+    `${apiBase}/repos/${repository}/actions/runs?branch=main&event=push&per_page=100`,
     headers,
   );
+  const candidates = (runs.workflow_runs ?? []).map((run) => ({
+    id: run.id,
+    name: run.name,
+    path: run.path,
+    event: run.event,
+    headBranch: run.head_branch,
+    headSha: run.head_sha,
+    status: run.status,
+    conclusion: run.conclusion,
+  }));
   const matches = (runs.workflow_runs ?? []).filter((run) => run.path === WORKFLOW_PATH
     && run.event === 'push'
     && run.head_branch === 'main'
     && run.head_sha === sourceSha
     && run.status === 'completed'
     && run.conclusion === 'success');
-  assert(matches.length === 1, `Expected exactly one successful main push validation run, found ${matches.length}`);
+  assert(matches.length === 1,
+    `Expected exactly one successful main push validation run, found ${matches.length}; candidates ${JSON.stringify(candidates)}`);
   const run = matches[0];
 
   const jobsResponse = await fetchJson(
