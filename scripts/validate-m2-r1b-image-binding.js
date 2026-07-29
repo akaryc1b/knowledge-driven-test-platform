@@ -3,7 +3,6 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { canonicalize, canonicalStringify, sha256 } from '../packages/knowledge-core/src/index.js';
 import { resolveEvidenceBranch } from './release-evidence-environment.js';
-import { validateM2ProductionPromotion } from './validate-m2-production-promotion.js';
 
 export const M2_R1B_IMAGE_BINDING_SCHEMA_VERSION = 'm2-r1b-image-binding/v1';
 export const M2_R1B_IMAGE_BINDING_EVIDENCE_SCHEMA_VERSION = 'm2-r1b-image-binding-evidence/v1';
@@ -13,6 +12,8 @@ const BINDING_PATH = join(ROOT, 'releases/m2/r1b-image-binding.json');
 const RELEASE_EVIDENCE_PATH = join(ROOT, 'releases/m2/release-image-evidence.json');
 const PROMOTION_PATH = join(ROOT, 'releases/m2/production-promotion.json');
 const DEPLOYMENT_PATH = join(ROOT, 'deploy/kubernetes/read-only-governance-service/deployment.yaml');
+const CANDIDATE_PATH = join(ROOT, 'releases/m2/planning-release-candidate.json');
+const POST_MERGE_PATH = join(ROOT, 'releases/m2/post-merge-acceptance.json');
 const SOURCE_SHA = '6bef789da58bbb7f2edd2a2024ba9a0bbf8e22a7';
 const MAIN_CI_RUN_ID = 30440545497;
 const VALIDATE_JOB_ID = 90538558839;
@@ -23,6 +24,8 @@ const RELEASE_ARTIFACT_NAME = 'm2-release-image-evidence-6bef789da58b';
 const RELEASE_ARTIFACT_DIGEST = 'sha256:03d7a7aa35b99436237494dae1f1048b828812651e4b39b4c8c82ea41a6aeef5';
 const RELEASE_EVIDENCE_DIGEST = 'sha256:dcc912aada0bb5f4337cec0682ee081ac40fe4e1bf2cb6ad6203df3b3c45492a';
 const DEPLOYMENT_DIGEST = 'sha256:fb2cb10f42f8d3473c1997c514ec11eb66bfb06f7542c3404c328c39f8763a45';
+const CANDIDATE_DIGEST = '5ab9439d357921119d7ca9387e661cf3f28b8420a27b3dd201df57c6419b6697';
+const POST_MERGE_DIGEST = 'd073efec5aa587caf7f54eedd219a494b876d2913cb8e110981c374e79501e25';
 const IMAGE_REPOSITORY = 'ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service';
 const REGISTRY_DIGEST = 'sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13';
 const IMMUTABLE_REFERENCE = `${IMAGE_REPOSITORY}@${REGISTRY_DIGEST}`;
@@ -34,6 +37,10 @@ const MAIN_CI_ARTIFACTS = Object.freeze({
   repositoryValidation: 'sha256:8cb381ea153ebbc12ee3eccff5ef3ea7ece8e99d9ea57e4d036ca19ede0bdaf3',
   deploymentValidation: 'sha256:7be5a15fb53eabef201fa9b7eadf5f234f0f6c69205359e05237db683c750b3c',
 });
+const RESOLVED_BLOCKERS = Object.freeze([
+  'main-branch-final-ci-not-verified',
+  'external-registry-digest-missing',
+]);
 const REMAINING_BLOCKERS = Object.freeze([
   'production-secrets-not-configured',
   'target-cluster-validation-not-run',
@@ -53,11 +60,16 @@ export async function validateM2R1BImageBinding(options = {}) {
     ?? JSON.parse(await readFile(options.promotionPath ?? PROMOTION_PATH, 'utf8'));
   const deployment = options.deployment
     ?? JSON.parse(await readFile(options.deploymentPath ?? DEPLOYMENT_PATH, 'utf8'));
+  const candidate = options.candidate
+    ?? JSON.parse(await readFile(options.candidatePath ?? CANDIDATE_PATH, 'utf8'));
+  const postMerge = options.postMerge
+    ?? JSON.parse(await readFile(options.postMergePath ?? POST_MERGE_PATH, 'utf8'));
 
   validateBinding(binding);
   validateReleaseEvidence(releaseEvidence);
+  validatePromotion(promotion, releaseEvidence, candidate, postMerge);
+  validateDeployment(deployment);
   validateCrossReferences(binding, releaseEvidence, promotion, deployment);
-  await validateM2ProductionPromotion({ promotion, releaseImageEvidence: releaseEvidence });
   assertNoSensitiveMaterial({ binding, releaseEvidence, promotion, deployment });
 
   const generatedAt = normalizeTimestamp(options.generatedAt ?? new Date().toISOString());
@@ -123,12 +135,10 @@ function validateBinding(binding) {
   assertObject(binding.source.mainCi, 'R1-B main CI');
   assertExactKeys(binding.source.mainCi, ['runId', 'validateJobId', 'postgresJobId', 'artifacts'],
     'R1-B main CI');
-  assert(binding.source.mainCi.runId === MAIN_CI_RUN_ID,
-    'R1-B main CI run is invalid');
-  assert(binding.source.mainCi.validateJobId === VALIDATE_JOB_ID,
-    'R1-B Validate job is invalid');
-  assert(binding.source.mainCi.postgresJobId === POSTGRES_JOB_ID,
-    'R1-B PostgreSQL job is invalid');
+  assert(binding.source.mainCi.runId === MAIN_CI_RUN_ID
+    && binding.source.mainCi.validateJobId === VALIDATE_JOB_ID
+    && binding.source.mainCi.postgresJobId === POSTGRES_JOB_ID,
+  'R1-B main CI job evidence is invalid');
   assertCanonicalEqual(binding.source.mainCi.artifacts, MAIN_CI_ARTIFACTS,
     'R1-B main CI Artifact digests changed');
 
@@ -151,12 +161,10 @@ function validateBinding(binding) {
 
   assertObject(binding.deployment, 'R1-B deployment binding');
   assertExactKeys(binding.deployment, ['path', 'image', 'manifestDigest'], 'R1-B deployment binding');
-  assert(binding.deployment.path === 'deploy/kubernetes/read-only-governance-service/deployment.yaml',
-    'R1-B deployment path is invalid');
-  assert(binding.deployment.image === IMMUTABLE_REFERENCE,
-    'R1-B deployment image is not the published immutable image');
-  assert(binding.deployment.manifestDigest === DEPLOYMENT_DIGEST,
-    'R1-B deployment manifest digest is invalid');
+  assert(binding.deployment.path === 'deploy/kubernetes/read-only-governance-service/deployment.yaml'
+    && binding.deployment.image === IMMUTABLE_REFERENCE
+    && binding.deployment.manifestDigest === DEPLOYMENT_DIGEST,
+  'R1-B deployment binding is invalid');
 
   assertObject(binding.decision, 'R1-B decision');
   assertExactKeys(binding.decision, [
@@ -177,10 +185,10 @@ function validateBinding(binding) {
 
 function validateReleaseEvidence(evidence) {
   assertObject(evidence, 'R1-A release image evidence');
-  assert(evidence.schemaVersion === 'm2-release-image-evidence/v1',
-    'R1-A release image evidence schemaVersion is invalid');
-  assert(evidence.releaseId === 'M2-RC1' && evidence.version === '0.12.0',
-    'R1-A release identity is invalid');
+  assert(evidence.schemaVersion === 'm2-release-image-evidence/v1'
+    && evidence.releaseId === 'M2-RC1'
+    && evidence.version === '0.12.0',
+  'R1-A release identity is invalid');
   normalizeTimestamp(evidence.generatedAt);
   assert(evidence.source?.branch === 'main' && evidence.source?.sha === SOURCE_SHA,
     'R1-A release source is invalid');
@@ -214,6 +222,107 @@ function validateReleaseEvidence(evidence) {
     'Repository release evidence digest changed');
 }
 
+function validatePromotion(promotion, releaseEvidence, candidate, postMerge) {
+  assertObject(promotion, 'M2 production promotion');
+  assertExactKeys(promotion, [
+    'schemaVersion', 'releaseId', 'version', 'phase', 'sourceEvidence', 'promotionSource',
+    'mainBranchFinalCi', 'imageRelease', 'secrets', 'targetClusterValidation', 'approvals', 'decision',
+  ], 'M2 production promotion');
+  assert(promotion.schemaVersion === 'm2-production-promotion/v1'
+    && promotion.releaseId === 'M2-RC1'
+    && promotion.version === '0.12.0'
+    && promotion.phase === 'PRODUCTION_PROMOTION',
+  'M2 production promotion identity is invalid');
+  assert(sha256(canonicalize(candidate)) === CANDIDATE_DIGEST,
+    'Original M2 candidate was modified');
+  assert(sha256(canonicalize(postMerge)) === POST_MERGE_DIGEST,
+    'Original M2 post-merge acceptance was modified');
+  assert(promotion.sourceEvidence?.candidate?.path === 'releases/m2/planning-release-candidate.json'
+    && promotion.sourceEvidence?.candidate?.digest === CANDIDATE_DIGEST
+    && promotion.sourceEvidence?.postMergeAcceptance?.path === 'releases/m2/post-merge-acceptance.json'
+    && promotion.sourceEvidence?.postMergeAcceptance?.digest === POST_MERGE_DIGEST,
+  'M2 production promotion historical references are invalid');
+  assert(promotion.promotionSource?.branch === 'main'
+    && promotion.promotionSource?.mainSha === SOURCE_SHA,
+  'M2 promotion source is invalid');
+  assert(promotion.mainBranchFinalCi?.status === 'PASSED'
+    && promotion.mainBranchFinalCi?.event === 'push'
+    && promotion.mainBranchFinalCi?.sourceSha === SOURCE_SHA
+    && promotion.mainBranchFinalCi?.runId === MAIN_CI_RUN_ID,
+  'M2 final main CI evidence is invalid');
+  assertCanonicalEqual(promotion.mainBranchFinalCi.artifacts, MAIN_CI_ARTIFACTS,
+    'M2 final main CI Artifact digests changed');
+
+  const image = promotion.imageRelease;
+  assert(image?.status === 'PUBLISHED'
+    && image.repository === IMAGE_REPOSITORY
+    && image.immutableReference === IMMUTABLE_REFERENCE
+    && image.registryDigest === REGISTRY_DIGEST
+    && image.sourceSha === SOURCE_SHA
+    && image.buildRunId === RELEASE_RUN_ID,
+  'M2 published image binding is invalid');
+  assert(image.sbom?.status === 'GENERATED'
+    && image.sbom?.format === releaseEvidence.sbom.format
+    && image.sbom?.digest === releaseEvidence.sbom.digest,
+  'M2 SBOM binding is invalid');
+  validatePromotionAttestation(image.provenanceAttestation, releaseEvidence.attestations.provenance,
+    'provenance');
+  validatePromotionAttestation(image.sbomAttestation, releaseEvidence.attestations.sbom, 'SBOM');
+  assert(image.pullVerification?.status === 'PASSED'
+    && image.pullVerification?.verifiedReference === IMMUTABLE_REFERENCE
+    && image.pullVerification?.resolvedDigest === REGISTRY_DIGEST
+    && image.pullVerification?.verifiedAt === releaseEvidence.image.pullVerification.verifiedAt,
+  'M2 pull verification binding is invalid');
+
+  assertCanonicalEqual(promotion.secrets, {
+    status: 'NOT_CONFIGURED', provider: null, references: [], configuredAt: null,
+  }, 'R1-B must not configure production Secrets');
+  assertCanonicalEqual(promotion.targetClusterValidation, {
+    status: 'NOT_RUN', clusterRef: null, validationRunId: null, sourceSha: null,
+    imageDigest: null, deploymentManifestDigest: null, validatedAt: null,
+  }, 'R1-B must not claim target cluster validation');
+  assertCanonicalEqual(promotion.approvals, {
+    change: { status: 'MISSING', system: null, approvalId: null, approvedAt: null },
+    releaseOwner: { status: 'MISSING', system: null, approvalId: null, approvedAt: null },
+  }, 'R1-B must not claim production approvals');
+  assert(promotion.decision?.productionEligible === false,
+    'R1-B cannot make the release production eligible');
+  assertSet(promotion.decision?.resolvedBlockers, RESOLVED_BLOCKERS,
+    'M2 resolved blockers');
+  assertSet(promotion.decision?.openBlockers, REMAINING_BLOCKERS,
+    'M2 open blockers');
+}
+
+function validateDeployment(deployment) {
+  assert(deployment?.apiVersion === 'apps/v1' && deployment?.kind === 'Deployment',
+    'R1-B Deployment identity is invalid');
+  const containers = deployment?.spec?.template?.spec?.containers;
+  assert(Array.isArray(containers) && containers.length === 1,
+    'R1-B Deployment must contain exactly one container');
+  assert(containers[0].image === IMMUTABLE_REFERENCE,
+    'R1-B Deployment image does not match the published immutable image');
+  assert(containers[0].imagePullPolicy === 'IfNotPresent',
+    'R1-B immutable image must use IfNotPresent');
+  assert(artifactDigest(deployment) === DEPLOYMENT_DIGEST,
+    'R1-B Deployment manifest digest changed');
+}
+
+function validateCrossReferences(binding, releaseEvidence, promotion, deployment) {
+  assert(binding.release.evidence.digest === artifactDigest(releaseEvidence),
+    'R1-B binding does not match repository release evidence');
+  assert(binding.deployment.manifestDigest === artifactDigest(deployment),
+    'R1-B binding does not match Deployment manifest');
+  assert(binding.deployment.image === releaseEvidence.image.immutableReference
+    && binding.deployment.image === promotion.imageRelease.immutableReference,
+  'R1-B immutable image references are inconsistent');
+  assert(binding.source.sha === promotion.promotionSource.mainSha
+    && binding.source.sha === releaseEvidence.source.sha,
+  'R1-B source SHAs are inconsistent');
+  assert(binding.release.runId === promotion.imageRelease.buildRunId
+    && binding.release.runId === releaseEvidence.build.runId,
+  'R1-B release run IDs are inconsistent');
+}
+
 function validateAttestation(attestation, expectedId, expectedBundleDigest, label) {
   assertObject(attestation, `${label} attestation`);
   assert(attestation.attestationId === expectedId,
@@ -224,47 +333,12 @@ function validateAttestation(attestation, expectedId, expectedBundleDigest, labe
     `${label} attestation bundle digest is invalid`);
 }
 
-function validateCrossReferences(binding, releaseEvidence, promotion, deployment) {
-  assert(binding.release.evidence.digest === artifactDigest(releaseEvidence),
-    'R1-B binding does not match repository release evidence');
-  assert(binding.deployment.manifestDigest === artifactDigest(deployment),
-    'R1-B binding does not match Deployment manifest');
-  const container = deployment?.spec?.template?.spec?.containers?.[0];
-  assert(deployment?.spec?.template?.spec?.containers?.length === 1,
-    'R1-B Deployment must contain exactly one container');
-  assert(container.image === IMMUTABLE_REFERENCE && container.image === binding.deployment.image,
-    'R1-B Deployment image does not match the published immutable image');
-  assert(container.imagePullPolicy === 'IfNotPresent',
-    'R1-B immutable digest Deployment must use IfNotPresent');
-
-  assert(promotion.promotionSource?.mainSha === SOURCE_SHA
-    && promotion.mainBranchFinalCi?.sourceSha === SOURCE_SHA
-    && promotion.mainBranchFinalCi?.runId === MAIN_CI_RUN_ID,
-  'Production Promotion does not bind the published source and main CI');
-  assertCanonicalEqual(promotion.mainBranchFinalCi.artifacts, MAIN_CI_ARTIFACTS,
-    'Production Promotion main CI Artifact digests changed');
-  assert(promotion.imageRelease?.status === 'PUBLISHED'
-    && promotion.imageRelease?.immutableReference === IMMUTABLE_REFERENCE
-    && promotion.imageRelease?.registryDigest === REGISTRY_DIGEST
-    && promotion.imageRelease?.sourceSha === SOURCE_SHA
-    && promotion.imageRelease?.buildRunId === RELEASE_RUN_ID,
-  'Production Promotion does not bind the published image');
-  assert(promotion.imageRelease?.sbom?.digest === releaseEvidence.sbom.digest,
-    'Production Promotion SBOM does not match release evidence');
-  assert(promotion.imageRelease?.provenanceAttestation?.bundleDigest
-      === releaseEvidence.attestations.provenance.bundleDigest,
-  'Production Promotion provenance does not match release evidence');
-  assert(promotion.imageRelease?.sbomAttestation?.bundleDigest
-      === releaseEvidence.attestations.sbom.bundleDigest,
-  'Production Promotion SBOM attestation does not match release evidence');
-  assertSet(promotion.decision?.resolvedBlockers, [
-    'main-branch-final-ci-not-verified',
-    'external-registry-digest-missing',
-  ], 'Production Promotion resolved blockers');
-  assertSet(promotion.decision?.openBlockers, REMAINING_BLOCKERS,
-    'Production Promotion open blockers');
-  assert(promotion.decision?.productionEligible === false,
-    'R1-B cannot make Production Promotion eligible');
+function validatePromotionAttestation(actual, expected, label) {
+  assert(actual?.status === 'VERIFIED'
+    && actual.attestationId === expected.attestationId
+    && actual.url === expected.url
+    && actual.bundleDigest === expected.bundleDigest,
+  `M2 ${label} attestation binding is invalid`);
 }
 
 function artifactDigest(value) {
