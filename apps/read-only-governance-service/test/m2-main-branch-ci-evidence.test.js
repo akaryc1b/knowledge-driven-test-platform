@@ -9,7 +9,7 @@ const PROMOTION = {
   promotionSource: { mainSha: SOURCE_SHA },
 };
 
-const RUN = {
+const SUCCESS_RUN = {
   id: 30360000123,
   workflow_id: 321111055,
   name: 'validation',
@@ -23,7 +23,7 @@ const RUN = {
   html_url: 'https://github.com/akaryc1b/knowledge-driven-test-platform/actions/runs/30360000123',
 };
 
-const JOBS = [
+const SUCCESS_JOBS = [
   {
     id: 90270000101,
     name: 'validate',
@@ -42,15 +42,16 @@ const JOBS = [
   },
 ];
 
-const ARTIFACTS = [
+const COMPLETE_ARTIFACTS = [
   artifact(8685000001, 'm1-release-candidate-evidence', '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'),
   artifact(8685000002, 'm2-release-candidate-evidence', '123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0'),
   artifact(8685000003, 'm2-post-merge-acceptance-evidence', '23456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01'),
   artifact(8685000004, 'postgres-test-log', '3456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012'),
   artifact(8685000005, 'repository-validation-log', '456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123'),
+  artifact(8685000006, 'deployment-validation-log', '56789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234'),
 ];
 
-test('main CI collector binds the exact successful push run, jobs, step and permanent Artifacts', async () => {
+test('main CI collector binds an exact successful push and marks complete evidence eligible', async () => {
   const requested = [];
   const evidence = await collectM2MainBranchCiEvidence({
     promotion: PROMOTION,
@@ -58,57 +59,80 @@ test('main CI collector binds the exact successful push run, jobs, step and perm
     credential: 'masked-runtime-credential',
     fetchImpl: async (url, options) => {
       requested.push({ url, authorization: options.headers.Authorization });
-      if (url.includes('/actions/runs?')) return response({ workflow_runs: [RUN] });
-      if (url.includes('/jobs?')) return response({ jobs: JOBS });
-      if (url.includes('/artifacts?')) return response({ artifacts: ARTIFACTS });
+      if (url.includes('/actions/runs?')) return response({ workflow_runs: [SUCCESS_RUN] });
+      if (url.includes('/jobs?')) return response({ jobs: SUCCESS_JOBS });
+      if (url.includes('/artifacts?')) return response({ artifacts: COMPLETE_ARTIFACTS });
       return response({}, false, 404);
     },
   });
 
   assert.equal(evidence.schemaVersion, 'm2-main-branch-ci-evidence/v1');
-  assert.equal(evidence.run.id, RUN.id);
+  assert.equal(evidence.run.id, SUCCESS_RUN.id);
   assert.equal(evidence.run.event, 'push');
   assert.equal(evidence.run.headSha, SOURCE_SHA);
   assert.equal(evidence.jobs.validate.deploymentValidationStep.conclusion, 'success');
   assert.equal(evidence.jobs.postgresIntegration.conclusion, 'success');
   assert.equal(evidence.artifacts.m2PostMergeEvidence.name, 'm2-post-merge-acceptance-evidence');
-  assert.equal(evidence.artifacts.deploymentValidation, null);
+  assert.equal(evidence.artifacts.deploymentValidation.name, 'deployment-validation-log');
+  assert.equal(evidence.eligibleForClosure, true);
   assert.equal(requested.length, 3);
   assert(requested.every((item) => item.authorization === 'Bearer masked-runtime-credential'));
   assert(!JSON.stringify(evidence).includes('masked-runtime-credential'));
 });
 
-test('main CI collector rejects PR validation and unsuccessful deployment validation', async () => {
-  const prRun = { ...RUN, event: 'pull_request', head_branch: 'agent/test' };
+test('main CI collector preserves the real failed push observation without closing the blocker', async () => {
+  const failedRun = {
+    ...SUCCESS_RUN,
+    id: 30356400001,
+    conclusion: 'failure',
+    html_url: 'https://github.com/akaryc1b/knowledge-driven-test-platform/actions/runs/30356400001',
+  };
+  const failedJobs = structuredClone(SUCCESS_JOBS);
+  failedJobs[0].id = 90265505895;
+  failedJobs[0].conclusion = 'failure';
+  failedJobs[0].steps = [];
+  failedJobs[1].id = 90265505920;
+  const partialArtifacts = [
+    artifact(8686972491, 'postgres-test-log', 'ff900fd49517bbc469891017e741d9bcff8b8389b6a9d0881759f42f6a6dbfff'),
+  ];
+
+  const evidence = await collectM2MainBranchCiEvidence({
+    promotion: PROMOTION,
+    fetchImpl: mockFetch({ run: failedRun, jobs: failedJobs, artifacts: partialArtifacts }),
+  });
+
+  assert.equal(evidence.run.id, 30356400001);
+  assert.equal(evidence.run.conclusion, 'failure');
+  assert.equal(evidence.jobs.validate.conclusion, 'failure');
+  assert.equal(evidence.jobs.validate.deploymentValidationStep, null);
+  assert.equal(evidence.jobs.postgresIntegration.conclusion, 'success');
+  assert.equal(evidence.artifacts.postgresValidation.digest,
+    'sha256:ff900fd49517bbc469891017e741d9bcff8b8389b6a9d0881759f42f6a6dbfff');
+  assert.equal(evidence.artifacts.repositoryValidation, null);
+  assert.equal(evidence.eligibleForClosure, false);
+});
+
+test('main CI collector rejects PR validation and ambiguous exact runs', async () => {
+  const prRun = { ...SUCCESS_RUN, event: 'pull_request', head_branch: 'agent/test' };
   await assert.rejects(
     collectM2MainBranchCiEvidence({
       promotion: PROMOTION,
       fetchImpl: async () => response({ workflow_runs: [prRun] }),
     }),
-    /exactly one successful main push validation run/,
+    /exactly one completed main push validation run/,
   );
 
-  const failedJobs = structuredClone(JOBS);
-  failedJobs[0].steps[0].conclusion = 'failure';
   await assert.rejects(
     collectM2MainBranchCiEvidence({
       promotion: PROMOTION,
-      fetchImpl: mockFetch({ jobs: failedJobs, artifacts: ARTIFACTS }),
+      fetchImpl: async () => response({ workflow_runs: [SUCCESS_RUN, { ...SUCCESS_RUN, id: 30360000124 }] }),
     }),
-    /Deployment Validator step did not succeed/,
+    /found 2/,
   );
 });
 
-test('main CI collector rejects missing or placeholder Artifact evidence', async () => {
-  await assert.rejects(
-    collectM2MainBranchCiEvidence({
-      promotion: PROMOTION,
-      fetchImpl: mockFetch({ artifacts: ARTIFACTS.slice(0, -1) }),
-    }),
-    /repository-validation-log Artifact, found 0/,
-  );
-
-  const placeholderArtifacts = structuredClone(ARTIFACTS);
+test('main CI collector rejects placeholder or duplicate Artifact evidence', async () => {
+  const placeholderArtifacts = structuredClone(COMPLETE_ARTIFACTS);
   placeholderArtifacts[0].digest = `sha256:${'a'.repeat(64)}`;
   await assert.rejects(
     collectM2MainBranchCiEvidence({
@@ -117,11 +141,19 @@ test('main CI collector rejects missing or placeholder Artifact evidence', async
     }),
     /looks like a placeholder/,
   );
+
+  await assert.rejects(
+    collectM2MainBranchCiEvidence({
+      promotion: PROMOTION,
+      fetchImpl: mockFetch({ artifacts: [...COMPLETE_ARTIFACTS, COMPLETE_ARTIFACTS[0]] }),
+    }),
+    /at most one m1-release-candidate-evidence Artifact/,
+  );
 });
 
-function mockFetch({ jobs = JOBS, artifacts = ARTIFACTS } = {}) {
+function mockFetch({ run = SUCCESS_RUN, jobs = SUCCESS_JOBS, artifacts = COMPLETE_ARTIFACTS } = {}) {
   return async (url) => {
-    if (url.includes('/actions/runs?')) return response({ workflow_runs: [RUN] });
+    if (url.includes('/actions/runs?')) return response({ workflow_runs: [run] });
     if (url.includes('/jobs?')) return response({ jobs });
     if (url.includes('/artifacts?')) return response({ artifacts });
     return response({}, false, 404);
