@@ -120,8 +120,12 @@ jobs:
 
       - name: Run non-PostgreSQL examples
         shell: bash
+        env:
+          KDTP_RELEASE_SOURCE_SHA: ${{ inputs.source_sha }}
+          KDTP_RELEASE_SOURCE_BRANCH: main
         run: |
           set -euo pipefail
+          export KDTP_RELEASE_GENERATED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           npm run --silent example:approval > /tmp/approval-snapshot.json
           npm run --silent example:registry > /tmp/registry-record.json
           npm run --silent example:governance > /tmp/governance-evidence.json
