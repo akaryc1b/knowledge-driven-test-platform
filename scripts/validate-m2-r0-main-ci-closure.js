@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const CLOSURE_PATH = 'releases/m2/r0-main-ci-closure.json';
-const PROMOTION_PATH = 'releases/m2/production-promotion.json';
+const PROMOTION_PATH = 'releases/m2/r0-production-promotion.json';
 const SOURCE_SHA = 'edf09333d9be9ea6839b8cf4d18efed95cfba821';
 const RUN_ID = 30423781549;
 const WORKFLOW_ID = 321111055;
@@ -85,7 +85,7 @@ function validateJobs(jobs) {
 
   const postgres = jobs.postgresIntegration;
   assertObject(postgres, 'R0 PostgreSQL job');
-  assertExactKeys(postgres, ['id', 'name', 'status', 'conclusion'], 'R0 PostgreSQL job');
+  assertExactKeys(postgres, ['id', 'name', 'status', 'conclusion'], 'R0 closure jobs');
   assert(postgres.id === 90485717817 && postgres.name === 'postgres-integration', 'R0 PostgreSQL job identity changed');
   assert(postgres.status === 'completed' && postgres.conclusion === 'success', 'R0 PostgreSQL job did not succeed');
 }
@@ -105,21 +105,21 @@ function validateArtifacts(artifacts) {
 }
 
 function validatePromotionBinding(promotion, closure) {
-  assertObject(promotion, 'Production Promotion');
+  assertObject(promotion, 'Frozen R0 Production Promotion');
   assert(promotion.promotionSource?.branch === 'main'
     && promotion.promotionSource?.mainSha === SOURCE_SHA,
-  'Production Promotion does not bind the R0 merge SHA');
+  'Frozen R0 Production Promotion does not bind the R0 merge SHA');
   const mainCi = promotion.mainBranchFinalCi;
-  assertObject(mainCi, 'Production Promotion main CI');
+  assertObject(mainCi, 'Frozen R0 Production Promotion main CI');
   assert(mainCi.status === 'PASSED' && mainCi.event === 'push'
     && mainCi.sourceSha === SOURCE_SHA && mainCi.runId === RUN_ID,
-  'Production Promotion does not bind the successful R0 main run');
+  'Frozen R0 Production Promotion does not bind the successful R0 main run');
   for (const key of Object.keys(EXPECTED_ARTIFACTS)) {
     assert(mainCi.artifacts?.[key] === closure.artifacts[key].digest,
-      `Production Promotion ${key} digest does not match R0 closure`);
+      `Frozen R0 Production Promotion ${key} digest does not match R0 closure`);
   }
   assert(promotion.decision?.productionEligible === false,
-    'Production Promotion cannot be eligible while external blockers remain');
+    'Frozen R0 Production Promotion cannot be eligible while external blockers remain');
   assertSet(promotion.decision?.resolvedBlockers, ['main-branch-final-ci-not-verified'], 'resolved blockers');
   assertSet(promotion.decision?.openBlockers, OPEN_BLOCKERS, 'open blockers');
 }
