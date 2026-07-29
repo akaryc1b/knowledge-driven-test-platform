@@ -159,6 +159,7 @@ jobs:
 
       - name: Run PostgreSQL examples
         env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
           KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
         shell: bash
         run: |
