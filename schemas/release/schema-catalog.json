@@ -25,10 +25,25 @@
     {
       "schemaVersion": "m2-governed-planning-post-merge-evidence/v1",
       "path": "schemas/release/v2/planning-post-merge-evidence.schema.json"
+    },
+    {
+      "schemaVersion": "m2-production-promotion/v1",
+      "path": "schemas/release/v3/m2-production-promotion.schema.json"
+    },
+    {
+      "schemaVersion": "m2-production-promotion-evidence/v1",
+      "path": "schemas/release/v3/m2-production-promotion-evidence.schema.json"
+    },
+    {
+      "schemaVersion": "m2-main-branch-ci-evidence/v1",
+      "path": "schemas/release/v3/m2-main-branch-ci-evidence.schema.json"
     }
   ],
   "m2ReleaseCandidate": "m2-governed-planning-release-candidate/v1",
   "m2ReleaseEvidence": "m2-governed-planning-release-evidence/v1",
   "m2PostMergeAcceptance": "m2-governed-planning-post-merge-acceptance/v1",
-  "m2PostMergeEvidence": "m2-governed-planning-post-merge-evidence/v1"
+  "m2PostMergeEvidence": "m2-governed-planning-post-merge-evidence/v1",
+  "m2ProductionPromotion": "m2-production-promotion/v1",
+  "m2ProductionPromotionEvidence": "m2-production-promotion-evidence/v1",
+  "m2MainBranchCiEvidence": "m2-main-branch-ci-evidence/v1"
 }

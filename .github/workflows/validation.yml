@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   validate:
@@ -38,7 +39,18 @@ jobs:
       - run: npm run --silent example:http > /tmp/read-only-http.json
       - run: npm run --silent example:oidc > /tmp/oidc-authentication.json
       - run: npm run --silent example:service > /tmp/read-only-service.json
-      - run: npm run validate:deployment
+      - name: Run deployment validation
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run validate:deployment 2>&1 | tee /tmp/deployment-validation.log
+      - name: Upload deployment validation log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-validation-log
+          path: /tmp/deployment-validation.log
+          if-no-files-found: error
       - run: npm run --silent example:deployment > /tmp/deployment-acceptance.json
       - run: npm run --silent example:planning-orchestration > /tmp/planning-orchestration.json
       - run: npm run --silent example:plan-query > /tmp/read-only-test-plan-query.json
@@ -47,6 +59,18 @@ jobs:
       - run: npm run validate:release
       - run: npm run validate:m2-release
       - run: npm run validate:m2-post-merge
+      - run: npm run validate:m2-production-promotion
+      - run: npm run validate:m2-main-ci-evidence
+      - name: Collect immutable main push CI evidence
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/collect-m2-main-branch-ci-evidence.js > /tmp/m2-main-branch-ci-evidence.json
+      - name: Upload immutable main push CI evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-main-branch-ci-evidence
+          path: /tmp/m2-main-branch-ci-evidence.json
+          if-no-files-found: error
       - name: Build non-root read-only service image
         run: docker build -f apps/read-only-governance-service/Dockerfile -t kdtp-read-only-service:test .
       - name: Verify container user
@@ -90,6 +114,17 @@ jobs:
         with:
           name: m2-post-merge-acceptance-evidence
           path: /tmp/m2-post-merge-evidence.json
+          if-no-files-found: error
+      - name: Generate M2 production promotion evidence
+        env:
+          KDTP_RELEASE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          KDTP_RELEASE_SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: npm run --silent example:m2-production-promotion > /tmp/m2-production-promotion-evidence.json
+      - name: Upload M2 production promotion evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-production-promotion-evidence
+          path: /tmp/m2-production-promotion-evidence.json
           if-no-files-found: error
 
   postgres-integration:

@@ -45,13 +45,16 @@
 - [M2-H Planning Service Composition and Operations](03-roadmap/m2-h-planning-service-composition.md)
 - [M2-I M2 Release Acceptance](03-roadmap/m2-i-release-acceptance.md)
 - [M2-RC1 Post-Merge Acceptance Closure](03-roadmap/m2-rc1-post-merge-acceptance.md)
+- [M2-RC1 Production Promotion](03-roadmap/m2-rc1-production-promotion.md)
 
 ## 发布与治理
 
 - [M1-RC1 发布候选说明](releases/M1-RC1.md)
 - [M2-RC1 发布候选说明](releases/M2-RC1.md)
 - [M2-RC1 合并后验收](releases/M2-RC1-main-acceptance.md)
+- [M2-RC1 Production Promotion](releases/M2-RC1-production-promotion.md)
 - [M1 发布验收矩阵](04-governance/m1-release-acceptance-matrix.md)
+- [M2 Production Promotion 验收矩阵](04-governance/m2-production-promotion-acceptance-matrix.md)
 - [知识治理](04-governance/knowledge-governance.md)
 - [多项目安全与隔离](04-governance/security-and-isolation.md)
 
@@ -81,3 +84,4 @@
 - [ADR-0022：Unified Read-Only Knowledge and Test Plan Service Composition](05-adr/ADR-0022-unified-read-only-planning-service-composition.md)
 - [ADR-0023：M2 堆叠合并前先固定发布证据](05-adr/ADR-0023-evidence-before-m2-stack-merge.md)
 - [ADR-0024：保留候选证据并追加合并后验收](05-adr/ADR-0024-post-merge-release-acceptance.md)
+- [ADR-0025：以追加证据而非改写历史完成生产晋级](05-adr/ADR-0025-production-promotion-evidence.md)
