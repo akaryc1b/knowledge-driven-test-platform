@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "m2-main-branch-ci-evidence/v1",
+  "releaseId": "M2-RC1",
+  "version": "0.12.0",
+  "collectedAt": "2026-07-29T00:56:11.676Z",
+  "repository": "akaryc1b/knowledge-driven-test-platform",
+  "promotionSourceSha": "991b5f0f9cfa3a382f9aff3c600f98b76aed9c08",
+  "run": {
+    "id": 30356400001,
+    "workflowId": 321111055,
+    "workflowName": "validation",
+    "attempt": 1,
+    "event": "push",
+    "headBranch": "main",
+    "headSha": "991b5f0f9cfa3a382f9aff3c600f98b76aed9c08",
+    "status": "completed",
+    "conclusion": "failure",
+    "url": "https://github.com/akaryc1b/knowledge-driven-test-platform/actions/runs/30356400001"
+  },
+  "jobs": {
+    "validate": {
+      "id": 90265505895,
+      "name": "validate",
+      "status": "completed",
+      "conclusion": "failure",
+      "deploymentValidationStep": {
+        "number": 16,
+        "name": "Run npm run validate:deployment",
+        "status": "completed",
+        "conclusion": "skipped"
+      }
+    },
+    "postgresIntegration": {
+      "id": 90265505920,
+      "name": "postgres-integration",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  },
+  "artifacts": {
+    "m1ReleaseEvidence": null,
+    "m2ReleaseEvidence": null,
+    "m2PostMergeEvidence": null,
+    "postgresValidation": {
+      "id": 8686972491,
+      "name": "postgres-test-log",
+      "digest": "sha256:ff900fd49517bbc469891017e741d9bcff8b8389b6a9d0881759f42f6a6dbfff",
+      "expired": false
+    },
+    "repositoryValidation": null,
+    "deploymentValidation": null
+  },
+  "eligibleForClosure": false
+}
