@@ -1,9 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { execFile as execFileCallback } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import { promisify } from 'node:util';
 import { generateM2ReleaseImageEvidence } from '../../../scripts/generate-m2-release-image-evidence.js';
 
+const execFile = promisify(execFileCallback);
 const SOURCE_SHA = createHash('sha1').update('r1-a-governed-main-source').digest('hex');
 const IMAGE_REPOSITORY = 'ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service';
 
@@ -90,6 +93,31 @@ test('M2 release image evidence rejects invalid sources, placeholder attestation
     generateM2ReleaseImageEvidence({ env: credentials }),
     /sensitive material/,
   );
+});
+
+test('manual release metadata executes every governed release evidence example', async () => {
+  const env = {
+    ...process.env,
+    KDTP_RELEASE_SOURCE_SHA: SOURCE_SHA,
+    KDTP_RELEASE_SOURCE_BRANCH: 'main',
+    KDTP_RELEASE_GENERATED_AT: '2026-07-29T05:32:00.000Z',
+  };
+  for (const script of [
+    'examples/read-only-release-candidate.js',
+    'examples/m2-release-candidate.js',
+    'examples/m2-post-merge-acceptance.js',
+    'examples/m2-production-promotion.js',
+  ]) {
+    const { stdout, stderr } = await execFile(process.execPath, [script], {
+      cwd: process.cwd(),
+      env,
+      maxBuffer: 1024 * 1024,
+    });
+    assert.equal(stderr, '');
+    const evidence = JSON.parse(stdout);
+    assert.equal(evidence.source.branch, 'main');
+    assert.equal(evidence.source.commitSha, SOURCE_SHA);
+  }
 });
 
 test('M2 GHCR workflow is manual, exact-SHA, closure-gated and evidence-producing', async () => {
