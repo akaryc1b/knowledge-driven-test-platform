@@ -1,6 +1,6 @@
 import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { validateM2ProductionPromotion } from './validate-m2-production-promotion.js';
+import { validateM2ProductionPromotion } from './validate-m2-production-promotion-entry.js';
 
 const ROOT = process.cwd();
 const REQUIRED = Object.freeze([
@@ -12,12 +12,15 @@ const REQUIRED = Object.freeze([
   'schemas/release/v3/m2-production-promotion.schema.json',
   'schemas/release/v3/m2-production-promotion-evidence.schema.json',
   'schemas/release/v3/m2-main-branch-ci-evidence.schema.json',
+  'scripts/release-evidence-environment.js',
   'scripts/validate-m2-production-promotion.js',
+  'scripts/validate-m2-production-promotion-entry.js',
   'scripts/collect-m2-main-branch-ci-evidence.js',
   'examples/m2-production-promotion.js',
   'apps/read-only-governance-service/test/m2-production-promotion.test.js',
   'apps/read-only-governance-service/test/m2-production-promotion-integration.test.js',
   'apps/read-only-governance-service/test/m2-main-branch-ci-evidence.test.js',
+  'apps/read-only-governance-service/test/release-evidence-environment.test.js',
   '.github/workflows/validation.yml',
 ]);
 
@@ -58,6 +61,7 @@ for (const requiredText of [
   "run.event === 'push'",
   "run.head_branch === 'main'",
   "run.conclusion === 'success'",
+  'eligibleForClosure',
   'repository-validation-log',
   'm2-post-merge-acceptance-evidence',
 ]) {
