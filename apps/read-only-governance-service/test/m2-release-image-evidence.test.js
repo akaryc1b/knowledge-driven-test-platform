@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { generateM2ReleaseImageEvidence } from '../../../scripts/generate-m2-release-image-evidence.js';
 
-const MAIN_SHA = '991b5f0f9cfa3a382f9aff3c600f98b76aed9c08';
+const SOURCE_SHA = '37f74c9f08199cc074206f79e9214cacd25aa9e9';
 const IMAGE_REPOSITORY = 'ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service';
 
 function digest(label) {
@@ -16,7 +16,7 @@ function releaseEnvironment() {
   return {
     KDTP_RELEASE_ID: 'M2-RC1',
     KDTP_RELEASE_VERSION: '0.12.0',
-    KDTP_RELEASE_SOURCE_SHA: MAIN_SHA,
+    KDTP_RELEASE_SOURCE_SHA: SOURCE_SHA,
     KDTP_RELEASE_BUILD_RUN_ID: '30371000001',
     KDTP_RELEASE_IMAGE_REPOSITORY: IMAGE_REPOSITORY,
     KDTP_RELEASE_IMAGE_DIGEST: imageDigest,
@@ -33,16 +33,25 @@ function releaseEnvironment() {
   };
 }
 
-test('M2 release image evidence binds a real Registry digest, SBOM and attestations', async () => {
+test('M2 release image evidence binds a real Registry digest, source SHA, SBOM and attestations', async () => {
   const evidence = await generateM2ReleaseImageEvidence({ env: releaseEnvironment() });
   assert.equal(evidence.schemaVersion, 'm2-release-image-evidence/v1');
-  assert.equal(evidence.source.sha, MAIN_SHA);
+  assert.equal(evidence.source.sha, SOURCE_SHA);
   assert.equal(evidence.image.immutableReference, `${IMAGE_REPOSITORY}@${evidence.image.registryDigest}`);
-  assert.deepEqual(evidence.image.tags, ['0.12.0', 'm2-rc1', `sha-${MAIN_SHA.slice(0, 12)}`]);
+  assert.deepEqual(evidence.image.tags, ['0.12.0', 'm2-rc1', `sha-${SOURCE_SHA.slice(0, 12)}`]);
   assert.equal(evidence.image.pullVerification.status, 'PASSED');
   assert.equal(evidence.sbom.format, 'spdx-json');
   assert.equal(evidence.decision.externalRegistryDigestAvailable, true);
   assert.equal(evidence.decision.eligibleForDigestBinding, true);
+});
+
+test('M2 release image evidence accepts a valid later main SHA and defers promotion binding to R1-B', async () => {
+  const environment = releaseEnvironment();
+  const laterMainSha = createHash('sha1').update('later-governed-main-source').digest('hex');
+  environment.KDTP_RELEASE_SOURCE_SHA = laterMainSha;
+  const evidence = await generateM2ReleaseImageEvidence({ env: environment });
+  assert.equal(evidence.source.sha, laterMainSha);
+  assert.equal(evidence.image.tags.at(-1), `sha-${laterMainSha.slice(0, 12)}`);
 });
 
 test('M2 release image evidence rejects mutable references, local image IDs and fake digests', async () => {
@@ -69,12 +78,19 @@ test('M2 release image evidence rejects mutable references, local image IDs and 
   );
 });
 
-test('M2 release image evidence rejects source drift, placeholder attestations and sensitive URLs', async () => {
-  const sourceDrift = releaseEnvironment();
-  sourceDrift.KDTP_RELEASE_SOURCE_SHA = createHash('sha1').update('other-main-source').digest('hex');
+test('M2 release image evidence rejects invalid source SHA, placeholder attestations and sensitive URLs', async () => {
+  const invalidSource = releaseEnvironment();
+  invalidSource.KDTP_RELEASE_SOURCE_SHA = 'not-a-git-sha';
   await assert.rejects(
-    generateM2ReleaseImageEvidence({ env: sourceDrift }),
-    /does not match Production Promotion/,
+    generateM2ReleaseImageEvidence({ env: invalidSource }),
+    /source SHA is invalid/,
+  );
+
+  const placeholderSource = releaseEnvironment();
+  placeholderSource.KDTP_RELEASE_SOURCE_SHA = 'a'.repeat(40);
+  await assert.rejects(
+    generateM2ReleaseImageEvidence({ env: placeholderSource }),
+    /source SHA cannot be a placeholder/,
   );
 
   const placeholder = releaseEnvironment();
@@ -106,7 +122,12 @@ test('M2 GHCR workflow is manual, exact-SHA, permission-bounded and evidence-pro
   assert.match(workflow, /ref:\s*\$\{\{ inputs\.source_sha \}\}/);
   assert.match(workflow, /fetch-depth:\s*0/);
   assert.match(workflow, /merge-base --is-ancestor/);
+  assert.match(workflow, /test -f scripts\/validate-m2-production-promotion-entry\.js/);
+  assert.match(workflow, /test -f scripts\/generate-m2-release-image-evidence\.js/);
+  assert.doesNotMatch(workflow, /PROMOTION_SHA/);
+  assert.doesNotMatch(workflow, /test "\$SOURCE_SHA" = "\$PROMOTION_SHA"/);
   assert.match(workflow, /npm run validate:m2-production-promotion/);
+  assert.match(workflow, /npm run validate:m2-main-ci-evidence/);
   assert.match(workflow, /postgres:18-alpine/);
   assert.match(workflow, /docker\/login-action@v4/);
   assert.match(workflow, /docker\/setup-buildx-action@v4/);
