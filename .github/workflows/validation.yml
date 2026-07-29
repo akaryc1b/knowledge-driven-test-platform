@@ -145,6 +145,7 @@ jobs:
           --health-timeout 3s
           --health-retries 30
     env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
       KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
     steps:
       - uses: actions/checkout@v4
@@ -165,5 +166,11 @@ jobs:
           name: postgres-test-log
           path: /tmp/postgres-test.log
           if-no-files-found: error
-      - run: npm run --silent example:governance:postgres > /tmp/postgres-governance.json
-      - run: npm run --silent example:planning-orchestration:postgres > /tmp/postgres-planning-orchestration.json
+      - name: Run all PostgreSQL examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run --silent example:postgres > /tmp/postgres-registry.json
+          npm run --silent example:governance:postgres > /tmp/postgres-governance.json
+          npm run --silent example:plan-registry:postgres > /tmp/postgres-test-plan-registry.json
+          npm run --silent example:planning-orchestration:postgres > /tmp/postgres-planning-orchestration.json
