@@ -84,7 +84,7 @@ for (const requiredText of [
   'node scripts/collect-m2-main-branch-ci-evidence.js',
   'name: m2-main-branch-ci-evidence',
   'npm run validate:m2-production-promotion',
-  'npm run validate:m2-r1b-image-binding',
+  'validate:m2-r1b-image-binding',
   'name: m2-r1b-image-binding-evidence',
 ]) {
   if (!workflow.includes(requiredText)) throw new Error(`Validation workflow is missing ${requiredText}`);
@@ -104,7 +104,7 @@ const bindingWorkflow = await readFile(join(ROOT, '.github/workflows/m2-r1b-imag
 for (const requiredText of [
   'workflow_dispatch:',
   'contents: read',
-  'npm run validate:m2-r1b-image-binding',
+  'validate:m2-r1b-image-binding',
   'name: m2-r1b-image-binding-evidence',
   'productionEligible !== false',
 ]) {
