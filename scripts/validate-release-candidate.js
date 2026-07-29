@@ -2,6 +2,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { canonicalize, sha256 } from '../packages/knowledge-core/src/index.js';
+import { resolveEvidenceBranch } from './release-evidence-environment.js';
 
 export const RELEASE_CANDIDATE_SCHEMA_VERSION = 'm1-read-only-release-candidate/v1';
 export const RELEASE_EVIDENCE_SCHEMA_VERSION = 'm1-read-only-release-evidence/v1';
@@ -61,7 +62,11 @@ export async function validateReleaseCandidate(options = {}) {
   const generatedAt = normalizeTimestamp(options.generatedAt ?? new Date().toISOString());
   const commitSha = options.commitSha ?? process.env.GITHUB_SHA ?? 'local';
   assert(commitSha === 'local' || /^[a-f0-9]{40}$/.test(commitSha), 'source commit SHA is invalid');
-  const branch = options.branch ?? process.env.GITHUB_HEAD_REF ?? process.env.GITHUB_REF_NAME ?? candidate.candidateBranch;
+  const branch = resolveEvidenceBranch({
+    branch: options.branch,
+    fallback: candidate.candidateBranch,
+    label: 'Release source branch',
+  });
   const imageId = nullableDigest(options.imageId ?? process.env.KDTP_RELEASE_IMAGE_ID ?? null, 'local image ID');
   const registryDigest = nullableDigest(options.registryDigest ?? process.env.KDTP_RELEASE_REGISTRY_DIGEST ?? null, 'registry digest');
 
@@ -120,27 +125,16 @@ function nullableDigest(value, label) {
   assert(typeof value === 'string' && /^sha256:[a-f0-9]{64}$/.test(value), `${label} is invalid`);
   return value;
 }
-
 function normalizeTimestamp(value) {
   assert(typeof value === 'string' && Number.isFinite(Date.parse(value)), 'generatedAt is invalid');
   return new Date(value).toISOString();
 }
-
 function assertSet(actual, expected, label) {
   assert(Array.isArray(actual) && actual.length === expected.length, `${label} count is invalid`);
   assert(actual.every((value, index) => value === expected[index]), `${label} order is invalid`);
-  assert(new Set(actual).size === actual.length, `${label} contains duplicates`);
 }
-
-function assertObject(value, label) {
-  assert(value && typeof value === 'object' && !Array.isArray(value), `${label} must be an object`);
-}
-
-function assert(condition, message) {
-  if (!condition) throw new Error(message);
-}
+function assertObject(value, label) { assert(value && typeof value === 'object' && !Array.isArray(value), `${label} must be an object`); }
+function assert(condition, message) { if (!condition) throw new Error(message); }
 
 const isMain = process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
-if (isMain) {
-  process.stdout.write(`${JSON.stringify(await validateReleaseCandidate(), null, 2)}\n`);
-}
+if (isMain) process.stdout.write(`${JSON.stringify(await validateReleaseCandidate(), null, 2)}\n`);
