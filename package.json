@@ -20,6 +20,7 @@
     "validate:m2-production-promotion": "node scripts/validate-m2-production-promotion-entry.js",
     "validate:m2-main-ci-evidence": "node scripts/validate-m2-main-branch-ci-evidence.js",
     "validate:m2-r0-main-ci-closure": "node scripts/validate-m2-r0-main-ci-closure.js",
+    "validate:m2-r1b-image-binding": "node scripts/validate-m2-r1b-image-binding.js",
     "example:approval": "node apps/knowledge-cli/src/cli.js resolve examples/approval-platform",
     "example:registry": "node examples/registry-lifecycle.js",
     "example:governance": "node examples/governance-lifecycle.js",
