@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import {
   M2_R0_MAIN_SHA,
   collectM2R0MainCiClosureEvidence,
@@ -9,10 +10,13 @@ import {
   loadM2R0MainCiClosure,
   validateM2R0MainCiClosure,
 } from '../../../scripts/validate-m2-r0-main-ci-closure.js';
-import { loadM2ProductionPromotion } from '../../../scripts/validate-m2-production-promotion.js';
 
 function digest(label) {
   return `sha256:${createHash('sha256').update(label).digest('hex')}`;
+}
+
+async function loadFrozenR0Promotion() {
+  return JSON.parse(await readFile('releases/m2/r0-production-promotion.json', 'utf8'));
 }
 
 const run = {
@@ -92,7 +96,7 @@ test('R0 closure collector queries main push runs and matches the exact merged S
   assert(!JSON.stringify(evidence).includes('masked-runtime-token'));
 });
 
-test('permanent R0 closure binds the real run and resolves only the final main CI blocker', async () => {
+test('permanent R0 closure binds the real run and frozen R0 blocker state', async () => {
   const closure = await validateM2R0MainCiClosure();
   assert.equal(closure.promotionSourceSha, M2_R0_MAIN_SHA);
   assert.equal(closure.run.id, 30423781549);
@@ -102,13 +106,13 @@ test('permanent R0 closure binds the real run and resolves only the final main C
     'sha256:99a28a45d3841ac234b05ca22442980871a9534ee2d92247b1d16b116b49d5a6');
   assert.equal(closure.eligibleForClosure, true);
 
-  const promotion = await loadM2ProductionPromotion();
+  const promotion = await loadFrozenR0Promotion();
   assert.deepEqual(promotion.decision.resolvedBlockers, ['main-branch-final-ci-not-verified']);
   assert.equal(promotion.decision.openBlockers.length, 5);
   assert.equal(promotion.decision.productionEligible, false);
 });
 
-test('R0 closure rejects run, Artifact and blocker tampering', async () => {
+test('R0 closure rejects run, Artifact and frozen blocker tampering', async () => {
   const closure = await loadM2R0MainCiClosure();
 
   const failedRun = structuredClone(closure);
@@ -125,7 +129,7 @@ test('R0 closure rejects run, Artifact and blocker tampering', async () => {
     /identity or digest changed/,
   );
 
-  const promotion = await loadM2ProductionPromotion();
+  const promotion = await loadFrozenR0Promotion();
   const reopened = structuredClone(promotion);
   reopened.decision.resolvedBlockers = [];
   reopened.decision.openBlockers = [
