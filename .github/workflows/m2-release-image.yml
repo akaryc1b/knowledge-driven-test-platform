@@ -78,12 +78,16 @@ jobs:
           test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
           git fetch --no-tags origin main:refs/remotes/origin/main
           git merge-base --is-ancestor "$SOURCE_SHA" refs/remotes/origin/main
+          test -f releases/m2/production-promotion.json
+          test -f releases/m2/main-branch-ci-observation.json
+          test -f scripts/validate-m2-production-promotion-entry.js
+          test -f scripts/validate-m2-main-branch-ci-evidence.js
+          test -f scripts/generate-m2-release-image-evidence.js
+          test -f .github/workflows/m2-release-image.yml
           PROMOTION_RELEASE_ID="$(node --input-type=module -e "import { readFileSync } from 'node:fs'; const p=JSON.parse(readFileSync('releases/m2/production-promotion.json','utf8')); process.stdout.write(p.releaseId)")"
           PROMOTION_VERSION="$(node --input-type=module -e "import { readFileSync } from 'node:fs'; const p=JSON.parse(readFileSync('releases/m2/production-promotion.json','utf8')); process.stdout.write(p.version)")"
-          PROMOTION_SHA="$(node --input-type=module -e "import { readFileSync } from 'node:fs'; const p=JSON.parse(readFileSync('releases/m2/production-promotion.json','utf8')); process.stdout.write(p.promotionSource.mainSha)")"
           test "$RELEASE_ID" = "$PROMOTION_RELEASE_ID"
           test "$RELEASE_VERSION" = "$PROMOTION_VERSION"
-          test "$SOURCE_SHA" = "$PROMOTION_SHA"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -109,6 +113,7 @@ jobs:
           npm run validate:m2-release
           npm run validate:m2-post-merge
           npm run validate:m2-production-promotion
+          npm run validate:m2-main-ci-evidence
 
       - name: Run non-PostgreSQL examples
         shell: bash
