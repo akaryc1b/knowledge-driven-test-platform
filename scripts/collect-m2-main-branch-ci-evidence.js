@@ -7,16 +7,26 @@ export const M2_MAIN_BRANCH_CI_EVIDENCE_SCHEMA_VERSION = 'm2-main-branch-ci-evid
 const REPOSITORY = 'akaryc1b/knowledge-driven-test-platform';
 const PROMOTION_PATH = 'releases/m2/production-promotion.json';
 const WORKFLOW_PATH = '.github/workflows/validation.yml';
-const REQUIRED_ARTIFACTS = Object.freeze({
+const ARTIFACTS = Object.freeze({
   m1ReleaseEvidence: 'm1-release-candidate-evidence',
   m2ReleaseEvidence: 'm2-release-candidate-evidence',
   m2PostMergeEvidence: 'm2-post-merge-acceptance-evidence',
   postgresValidation: 'postgres-test-log',
   repositoryValidation: 'repository-validation-log',
-});
-const OPTIONAL_ARTIFACTS = Object.freeze({
   deploymentValidation: 'deployment-validation-log',
 });
+const CLOSURE_ARTIFACT_KEYS = Object.freeze(Object.keys(ARTIFACTS));
+const CONCLUSIONS = new Set([
+  'success',
+  'failure',
+  'cancelled',
+  'timed_out',
+  'action_required',
+  'neutral',
+  'skipped',
+  'stale',
+  'startup_failure',
+]);
 const PLACEHOLDER_PATTERN = /(?:example|placeholder|sample|dummy|fake|todo|tbd|changeme|replace[-_ ]?me|not[-_ ]?set|unknown)/i;
 
 export async function collectM2MainBranchCiEvidence(options = {}) {
@@ -47,39 +57,27 @@ export async function collectM2MainBranchCiEvidence(options = {}) {
     `${apiBase}/repos/${repository}/actions/runs?branch=main&event=push&per_page=100`,
     headers,
   );
-  const candidates = (runs.workflow_runs ?? []).map((run) => ({
-    id: run.id,
-    name: run.name,
-    path: run.path,
-    event: run.event,
-    headBranch: run.head_branch,
-    headSha: run.head_sha,
-    status: run.status,
-    conclusion: run.conclusion,
-  }));
   const matches = (runs.workflow_runs ?? []).filter((run) => run.path === WORKFLOW_PATH
     && run.event === 'push'
     && run.head_branch === 'main'
     && run.head_sha === sourceSha
-    && run.status === 'completed'
-    && run.conclusion === 'success');
-  assert(matches.length === 1,
-    `Expected exactly one successful main push validation run, found ${matches.length}; candidates ${JSON.stringify(candidates)}`);
+    && run.status === 'completed');
+  assert(matches.length === 1, `Expected exactly one completed main push validation run, found ${matches.length}`);
   const run = matches[0];
+  assertConclusion(run.conclusion, 'Main CI run conclusion');
 
   const jobsResponse = await fetchJson(
     fetchImpl,
     `${apiBase}/repos/${repository}/actions/runs/${run.id}/jobs?filter=latest&per_page=100`,
     headers,
   );
-  const validateJob = requireSuccessfulJob(jobsResponse.jobs, 'validate');
-  const postgresJob = requireSuccessfulJob(jobsResponse.jobs, 'postgres-integration');
-  const deploymentStep = (validateJob.steps ?? []).find((step) => [
+  const validateJob = requireObservedJob(jobsResponse.jobs, 'validate');
+  const postgresJob = requireObservedJob(jobsResponse.jobs, 'postgres-integration');
+  const deploymentStepSource = (validateJob.steps ?? []).find((step) => [
     'Run npm run validate:deployment',
     'Run deployment validation',
   ].includes(step.name));
-  assert(deploymentStep?.status === 'completed' && deploymentStep?.conclusion === 'success',
-    'Main push Deployment Validator step did not succeed');
+  const deploymentStep = deploymentStepSource ? normalizeStep(deploymentStepSource) : null;
 
   const artifactsResponse = await fetchJson(
     fetchImpl,
@@ -87,13 +85,15 @@ export async function collectM2MainBranchCiEvidence(options = {}) {
     headers,
   );
   const artifacts = {};
-  for (const [key, name] of Object.entries(REQUIRED_ARTIFACTS)) {
-    artifacts[key] = requireArtifact(artifactsResponse.artifacts, name);
+  for (const [key, name] of Object.entries(ARTIFACTS)) {
+    artifacts[key] = optionalArtifact(artifactsResponse.artifacts, name);
   }
-  for (const [key, name] of Object.entries(OPTIONAL_ARTIFACTS)) {
-    const artifact = (artifactsResponse.artifacts ?? []).find((item) => item.name === name);
-    artifacts[key] = artifact ? normalizeArtifact(artifact) : null;
-  }
+
+  const eligibleForClosure = run.conclusion === 'success'
+    && validateJob.conclusion === 'success'
+    && postgresJob.conclusion === 'success'
+    && deploymentStep?.conclusion === 'success'
+    && CLOSURE_ARTIFACT_KEYS.every((key) => artifacts[key] !== null);
 
   const evidence = {
     schemaVersion: M2_MAIN_BRANCH_CI_EVIDENCE_SCHEMA_VERSION,
@@ -120,11 +120,7 @@ export async function collectM2MainBranchCiEvidence(options = {}) {
         name: validateJob.name,
         status: validateJob.status,
         conclusion: validateJob.conclusion,
-        deploymentValidationStep: {
-          number: positiveInteger(deploymentStep.number, 'Deployment Validator step number'),
-          name: deploymentStep.name,
-          conclusion: deploymentStep.conclusion,
-        },
+        deploymentValidationStep: deploymentStep,
       },
       postgresIntegration: {
         id: positiveInteger(postgresJob.id, 'PostgreSQL job ID'),
@@ -134,6 +130,7 @@ export async function collectM2MainBranchCiEvidence(options = {}) {
       },
     },
     artifacts,
+    eligibleForClosure,
   };
   assertNoSensitiveMaterial(evidence);
   return evidence;
@@ -145,18 +142,30 @@ async function fetchJson(fetchImpl, url, headers) {
   return response.json();
 }
 
-function requireSuccessfulJob(jobs, name) {
+function requireObservedJob(jobs, name) {
   const matches = (jobs ?? []).filter((job) => job.name === name);
   assert(matches.length === 1, `Expected exactly one ${name} job, found ${matches.length}`);
   const job = matches[0];
-  assert(job.status === 'completed' && job.conclusion === 'success', `${name} job did not succeed`);
+  assert(job.status === 'completed', `${name} job is not completed`);
+  assertConclusion(job.conclusion, `${name} job conclusion`);
   return job;
 }
 
-function requireArtifact(artifacts, name) {
+function normalizeStep(step) {
+  assert(step.status === 'completed', `${step.name} step is not completed`);
+  assertConclusion(step.conclusion, `${step.name} step conclusion`);
+  return {
+    number: positiveInteger(step.number, `${step.name} step number`),
+    name: step.name,
+    status: step.status,
+    conclusion: step.conclusion,
+  };
+}
+
+function optionalArtifact(artifacts, name) {
   const matches = (artifacts ?? []).filter((artifact) => artifact.name === name);
-  assert(matches.length === 1, `Expected exactly one ${name} Artifact, found ${matches.length}`);
-  return normalizeArtifact(matches[0]);
+  assert(matches.length <= 1, `Expected at most one ${name} Artifact, found ${matches.length}`);
+  return matches.length === 1 ? normalizeArtifact(matches[0]) : null;
 }
 
 function normalizeArtifact(artifact) {
@@ -168,6 +177,11 @@ function normalizeArtifact(artifact) {
     digest: artifact.digest,
     expired: false,
   };
+}
+
+function assertConclusion(value, label) {
+  assert(CONCLUSIONS.has(value), `${label} is invalid`);
+  return value;
 }
 
 function assertArtifactDigest(value, label) {
