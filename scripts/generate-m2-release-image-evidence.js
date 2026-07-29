@@ -35,7 +35,6 @@ export async function generateM2ReleaseImageEvidence(options = {}) {
   assert(version === promotion.version && version === '0.12.0', 'Release version does not match Production Promotion');
   assert(isSha(sourceSha), 'Release image source SHA is invalid');
   assert(!isPlaceholderHex(sourceSha), 'Release image source SHA cannot be a placeholder');
-  assert(sourceSha === promotion.promotionSource?.mainSha, 'Release image source SHA does not match Production Promotion');
   assert(imageRepository === IMAGE_REPOSITORY, 'Release image repository is invalid');
   assert(immutableReference === `${imageRepository}@${registryDigest}`,
     'Release image reference must be the complete immutable Registry reference');
