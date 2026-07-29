@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { canonicalize, canonicalStringify, sha256 } from '../packages/knowledge-core/src/index.js';
+import { resolveEvidenceBranch } from './release-evidence-environment.js';
 
 export const M2_POST_MERGE_ACCEPTANCE_SCHEMA_VERSION = 'm2-governed-planning-post-merge-acceptance/v1';
 export const M2_POST_MERGE_EVIDENCE_SCHEMA_VERSION = 'm2-governed-planning-post-merge-evidence/v1';
@@ -74,9 +75,11 @@ export async function validateM2PostMergeAcceptance(options = {}) {
   const generatedAt = normalizeTimestamp(options.generatedAt ?? new Date().toISOString());
   const commitSha = options.commitSha ?? process.env.GITHUB_SHA ?? 'local';
   assert(commitSha === 'local' || isSha(commitSha), 'M2 post-merge source commit SHA is invalid');
-  const branch = options.branch ?? process.env.GITHUB_HEAD_REF ?? process.env.GITHUB_REF_NAME
-    ?? 'agent/m2-rc1-post-merge-acceptance';
-  assert(typeof branch === 'string' && branch.length > 0, 'M2 post-merge source branch is invalid');
+  const branch = resolveEvidenceBranch({
+    branch: options.branch,
+    fallback: 'agent/m2-rc1-post-merge-acceptance',
+    label: 'M2 post-merge source branch',
+  });
 
   const evidence = {
     schemaVersion: M2_POST_MERGE_EVIDENCE_SCHEMA_VERSION,
