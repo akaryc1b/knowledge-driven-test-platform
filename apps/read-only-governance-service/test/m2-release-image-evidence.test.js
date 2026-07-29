@@ -122,6 +122,7 @@ test('manual release metadata executes every governed release evidence example',
 
 test('M2 GHCR workflow is manual, exact-SHA, closure-gated and evidence-producing', async () => {
   const workflow = await readFile('.github/workflows/m2-release-image.yml', 'utf8');
+  const validationWorkflow = await readFile('.github/workflows/validation.yml', 'utf8');
   assert.match(workflow, /workflow_dispatch:/);
   assert.doesNotMatch(workflow, /^\s{2}(?:push|pull_request|schedule):/m);
   assert.match(workflow, /source_sha:/);
@@ -158,6 +159,27 @@ test('M2 GHCR workflow is manual, exact-SHA, closure-gated and evidence-producin
   assert.match(exampleStep, /KDTP_RELEASE_SOURCE_SHA:\s*\$\{\{ inputs\.source_sha \}\}/);
   assert.match(exampleStep, /KDTP_RELEASE_SOURCE_BRANCH:\s*main/);
   assert.match(exampleStep, /export KDTP_RELEASE_GENERATED_AT=/);
+
+  const postgresStepStart = workflow.indexOf('- name: Run PostgreSQL examples');
+  const postgresStepEnd = workflow.indexOf('- name: Build local release validation image');
+  assert(postgresStepStart >= 0 && postgresStepEnd > postgresStepStart);
+  const postgresStep = workflow.slice(postgresStepStart, postgresStepEnd);
+  assert.match(postgresStep, /DATABASE_URL:\s*postgresql:\/\/postgres:postgres@127\.0\.0\.1:5432\/kdtp_test/);
+  assert.match(postgresStep, /KDTP_POSTGRES_TEST_URL:\s*postgresql:\/\/postgres:postgres@127\.0\.0\.1:5432\/kdtp_test/);
+  assert.match(postgresStep, /example:postgres/);
+  assert.match(postgresStep, /example:governance:postgres/);
+  assert.match(postgresStep, /example:plan-registry:postgres/);
+  assert.match(postgresStep, /example:planning-orchestration:postgres/);
+
+  const validationPostgresStart = validationWorkflow.indexOf('postgres-integration:');
+  assert(validationPostgresStart >= 0);
+  const validationPostgres = validationWorkflow.slice(validationPostgresStart);
+  assert.match(validationPostgres, /DATABASE_URL:\s*postgresql:\/\/postgres:postgres@127\.0\.0\.1:5432\/kdtp_test/);
+  assert.match(validationPostgres, /KDTP_POSTGRES_TEST_URL:\s*postgresql:\/\/postgres:postgres@127\.0\.0\.1:5432\/kdtp_test/);
+  assert.match(validationPostgres, /example:postgres/);
+  assert.match(validationPostgres, /example:governance:postgres/);
+  assert.match(validationPostgres, /example:plan-registry:postgres/);
+  assert.match(validationPostgres, /example:planning-orchestration:postgres/);
 
   assert.doesNotMatch(workflow, /secrets\.[A-Z0-9_]*(?:TOKEN|PASSWORD|KEY)/);
 });
