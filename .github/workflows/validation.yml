@@ -62,6 +62,14 @@ jobs:
       - run: npm run validate:m2-production-promotion
       - run: npm run validate:m2-main-ci-evidence
       - run: npm run validate:m2-r0-main-ci-closure
+      - name: Validate M2 R1-B image binding
+        run: npm run --silent validate:m2-r1b-image-binding > /tmp/m2-r1b-image-binding-evidence.json
+      - name: Upload M2 R1-B image binding evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-r1b-image-binding-evidence
+          path: /tmp/m2-r1b-image-binding-evidence.json
+          if-no-files-found: error
       - name: Collect immutable main push CI evidence
         env:
           GITHUB_TOKEN: ${{ github.token }}
