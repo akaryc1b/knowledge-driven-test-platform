@@ -2,6 +2,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { canonicalize, canonicalStringify, sha256 } from '../packages/knowledge-core/src/index.js';
+import { resolveEvidenceBranch } from './release-evidence-environment.js';
 
 export const M2_RELEASE_CANDIDATE_SCHEMA_VERSION = 'm2-governed-planning-release-candidate/v1';
 export const M2_RELEASE_EVIDENCE_SCHEMA_VERSION = 'm2-governed-planning-release-evidence/v1';
@@ -72,7 +73,11 @@ export async function validateM2ReleaseCandidate(options = {}) {
   const generatedAt = normalizeTimestamp(options.generatedAt ?? new Date().toISOString());
   const commitSha = options.commitSha ?? process.env.GITHUB_SHA ?? 'local';
   assert(commitSha === 'local' || /^[a-f0-9]{40}$/.test(commitSha), 'M2 source commit SHA is invalid');
-  const branch = options.branch ?? process.env.GITHUB_HEAD_REF ?? process.env.GITHUB_REF_NAME ?? candidate.candidateBranch;
+  const branch = resolveEvidenceBranch({
+    branch: options.branch,
+    fallback: candidate.candidateBranch,
+    label: 'M2 source branch',
+  });
   const imageId = nullableDigest(options.imageId ?? process.env.KDTP_RELEASE_IMAGE_ID ?? null, 'M2 local image ID');
   const registryDigest = nullableDigest(options.registryDigest ?? process.env.KDTP_RELEASE_REGISTRY_DIGEST ?? null, 'M2 registry digest');
 
@@ -132,7 +137,6 @@ function normalizeTimestamp(value) {
 function assertSet(actual, expected, label) {
   assert(Array.isArray(actual) && actual.length === expected.length, `${label} count is invalid`);
   assert(actual.every((value, index) => value === expected[index]), `${label} order is invalid`);
-  assert(new Set(actual).size === actual.length, `${label} contains duplicates`);
 }
 function assertObject(value, label) { assert(value && typeof value === 'object' && !Array.isArray(value), `${label} must be an object`); }
 function assert(condition, message) { if (!condition) throw new Error(message); }
