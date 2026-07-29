@@ -21,7 +21,7 @@ export async function validateKubernetesManifests(directory = DEFAULT_DEPLOYMENT
   ].map(async ([key, file]) => [key, await readJsonYaml(join(directory, file))])));
 
   validateIdentity(resources);
-  const image = validateDeployment(resources.deployment, resources.configMap);
+  validateDeployment(resources.deployment, resources.configMap);
   validateService(resources.service, resources.deployment);
   validateServiceAccount(resources.serviceAccount, resources.deployment);
   validatePdb(resources.pdb, resources.deployment);
@@ -33,7 +33,6 @@ export async function validateKubernetesManifests(directory = DEFAULT_DEPLOYMENT
     deployment: resources.deployment.metadata.name,
     namespace: resources.deployment.metadata.namespace,
     replicas: resources.deployment.spec.replicas,
-    image,
   };
 }
 
@@ -124,7 +123,6 @@ function validateDeployment(deployment, configMap) {
   const tmpVolume = (podSpec.volumes ?? []).find((item) => item.name === tmpMount?.name);
   invariant(tmpMount && tmpVolume?.emptyDir?.sizeLimit,
     'Read-only root filesystem requires a bounded writable /tmp emptyDir');
-  return container.image;
 }
 
 function validateService(service, deployment) {
