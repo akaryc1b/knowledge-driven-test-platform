@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "m2-production-promotion/v1",
+  "releaseId": "M2-RC1",
+  "version": "0.12.0",
+  "phase": "PRODUCTION_PROMOTION",
+  "sourceEvidence": {
+    "candidate": {
+      "path": "releases/m2/planning-release-candidate.json",
+      "digest": "5ab9439d357921119d7ca9387e661cf3f28b8420a27b3dd201df57c6419b6697"
+    },
+    "postMergeAcceptance": {
+      "path": "releases/m2/post-merge-acceptance.json",
+      "digest": "d073efec5aa587caf7f54eedd219a494b876d2913cb8e110981c374e79501e25"
+    }
+  },
+  "promotionSource": {
+    "branch": "main",
+    "mainSha": "edf09333d9be9ea6839b8cf4d18efed95cfba821"
+  },
+  "mainBranchFinalCi": {
+    "status": "PASSED",
+    "event": "push",
+    "sourceSha": "edf09333d9be9ea6839b8cf4d18efed95cfba821",
+    "runId": 30423781549,
+    "artifacts": {
+      "m1ReleaseEvidence": "sha256:5fd6a0a992fc5042ec24e22ec5a9dbd83c73fd8f41179676b2cc0d0ec3b7c27b",
+      "m2ReleaseEvidence": "sha256:52fa0384bf868e7dbe4115fcb5755eed971f624346d70f201c0c52e7530ba0c1",
+      "m2PostMergeEvidence": "sha256:5b5cd301970cddd6aeea29b70108a128983262480a79d39d6371f3c5ef48b6ae",
+      "postgresValidation": "sha256:8008931c382ed28db60829d7ae729c3fb35547ec546dd5357c01498eac6dcd42",
+      "repositoryValidation": "sha256:1fd29192b102e0767a91d11649c6056f4a6261e8159f8dee34698a3ffd849cf1",
+      "deploymentValidation": "sha256:99a28a45d3841ac234b05ca22442980871a9534ee2d92247b1d16b116b49d5a6"
+    }
+  },
+  "imageRelease": {
+    "status": "MISSING",
+    "repository": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service",
+    "immutableReference": null,
+    "registryDigest": null,
+    "sourceSha": null,
+    "buildRunId": null,
+    "sbom": {
+      "status": "MISSING",
+      "format": null,
+      "digest": null
+    },
+    "provenanceAttestation": {
+      "status": "MISSING",
+      "attestationId": null,
+      "url": null,
+      "bundleDigest": null
+    },
+    "sbomAttestation": {
+      "status": "MISSING",
+      "attestationId": null,
+      "url": null,
+      "bundleDigest": null
+    },
+    "pullVerification": {
+      "status": "NOT_RUN",
+      "verifiedReference": null,
+      "resolvedDigest": null,
+      "verifiedAt": null
+    }
+  },
+  "secrets": {
+    "status": "NOT_CONFIGURED",
+    "provider": null,
+    "references": [],
+    "configuredAt": null
+  },
+  "targetClusterValidation": {
+    "status": "NOT_RUN",
+    "clusterRef": null,
+    "validationRunId": null,
+    "sourceSha": null,
+    "imageDigest": null,
+    "deploymentManifestDigest": null,
+    "validatedAt": null
+  },
+  "approvals": {
+    "change": {
+      "status": "MISSING",
+      "system": null,
+      "approvalId": null,
+      "approvedAt": null
+    },
+    "releaseOwner": {
+      "status": "MISSING",
+      "system": null,
+      "approvalId": null,
+      "approvedAt": null
+    }
+  },
+  "decision": {
+    "productionEligible": false,
+    "resolvedBlockers": [
+      "main-branch-final-ci-not-verified"
+    ],
+    "openBlockers": [
+      "external-registry-digest-missing",
+      "production-secrets-not-configured",
+      "target-cluster-validation-not-run",
+      "change-approval-missing",
+      "release-owner-approval-missing"
+    ]
+  }
+}
