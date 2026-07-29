@@ -13,7 +13,8 @@
     "promotionSourceSha",
     "run",
     "jobs",
-    "artifacts"
+    "artifacts",
+    "eligibleForClosure"
   ],
   "properties": {
     "schemaVersion": {
@@ -59,7 +60,7 @@
         "headBranch": { "const": "main" },
         "headSha": { "$ref": "#/$defs/sha" },
         "status": { "const": "completed" },
-        "conclusion": { "const": "success" },
+        "conclusion": { "$ref": "#/$defs/conclusion" },
         "url": { "$ref": "#/$defs/httpsUrl" }
       }
     },
@@ -70,20 +71,23 @@
       "properties": {
         "validate": {
           "allOf": [
-            { "$ref": "#/$defs/successfulJob" },
+            { "$ref": "#/$defs/jobObservation" },
             {
               "type": "object",
               "required": ["deploymentValidationStep"],
               "properties": {
                 "deploymentValidationStep": {
-                  "$ref": "#/$defs/successfulStep"
+                  "oneOf": [
+                    { "$ref": "#/$defs/stepObservation" },
+                    { "type": "null" }
+                  ]
                 }
               }
             }
           ]
         },
         "postgresIntegration": {
-          "$ref": "#/$defs/successfulJob"
+          "$ref": "#/$defs/jobObservation"
         }
       }
     },
@@ -99,18 +103,16 @@
         "deploymentValidation"
       ],
       "properties": {
-        "m1ReleaseEvidence": { "$ref": "#/$defs/artifact" },
-        "m2ReleaseEvidence": { "$ref": "#/$defs/artifact" },
-        "m2PostMergeEvidence": { "$ref": "#/$defs/artifact" },
-        "postgresValidation": { "$ref": "#/$defs/artifact" },
-        "repositoryValidation": { "$ref": "#/$defs/artifact" },
-        "deploymentValidation": {
-          "oneOf": [
-            { "$ref": "#/$defs/artifact" },
-            { "type": "null" }
-          ]
-        }
+        "m1ReleaseEvidence": { "$ref": "#/$defs/artifactOrNull" },
+        "m2ReleaseEvidence": { "$ref": "#/$defs/artifactOrNull" },
+        "m2PostMergeEvidence": { "$ref": "#/$defs/artifactOrNull" },
+        "postgresValidation": { "$ref": "#/$defs/artifactOrNull" },
+        "repositoryValidation": { "$ref": "#/$defs/artifactOrNull" },
+        "deploymentValidation": { "$ref": "#/$defs/artifactOrNull" }
       }
+    },
+    "eligibleForClosure": {
+      "type": "boolean"
     }
   },
   "$defs": {
@@ -126,17 +128,31 @@
       "type": "string",
       "pattern": "^https://"
     },
-    "successfulStep": {
+    "conclusion": {
+      "enum": [
+        "success",
+        "failure",
+        "cancelled",
+        "timed_out",
+        "action_required",
+        "neutral",
+        "skipped",
+        "stale",
+        "startup_failure"
+      ]
+    },
+    "stepObservation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["number", "name", "conclusion"],
+      "required": ["number", "name", "status", "conclusion"],
       "properties": {
         "number": { "type": "integer", "minimum": 1 },
         "name": { "type": "string", "minLength": 1 },
-        "conclusion": { "const": "success" }
+        "status": { "const": "completed" },
+        "conclusion": { "$ref": "#/$defs/conclusion" }
       }
     },
-    "successfulJob": {
+    "jobObservation": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "name", "status", "conclusion"],
@@ -144,9 +160,12 @@
         "id": { "type": "integer", "minimum": 1 },
         "name": { "type": "string", "minLength": 1 },
         "status": { "const": "completed" },
-        "conclusion": { "const": "success" },
+        "conclusion": { "$ref": "#/$defs/conclusion" },
         "deploymentValidationStep": {
-          "$ref": "#/$defs/successfulStep"
+          "oneOf": [
+            { "$ref": "#/$defs/stepObservation" },
+            { "type": "null" }
+          ]
         }
       }
     },
@@ -160,6 +179,12 @@
         "digest": { "$ref": "#/$defs/digest" },
         "expired": { "const": false }
       }
+    },
+    "artifactOrNull": {
+      "oneOf": [
+        { "$ref": "#/$defs/artifact" },
+        { "type": "null" }
+      ]
     }
   }
 }
