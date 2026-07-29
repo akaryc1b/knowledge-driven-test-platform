@@ -49,7 +49,7 @@
 
 | Blocker | 唯一允许的关闭证据 |
 |---|---|
-| `main-branch-final-ci-not-verified` | 精确 `main` SHA、真实 push run ID、M1/M2/post-merge/PostgreSQL/Repository Validation Artifact digest 均存在且格式有效 |
+| `main-branch-final-ci-not-verified` | 精确 `main` SHA、真实 push run ID、成功的 Validate/PostgreSQL jobs、成功的 Deployment Validator step，以及该历史 run 实际生成的 M1/M2/post-merge/PostgreSQL/Repository Validation Artifact digest |
 | `external-registry-digest-missing` | GHCR `@sha256:` 不可变引用、同值 Registry digest、build run ID、source SHA、SBOM digest、provenance 与 SBOM attestation、digest pull verification |
 | `production-secrets-not-configured` | 已允许的 Secret Provider、至少一个版本化 Secret 引用、配置时间；不得包含 Secret 值 |
 | `target-cluster-validation-not-run` | 非占位 cluster reference、验证 run ID、source SHA、镜像 digest、deployment manifest digest 与通过时间 |
@@ -57,6 +57,22 @@
 | `release-owner-approval-missing` | 非占位审批系统、审批号、批准时间 |
 
 `resolvedBlockers` 必须严格由对应证据推导。`openBlockers` 非空时，`productionEligible` 必须为 `false`；只有六项强制 blocker 全部由证据关闭后才允许为 `true`。
+
+## Main push CI 证据采集
+
+Production Promotion Validator 本身不得访问 GitHub。独立的只读 collector 可以在 GitHub Actions runner 中使用 `actions: read` 查询 Actions API，并生成 `m2-main-branch-ci-evidence/v1` Artifact。
+
+Collector 必须：
+
+- 只查询 `promotionSource.mainSha` 对应的 `push` run；
+- 要求 run 已完成且结论为 `success`；
+- 要求 Validate 与 PostgreSQL jobs 成功；
+- 要求 Deployment Validator step 成功；
+- 记录该历史 run 实际存在的全部发布与验证 Artifact digest；
+- 不把 PR run、当前 collector run 或缺失 Artifact 推断成历史 `main` run；
+- 不写入 `GITHUB_TOKEN`、请求头或其他认证材料。
+
+历史 `main` run 在新增 Deployment Validation Artifact 之前已经执行，因此不得伪造一个不存在的 deployment Artifact digest。该验证由成功的 job/step ID 和结论证明；后续新的主分支 run 仍继续生成独立 deployment validation Artifact。
 
 ## 明确不在范围内
 
