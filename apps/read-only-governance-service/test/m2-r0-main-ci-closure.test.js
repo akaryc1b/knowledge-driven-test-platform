@@ -5,6 +5,11 @@ import {
   M2_R0_MAIN_SHA,
   collectM2R0MainCiClosureEvidence,
 } from '../../../scripts/collect-m2-r0-main-ci-closure.js';
+import {
+  loadM2R0MainCiClosure,
+  validateM2R0MainCiClosure,
+} from '../../../scripts/validate-m2-r0-main-ci-closure.js';
+import { loadM2ProductionPromotion } from '../../../scripts/validate-m2-production-promotion.js';
 
 function digest(label) {
   return `sha256:${createHash('sha256').update(label).digest('hex')}`;
@@ -85,6 +90,52 @@ test('R0 closure collector queries the exact merged main SHA and requires comple
   assert(requested[0].url.includes(`head_sha=${M2_R0_MAIN_SHA}`));
   assert(requested.every((item) => item.authorization === 'Bearer masked-runtime-token'));
   assert(!JSON.stringify(evidence).includes('masked-runtime-token'));
+});
+
+test('permanent R0 closure binds the real run and resolves only the final main CI blocker', async () => {
+  const closure = await validateM2R0MainCiClosure();
+  assert.equal(closure.promotionSourceSha, M2_R0_MAIN_SHA);
+  assert.equal(closure.run.id, 30423781549);
+  assert.equal(closure.run.conclusion, 'success');
+  assert.equal(closure.jobs.validate.deploymentValidationStep.conclusion, 'success');
+  assert.equal(closure.artifacts.deploymentValidation.digest,
+    'sha256:99a28a45d3841ac234b05ca22442980871a9534ee2d92247b1d16b116b49d5a6');
+  assert.equal(closure.eligibleForClosure, true);
+
+  const promotion = await loadM2ProductionPromotion();
+  assert.deepEqual(promotion.decision.resolvedBlockers, ['main-branch-final-ci-not-verified']);
+  assert.equal(promotion.decision.openBlockers.length, 5);
+  assert.equal(promotion.decision.productionEligible, false);
+});
+
+test('R0 closure rejects run, Artifact and blocker tampering', async () => {
+  const closure = await loadM2R0MainCiClosure();
+
+  const failedRun = structuredClone(closure);
+  failedRun.run.conclusion = 'failure';
+  await assert.rejects(
+    validateM2R0MainCiClosure({ closure: failedRun }),
+    /run did not succeed/,
+  );
+
+  const changedDigest = structuredClone(closure);
+  changedDigest.artifacts.repositoryValidation.digest = digest('changed-repository-artifact');
+  await assert.rejects(
+    validateM2R0MainCiClosure({ closure: changedDigest }),
+    /identity or digest changed/,
+  );
+
+  const promotion = await loadM2ProductionPromotion();
+  const reopened = structuredClone(promotion);
+  reopened.decision.resolvedBlockers = [];
+  reopened.decision.openBlockers = [
+    'main-branch-final-ci-not-verified',
+    ...promotion.decision.openBlockers,
+  ];
+  await assert.rejects(
+    validateM2R0MainCiClosure({ closure, promotion: reopened }),
+    /resolved blockers|open blockers/,
+  );
 });
 
 function artifact(id, name, value) {
