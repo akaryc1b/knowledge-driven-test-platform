@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { canonicalize, canonicalStringify, sha256 } from '../packages/knowledge-core/src/index.js';
+import { resolveEvidenceBranch } from './release-evidence-environment.js';
 
 export const M2_PRODUCTION_PROMOTION_SCHEMA_VERSION = 'm2-production-promotion/v1';
 export const M2_PRODUCTION_PROMOTION_EVIDENCE_SCHEMA_VERSION = 'm2-production-promotion-evidence/v1';
@@ -12,7 +13,7 @@ const CANDIDATE_PATH = join(ROOT, 'releases/m2/planning-release-candidate.json')
 const POST_MERGE_PATH = join(ROOT, 'releases/m2/post-merge-acceptance.json');
 const CANDIDATE_DIGEST = '5ab9439d357921119d7ca9387e661cf3f28b8420a27b3dd201df57c6419b6697';
 const POST_MERGE_DIGEST = 'd073efec5aa587caf7f54eedd219a494b876d2913cb8e110981c374e79501e25';
-const PROMOTION_MAIN_SHA = '991b5f0f9cfa3a382f9aff3c600f98b76aed9c08';
+const PROMOTION_MAIN_SHA = 'edf09333d9be9ea6839b8cf4d18efed95cfba821';
 const IMAGE_REPOSITORY = 'ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service';
 const CI_ARTIFACT_KEYS = Object.freeze([
   'm1ReleaseEvidence',
@@ -73,27 +74,17 @@ export async function validateM2ProductionPromotion(options = {}) {
 
   validateSourceEvidence(promotion.sourceEvidence, candidate, postMergeAcceptance);
   validatePromotionSource(promotion.promotionSource);
-  const mainCiPassed = validateMainCi(promotion.mainBranchFinalCi);
-  const imagePublished = validateImageRelease(promotion.imageRelease);
-  const secretsConfigured = validateSecrets(promotion.secrets);
-  const clusterValidated = validateTargetCluster(
-    promotion.targetClusterValidation,
-    promotion.imageRelease,
-  );
-  const changeApproved = validateApproval(promotion.approvals?.change, 'change approval');
-  const ownerApproved = validateApproval(promotion.approvals?.releaseOwner, 'release owner approval');
-
+  const proofs = [
+    validateMainCi(promotion.mainBranchFinalCi),
+    validateImageRelease(promotion.imageRelease),
+    validateSecrets(promotion.secrets),
+    validateTargetCluster(promotion.targetClusterValidation, promotion.imageRelease),
+    validateApproval(promotion.approvals?.change, 'change approval'),
+    validateApproval(promotion.approvals?.releaseOwner, 'release owner approval'),
+  ];
   assertObject(promotion.approvals, 'production approvals');
   assertExactKeys(promotion.approvals, ['change', 'releaseOwner'], 'production approvals');
 
-  const proofs = [
-    mainCiPassed,
-    imagePublished,
-    secretsConfigured,
-    clusterValidated,
-    changeApproved,
-    ownerApproved,
-  ];
   const expectedResolved = BLOCKERS.filter((_, index) => proofs[index]);
   const expectedOpen = BLOCKERS.filter((_, index) => !proofs[index]);
   validateDecision(promotion.decision, expectedResolved, expectedOpen);
@@ -103,9 +94,11 @@ export async function validateM2ProductionPromotion(options = {}) {
   const commitSha = options.commitSha ?? process.env.GITHUB_SHA ?? 'local';
   assert(commitSha === 'local' || isSha(commitSha), 'M2 production promotion evidence commit SHA is invalid');
   if (commitSha !== 'local') assertNotPlaceholderSha(commitSha, 'M2 production promotion evidence commit SHA');
-  const branch = options.branch ?? process.env.GITHUB_HEAD_REF ?? process.env.GITHUB_REF_NAME
-    ?? 'agent/m2-rc1-production-promotion-contract';
-  assert(typeof branch === 'string' && branch.length > 0, 'M2 production promotion evidence branch is invalid');
+  const branch = resolveEvidenceBranch({
+    branch: options.branch,
+    fallback: 'agent/m2-rc1-production-promotion-contract',
+    label: 'M2 production promotion evidence branch',
+  });
 
   const evidence = {
     schemaVersion: M2_PRODUCTION_PROMOTION_EVIDENCE_SCHEMA_VERSION,
@@ -174,11 +167,13 @@ function validateMainCi(mainCi) {
   assertObject(mainCi, 'main branch final CI');
   assertExactKeys(mainCi, ['status', 'event', 'sourceSha', 'runId', 'artifacts'], 'main branch final CI');
   assert(mainCi.event === 'push', 'M2 final main CI must be a push workflow');
-  assert(mainCi.sourceSha === PROMOTION_MAIN_SHA, 'M2 final main CI source SHA must match the promotion source');
+  assert(mainCi.sourceSha === PROMOTION_MAIN_SHA,
+    'M2 final main CI source SHA must match the promotion source');
   assertNotPlaceholderSha(mainCi.sourceSha, 'M2 final main CI source SHA');
   assertObject(mainCi.artifacts, 'main branch final CI artifacts');
   assertExactKeys(mainCi.artifacts, CI_ARTIFACT_KEYS, 'main branch final CI artifacts');
-  assert(mainCi.status === 'UNVERIFIED' || mainCi.status === 'PASSED', 'M2 final main CI status is invalid');
+  assert(mainCi.status === 'UNVERIFIED' || mainCi.status === 'PASSED',
+    'M2 final main CI status is invalid');
   if (mainCi.status === 'UNVERIFIED') {
     assert(mainCi.runId === null, 'Unverified main CI cannot contain a run ID');
     for (const key of CI_ARTIFACT_KEYS) {
@@ -208,7 +203,8 @@ function validateImageRelease(imageRelease) {
     'pullVerification',
   ], 'image release');
   assert(imageRelease.repository === IMAGE_REPOSITORY, 'M2 image repository is invalid');
-  assert(imageRelease.status === 'MISSING' || imageRelease.status === 'PUBLISHED', 'M2 image release status is invalid');
+  assert(imageRelease.status === 'MISSING' || imageRelease.status === 'PUBLISHED',
+    'M2 image release status is invalid');
   if (imageRelease.status === 'MISSING') {
     for (const key of ['immutableReference', 'registryDigest', 'sourceSha', 'buildRunId']) {
       assert(imageRelease[key] === null, `Missing image release cannot contain ${key}`);
@@ -233,7 +229,11 @@ function validateImageRelease(imageRelease) {
   validateGeneratedSbom(imageRelease.sbom);
   validateVerifiedAttestation(imageRelease.provenanceAttestation, 'provenance attestation');
   validateVerifiedAttestation(imageRelease.sbomAttestation, 'SBOM attestation');
-  validatePassedPullVerification(imageRelease.pullVerification, expectedReference, imageRelease.registryDigest);
+  validatePassedPullVerification(
+    imageRelease.pullVerification,
+    expectedReference,
+    imageRelease.registryDigest,
+  );
   return true;
 }
 
@@ -248,7 +248,8 @@ function validateGeneratedSbom(sbom) {
   assertObject(sbom, 'SBOM');
   assertExactKeys(sbom, ['status', 'format', 'digest'], 'SBOM');
   assert(sbom.status === 'GENERATED', 'Published image requires a generated SBOM');
-  assert(sbom.format === 'spdx-json' || sbom.format === 'cyclonedx-json', 'Published image SBOM format is invalid');
+  assert(sbom.format === 'spdx-json' || sbom.format === 'cyclonedx-json',
+    'Published image SBOM format is invalid');
   assertArtifactDigest(sbom.digest, 'SBOM digest');
 }
 
@@ -256,8 +257,10 @@ function validateMissingAttestation(attestation, label) {
   assertObject(attestation, label);
   assertExactKeys(attestation, ['status', 'attestationId', 'url', 'bundleDigest'], label);
   assert(attestation.status === 'MISSING', `Missing image release ${label} status is invalid`);
-  assert(attestation.attestationId === null && attestation.url === null && attestation.bundleDigest === null,
-    `Missing image release cannot contain ${label} evidence`);
+  assert(attestation.attestationId === null
+    && attestation.url === null
+    && attestation.bundleDigest === null,
+  `Missing image release cannot contain ${label} evidence`);
 }
 
 function validateVerifiedAttestation(attestation, label) {
@@ -271,8 +274,13 @@ function validateVerifiedAttestation(attestation, label) {
 
 function validateMissingPullVerification(verification) {
   assertObject(verification, 'image pull verification');
-  assertExactKeys(verification, ['status', 'verifiedReference', 'resolvedDigest', 'verifiedAt'], 'image pull verification');
-  assert(verification.status === 'NOT_RUN', 'Missing image release pull verification status is invalid');
+  assertExactKeys(
+    verification,
+    ['status', 'verifiedReference', 'resolvedDigest', 'verifiedAt'],
+    'image pull verification',
+  );
+  assert(verification.status === 'NOT_RUN',
+    'Missing image release pull verification status is invalid');
   assert(verification.verifiedReference === null
     && verification.resolvedDigest === null
     && verification.verifiedAt === null,
@@ -281,32 +289,44 @@ function validateMissingPullVerification(verification) {
 
 function validatePassedPullVerification(verification, expectedReference, expectedDigest) {
   assertObject(verification, 'image pull verification');
-  assertExactKeys(verification, ['status', 'verifiedReference', 'resolvedDigest', 'verifiedAt'], 'image pull verification');
+  assertExactKeys(
+    verification,
+    ['status', 'verifiedReference', 'resolvedDigest', 'verifiedAt'],
+    'image pull verification',
+  );
   assert(verification.status === 'PASSED', 'Published image requires digest pull verification');
-  assert(verification.verifiedReference === expectedReference, 'Pulled image reference does not match published image');
-  assert(verification.resolvedDigest === expectedDigest, 'Pulled image digest does not match Registry digest');
+  assert(verification.verifiedReference === expectedReference,
+    'Pulled image reference does not match published image');
+  assert(verification.resolvedDigest === expectedDigest,
+    'Pulled image digest does not match Registry digest');
   normalizeTimestamp(verification.verifiedAt);
 }
 
 function validateSecrets(secrets) {
   assertObject(secrets, 'production Secret configuration');
-  assertExactKeys(secrets, ['status', 'provider', 'references', 'configuredAt'], 'production Secret configuration');
+  assertExactKeys(secrets, ['status', 'provider', 'references', 'configuredAt'],
+    'production Secret configuration');
   assert(Array.isArray(secrets.references), 'Production Secret references must be an array');
-  assert(secrets.status === 'NOT_CONFIGURED' || secrets.status === 'CONFIGURED', 'Production Secret status is invalid');
+  assert(secrets.status === 'NOT_CONFIGURED' || secrets.status === 'CONFIGURED',
+    'Production Secret status is invalid');
   if (secrets.status === 'NOT_CONFIGURED') {
-    assert(secrets.provider === null && secrets.references.length === 0 && secrets.configuredAt === null,
-      'Unconfigured production Secrets cannot contain provider evidence');
+    assert(secrets.provider === null
+      && secrets.references.length === 0
+      && secrets.configuredAt === null,
+    'Unconfigured production Secrets cannot contain provider evidence');
     return false;
   }
   assert(SECRET_PROVIDERS.has(secrets.provider), 'Production Secret provider is not allowed');
-  assert(secrets.references.length > 0, 'Configured production Secrets require at least one reference');
+  assert(secrets.references.length > 0,
+    'Configured production Secrets require at least one reference');
   const names = new Set();
   for (const [index, reference] of secrets.references.entries()) {
     assertObject(reference, `Secret reference ${index}`);
     assertExactKeys(reference, ['name', 'reference'], `Secret reference ${index}`);
     assertExternalId(reference.name, `Secret reference ${index} name`);
     assertExternalId(reference.reference, `Secret reference ${index}`);
-    assert(isVersionedSecretReference(reference.reference), `Secret reference ${index} is not a versioned provider reference`);
+    assert(isVersionedSecretReference(reference.reference),
+      `Secret reference ${index} is not a versioned provider reference`);
     assert(!names.has(reference.name), `Secret reference ${index} name is duplicated`);
     names.add(reference.name);
   }
@@ -325,7 +345,8 @@ function validateTargetCluster(cluster, imageRelease) {
     'deploymentManifestDigest',
     'validatedAt',
   ], 'target cluster validation');
-  assert(cluster.status === 'NOT_RUN' || cluster.status === 'PASSED', 'Target cluster validation status is invalid');
+  assert(cluster.status === 'NOT_RUN' || cluster.status === 'PASSED',
+    'Target cluster validation status is invalid');
   if (cluster.status === 'NOT_RUN') {
     for (const key of [
       'clusterRef',
@@ -337,13 +358,16 @@ function validateTargetCluster(cluster, imageRelease) {
     ]) assert(cluster[key] === null, `Unrun target cluster validation cannot contain ${key}`);
     return false;
   }
-  assert(imageRelease.status === 'PUBLISHED', 'Target cluster validation requires a published immutable image');
+  assert(imageRelease.status === 'PUBLISHED',
+    'Target cluster validation requires a published immutable image');
   assertExternalId(cluster.clusterRef, 'Target cluster reference');
   assertExternalId(cluster.validationRunId, 'Target cluster validation run ID');
-  assert(cluster.sourceSha === PROMOTION_MAIN_SHA, 'Target cluster validation source SHA is invalid');
+  assert(cluster.sourceSha === PROMOTION_MAIN_SHA,
+    'Target cluster validation source SHA is invalid');
   assertNotPlaceholderSha(cluster.sourceSha, 'Target cluster validation source SHA');
   assertArtifactDigest(cluster.imageDigest, 'Target cluster image digest');
-  assert(cluster.imageDigest === imageRelease.registryDigest, 'Target cluster image digest does not match Registry digest');
+  assert(cluster.imageDigest === imageRelease.registryDigest,
+    'Target cluster image digest does not match Registry digest');
   assertArtifactDigest(cluster.deploymentManifestDigest, 'Deployment manifest digest');
   normalizeTimestamp(cluster.validatedAt);
   return true;
@@ -352,10 +376,13 @@ function validateTargetCluster(cluster, imageRelease) {
 function validateApproval(approval, label) {
   assertObject(approval, label);
   assertExactKeys(approval, ['status', 'system', 'approvalId', 'approvedAt'], label);
-  assert(approval.status === 'MISSING' || approval.status === 'APPROVED', `${label} status is invalid`);
+  assert(approval.status === 'MISSING' || approval.status === 'APPROVED',
+    `${label} status is invalid`);
   if (approval.status === 'MISSING') {
-    assert(approval.system === null && approval.approvalId === null && approval.approvedAt === null,
-      `Missing ${label} cannot contain approval evidence`);
+    assert(approval.system === null
+      && approval.approvalId === null
+      && approval.approvedAt === null,
+    `Missing ${label} cannot contain approval evidence`);
     return false;
   }
   assertExternalId(approval.system, `${label} system`);
@@ -366,7 +393,8 @@ function validateApproval(approval, label) {
 
 function validateDecision(decision, expectedResolved, expectedOpen) {
   assertObject(decision, 'production promotion decision');
-  assertExactKeys(decision, ['productionEligible', 'resolvedBlockers', 'openBlockers'], 'production promotion decision');
+  assertExactKeys(decision, ['productionEligible', 'resolvedBlockers', 'openBlockers'],
+    'production promotion decision');
   assertSet(decision.resolvedBlockers, expectedResolved, 'resolved blockers');
   assertSet(decision.openBlockers, expectedOpen, 'open blockers');
   const resolved = new Set(decision.resolvedBlockers);
@@ -397,7 +425,8 @@ function assertNoSensitiveMaterial(value) {
 }
 
 function assertArtifactDigest(value, label) {
-  assert(typeof value === 'string' && /^sha256:[a-f0-9]{64}$/.test(value), `${label} is invalid`);
+  assert(typeof value === 'string' && /^sha256:[a-f0-9]{64}$/.test(value),
+    `${label} is invalid`);
   const digest = value.slice('sha256:'.length);
   assert(!isPlaceholderHex(digest), `${label} cannot be a placeholder digest`);
 }
@@ -415,14 +444,19 @@ function isPlaceholderHex(value) {
 }
 
 function assertExternalId(value, label) {
-  assert(typeof value === 'string' && value.length >= 4 && value.length <= 512, `${label} is invalid`);
+  assert(typeof value === 'string' && value.length >= 4 && value.length <= 512,
+    `${label} is invalid`);
   assert(!PLACEHOLDER_PATTERN.test(value), `${label} cannot be a placeholder`);
 }
 
 function assertHttpsUrl(value, label) {
   assertExternalId(value, label);
   let url;
-  try { url = new URL(value); } catch { throw new Error(`${label} is invalid`); }
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`${label} is invalid`);
+  }
   assert(url.protocol === 'https:', `${label} must use HTTPS`);
 }
 
@@ -431,13 +465,16 @@ function assertPositiveInteger(value, label) {
 }
 
 function normalizeTimestamp(value) {
-  assert(typeof value === 'string' && Number.isFinite(Date.parse(value)), 'M2 production promotion timestamp is invalid');
+  assert(typeof value === 'string' && Number.isFinite(Date.parse(value)),
+    'M2 production promotion timestamp is invalid');
   return new Date(value).toISOString();
 }
 
 function assertSet(actual, expected, label) {
-  assert(Array.isArray(actual) && actual.length === expected.length, `${label} count is invalid`);
-  assert(actual.every((value, index) => value === expected[index]), `${label} order is invalid`);
+  assert(Array.isArray(actual) && actual.length === expected.length,
+    `${label} count is invalid`);
+  assert(actual.every((value, index) => value === expected[index]),
+    `${label} order is invalid`);
   assert(new Set(actual).size === actual.length, `${label} contains duplicates`);
 }
 
@@ -454,7 +491,8 @@ function isSha(value) {
 }
 
 function assertObject(value, label) {
-  assert(value && typeof value === 'object' && !Array.isArray(value), `${label} must be an object`);
+  assert(value && typeof value === 'object' && !Array.isArray(value),
+    `${label} must be an object`);
 }
 
 function assert(condition, message) {
@@ -462,4 +500,6 @@ function assert(condition, message) {
 }
 
 const isMain = process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url;
-if (isMain) process.stdout.write(`${JSON.stringify(await validateM2ProductionPromotion(), null, 2)}\n`);
+if (isMain) {
+  process.stdout.write(`${JSON.stringify(await validateM2ProductionPromotion(), null, 2)}\n`);
+}

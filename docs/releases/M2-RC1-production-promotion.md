@@ -12,7 +12,7 @@ Production Promotion Validator 只验证仓库中已经存在的声明，不主�
   - canonical SHA-256：`5ab9439d357921119d7ca9387e661cf3f28b8420a27b3dd201df57c6419b6697`
 - `releases/m2/post-merge-acceptance.json`
   - canonical SHA-256：`d073efec5aa587caf7f54eedd219a494b876d2913cb8e110981c374e79501e25`
-- 当前准备晋级的 `main` SHA：`991b5f0f9cfa3a382f9aff3c600f98b76aed9c08`
+- 当前准备晋级的 `main` SHA：`edf09333d9be9ea6839b8cf4d18efed95cfba821`
 
 以上两份历史证据不得被生产晋级记录覆盖或修改。Validator 必须重新读取并计算其 canonical digest。
 
@@ -34,17 +34,6 @@ Production Promotion Validator 只验证仓库中已经存在的声明，不主�
 - Release Owner Approval；
 - resolved/open blockers 与 `productionEligible`。
 
-## 安全默认值
-
-仓库中的 Production Promotion 主记录保持：
-
-- 未通过的外部域为 `UNVERIFIED`、`MISSING`、`NOT_CONFIGURED` 或 `NOT_RUN`；
-- 不存在的外部标识和 digest 为 `null`；
-- `openBlockers` 保留全部生产阻断项；
-- `productionEligible=false`。
-
-失败的 CI 观测通过独立追加证据表达，不把主记录改写成 `PASSED`。不得使用示例 SHA、重复字符 digest、本地 Docker Image ID、占位审批号或可变镜像标签关闭 blocker。
-
 ## Blocker 关闭规则
 
 | Blocker | 唯一允许的关闭证据 |
@@ -58,39 +47,58 @@ Production Promotion Validator 只验证仓库中已经存在的声明，不主�
 
 `resolvedBlockers` 必须严格由对应证据推导。`openBlockers` 非空时，`productionEligible` 必须为 `false`；只有六项强制 blocker 全部由证据关闭后才允许为 `true`。
 
-## Main push CI 证据采集
+## Main push CI 证据链
 
-独立 collector 在 GitHub Actions runner 中使用最小 `actions: read` 权限查询 Actions API，并生成 `m2-main-branch-ci-evidence/v1`。
+### 历史失败观测
 
-Collector 必须：
+`releases/m2/main-branch-ci-observation.json` 保存旧 `main@991b5f0...` 的真实失败结果：
 
-- 只选择 `promotionSource.mainSha` 对应的、已完成的 `main` push run；
-- 如实记录 run、Validate job、PostgreSQL job 与 Deployment Validator step 的状态和结论；
-- 如实记录该历史 run 实际存在的 Artifact，缺失项保持 `null`；
-- 只有 run、两个 jobs、Deployment Validator step 与全部强制 Artifact 均成功/存在时才设置 `eligibleForClosure=true`；
-- 失败、取消、跳过或缺失证据时仍生成 observation，但固定 `eligibleForClosure=false`；
-- 不把 PR run、当前 collector run 或缺失 Artifact 推断成历史 `main` run；
-- 不写入 `GITHUB_TOKEN`、请求头或其他认证材料。
-
-## 已确认的最终 main push 结果
-
-只读 collector 已确认精确结果：
-
-- run ID：`30356400001`；
-- event：`push`；
-- branch：`main`；
-- head SHA：`991b5f0f9cfa3a382f9aff3c600f98b76aed9c08`；
-- workflow conclusion：`failure`；
-- Validate job：`90265505895`，`failure`；
-- PostgreSQL job：`90265505920`，`success`；
-- Deployment Validator step：`skipped`；
-- 唯一实际生成的 Artifact：`postgres-test-log`；
-- PostgreSQL Artifact digest：`sha256:ff900fd49517bbc469891017e741d9bcff8b8389b6a9d0881759f42f6a6dbfff`；
+- run `30356400001`；
+- Validate job `90265505895` 失败；
+- PostgreSQL job `90265505920` 成功；
+- Deployment Validator 被跳过；
 - `eligibleForClosure=false`。
 
-失败根因是 Post-Merge evidence generator 在 push 环境中把空字符串 `GITHUB_HEAD_REF` 当成有效分支，导致 `M2 post-merge source branch is invalid`。R0 已增加统一的非空分支归一化和 push 环境回归测试。
+该记录必须继续不可变保存。后续成功证据不得覆盖或删除这段历史。
 
-因此 `main-branch-final-ci-not-verified` 继续开放。PR Validation、成功的 PostgreSQL job 或此前成功的 M2-I 主分支 run 均不得替代该精确 SHA 的最终成功 push CI。
+### R0 成功 closure
+
+R0 merge commit：
+
+`edf09333d9be9ea6839b8cf4d18efed95cfba821`
+
+只读 collector 已确认：
+
+- push run：`30423781549`；
+- Validate job：`90485717866`，`success`；
+- Deployment Validator step：`success`；
+- PostgreSQL job：`90485717817`，`success`；
+- 六份强制 Artifact 均存在且未过期；
+- `eligibleForClosure=true`。
+
+永久证据保存在 `releases/m2/r0-main-ci-closure.json`，并由独立 Validator 固定校验 run、job、step、Artifact ID 与 digest。
+
+因此 Production Promotion 当前只关闭：
+
+- `main-branch-final-ci-not-verified`。
+
+## 当前安全状态
+
+已解决：
+
+- `main-branch-final-ci-not-verified`。
+
+继续开放：
+
+- `external-registry-digest-missing`；
+- `production-secrets-not-configured`；
+- `target-cluster-validation-not-run`；
+- `change-approval-missing`；
+- `release-owner-approval-missing`。
+
+镜像、Secret、目标集群和审批字段继续保持安全缺失状态，不存在的 digest/标识继续为 `null`。`productionEligible=false`。
+
+不得使用示例 SHA、重复字符 digest、本地 Docker Image ID、占位审批号或可变镜像标签关闭剩余 blocker。
 
 ## 明确不在范围内
 

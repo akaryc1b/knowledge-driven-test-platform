@@ -15,20 +15,20 @@
   },
   "promotionSource": {
     "branch": "main",
-    "mainSha": "991b5f0f9cfa3a382f9aff3c600f98b76aed9c08"
+    "mainSha": "edf09333d9be9ea6839b8cf4d18efed95cfba821"
   },
   "mainBranchFinalCi": {
-    "status": "UNVERIFIED",
+    "status": "PASSED",
     "event": "push",
-    "sourceSha": "991b5f0f9cfa3a382f9aff3c600f98b76aed9c08",
-    "runId": null,
+    "sourceSha": "edf09333d9be9ea6839b8cf4d18efed95cfba821",
+    "runId": 30423781549,
     "artifacts": {
-      "m1ReleaseEvidence": null,
-      "m2ReleaseEvidence": null,
-      "m2PostMergeEvidence": null,
-      "postgresValidation": null,
-      "repositoryValidation": null,
-      "deploymentValidation": null
+      "m1ReleaseEvidence": "sha256:5fd6a0a992fc5042ec24e22ec5a9dbd83c73fd8f41179676b2cc0d0ec3b7c27b",
+      "m2ReleaseEvidence": "sha256:52fa0384bf868e7dbe4115fcb5755eed971f624346d70f201c0c52e7530ba0c1",
+      "m2PostMergeEvidence": "sha256:5b5cd301970cddd6aeea29b70108a128983262480a79d39d6371f3c5ef48b6ae",
+      "postgresValidation": "sha256:8008931c382ed28db60829d7ae729c3fb35547ec546dd5357c01498eac6dcd42",
+      "repositoryValidation": "sha256:1fd29192b102e0767a91d11649c6056f4a6261e8159f8dee34698a3ffd849cf1",
+      "deploymentValidation": "sha256:99a28a45d3841ac234b05ca22442980871a9534ee2d92247b1d16b116b49d5a6"
     }
   },
   "imageRelease": {
@@ -93,9 +93,10 @@
   },
   "decision": {
     "productionEligible": false,
-    "resolvedBlockers": [],
+    "resolvedBlockers": [
+      "main-branch-final-ci-not-verified"
+    ],
     "openBlockers": [
-      "main-branch-final-ci-not-verified",
       "external-registry-digest-missing",
       "production-secrets-not-configured",
       "target-cluster-validation-not-run",

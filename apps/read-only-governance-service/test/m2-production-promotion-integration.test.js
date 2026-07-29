@@ -14,13 +14,14 @@ if (!connectionString) {
       assert(result.rows[0].version >= 180000);
       assert.equal(result.rows[0].ready, 1);
       const evidence = await validateM2ProductionPromotion({
-        generatedAt: '2026-07-28T12:30:00.000Z',
+        generatedAt: '2026-07-29T05:10:00.000Z',
         commitSha: 'local',
-        branch: 'agent/m2-rc1-production-promotion-contract',
+        branch: 'agent/m2-rc1-r0-main-ci-closure',
       });
       assert.equal(evidence.digests.candidate, '5ab9439d357921119d7ca9387e661cf3f28b8420a27b3dd201df57c6419b6697');
       assert.equal(evidence.digests.postMergeAcceptance, 'd073efec5aa587caf7f54eedd219a494b876d2913cb8e110981c374e79501e25');
-      assert.equal(evidence.decision.openBlockers.length, 6);
+      assert.deepEqual(evidence.decision.resolvedBlockers, ['main-branch-final-ci-not-verified']);
+      assert.equal(evidence.decision.openBlockers.length, 5);
       assert.equal(evidence.decision.productionEligible, false);
     } finally {
       await pool.end();

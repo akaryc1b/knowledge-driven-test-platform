@@ -10,7 +10,7 @@ import {
 
 const CANDIDATE_DIGEST = '5ab9439d357921119d7ca9387e661cf3f28b8420a27b3dd201df57c6419b6697';
 const POST_MERGE_DIGEST = 'd073efec5aa587caf7f54eedd219a494b876d2913cb8e110981c374e79501e25';
-const MAIN_SHA = '991b5f0f9cfa3a382f9aff3c600f98b76aed9c08';
+const MAIN_SHA = 'edf09333d9be9ea6839b8cf4d18efed95cfba821';
 const IMAGE_REPOSITORY = 'ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service';
 const BLOCKERS = [
   'main-branch-final-ci-not-verified',
@@ -120,18 +120,20 @@ async function completedPromotion() {
   return promotion;
 }
 
-test('M2 production promotion preserves immutable historical evidence and safe blockers', async () => {
+test('M2 production promotion preserves history and closes only verified main CI', async () => {
   const evidence = await validateM2ProductionPromotion({
-    generatedAt: '2026-07-28T12:30:00.000Z',
+    generatedAt: '2026-07-29T05:10:00.000Z',
     commitSha: 'local',
-    branch: 'agent/m2-rc1-production-promotion-contract',
+    branch: 'agent/m2-rc1-r0-main-ci-closure',
   });
   assert.equal(evidence.schemaVersion, 'm2-production-promotion-evidence/v1');
   assert.equal(evidence.digests.candidate, CANDIDATE_DIGEST);
   assert.equal(evidence.digests.postMergeAcceptance, POST_MERGE_DIGEST);
   assert.equal(evidence.promotionSource.mainSha, MAIN_SHA);
-  assert.deepEqual(evidence.decision.resolvedBlockers, []);
-  assert.deepEqual(evidence.decision.openBlockers, BLOCKERS);
+  assert.equal(evidence.mainBranchFinalCi.status, 'PASSED');
+  assert.equal(evidence.mainBranchFinalCi.runId, 30423781549);
+  assert.deepEqual(evidence.decision.resolvedBlockers, [BLOCKERS[0]]);
+  assert.deepEqual(evidence.decision.openBlockers, BLOCKERS.slice(1));
   assert.equal(evidence.decision.productionEligible, false);
 });
 
