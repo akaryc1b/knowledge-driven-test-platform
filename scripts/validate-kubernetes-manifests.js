@@ -7,6 +7,7 @@ export const DEFAULT_DEPLOYMENT_DIRECTORY = resolve(
   scriptDirectory,
   '../deploy/kubernetes/read-only-governance-service',
 );
+const IMMUTABLE_IMAGE = 'ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service@sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13';
 
 export async function validateKubernetesManifests(directory = DEFAULT_DEPLOYMENT_DIRECTORY) {
   const resources = Object.fromEntries(await Promise.all([
@@ -20,7 +21,7 @@ export async function validateKubernetesManifests(directory = DEFAULT_DEPLOYMENT
   ].map(async ([key, file]) => [key, await readJsonYaml(join(directory, file))])));
 
   validateIdentity(resources);
-  validateDeployment(resources.deployment, resources.configMap);
+  const image = validateDeployment(resources.deployment, resources.configMap);
   validateService(resources.service, resources.deployment);
   validateServiceAccount(resources.serviceAccount, resources.deployment);
   validatePdb(resources.pdb, resources.deployment);
@@ -32,6 +33,7 @@ export async function validateKubernetesManifests(directory = DEFAULT_DEPLOYMENT
     deployment: resources.deployment.metadata.name,
     namespace: resources.deployment.metadata.namespace,
     replicas: resources.deployment.spec.replicas,
+    image,
   };
 }
 
@@ -87,11 +89,12 @@ function validateDeployment(deployment, configMap) {
     podSpec.securityContext?.seccompProfile?.type === 'RuntimeDefault',
   'Pod security context must require non-root and RuntimeDefault seccomp');
 
-  invariant(typeof container.image === 'string' && container.image.length > 0 &&
-    !container.image.endsWith(':latest') && !container.image.includes('@sha256:replace'),
-  'Container image must be explicit and must not use latest');
+  invariant(container.image === IMMUTABLE_IMAGE,
+    'Container image must match the governed immutable Registry digest');
+  invariant(/^ghcr\.io\/akaryc1b\/knowledge-driven-test-platform\/read-only-governance-service@sha256:[a-f0-9]{64}$/.test(container.image),
+    'Container image must use a complete immutable GHCR digest reference');
   invariant(container.imagePullPolicy === 'IfNotPresent',
-    'Versioned baseline image must use IfNotPresent');
+    'Immutable digest image must use IfNotPresent');
   invariant(container.securityContext?.allowPrivilegeEscalation === false &&
     container.securityContext?.readOnlyRootFilesystem === true &&
     container.securityContext?.runAsNonRoot === true,
@@ -121,6 +124,7 @@ function validateDeployment(deployment, configMap) {
   const tmpVolume = (podSpec.volumes ?? []).find((item) => item.name === tmpMount?.name);
   invariant(tmpMount && tmpVolume?.emptyDir?.sizeLimit,
     'Read-only root filesystem requires a bounded writable /tmp emptyDir');
+  return container.image;
 }
 
 function validateService(service, deployment) {
