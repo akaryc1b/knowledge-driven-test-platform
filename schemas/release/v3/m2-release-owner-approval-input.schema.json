@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/release/v3/m2-release-owner-approval-input.schema.json",
+  "title": "M2 Release Owner Approval Input v1",
+  "$ref": "m2-external-evidence-intake.schema.json#/$defs/releaseOwnerApprovalEntry"
+}
