@@ -66,7 +66,7 @@ jobs:
             },
           ];
 
-          let selectedRuns;
+          let selectedRuns = {};
           for (let attempt = 0; attempt < 18; attempt += 1) {
             const response = await api(
               `/actions/runs?head_sha=${encodeURIComponent(targetSha)}&branch=main&event=push&per_page=100`,
@@ -81,20 +81,26 @@ jobs:
                 .sort((left, right) => right.id - left.id);
               return [definition.key, matches[0] ?? null];
             }));
-            const found = workflowDefinitions.every((definition) => selectedRuns[definition.key]);
-            const completed = found && workflowDefinitions.every(
-              (definition) => selectedRuns[definition.key].status === 'completed',
-            );
+            const completed = workflowDefinitions.every((definition) => {
+              const run = selectedRuns[definition.key];
+              return run && run.status === 'completed';
+            });
             if (completed) break;
             await new Promise((resolve) => setTimeout(resolve, 10000));
           }
 
           const observedRuns = {};
+          const verified = {};
           for (const definition of workflowDefinitions) {
-            const run = selectedRuns?.[definition.key];
-            if (!run) throw new Error(`Missing ${definition.name} push run for ${targetSha}`);
-            if (run.status !== 'completed' || run.conclusion !== 'success') {
-              throw new Error(`${definition.name} push run is not successful`);
+            const run = selectedRuns[definition.key];
+            if (!run) {
+              observedRuns[definition.key] = {
+                missing: true,
+                expectedName: definition.name,
+                expectedWorkflowPath: definition.path,
+              };
+              verified[definition.key] = false;
+              continue;
             }
 
             const jobsResponse = await api(`/actions/runs/${run.id}/jobs?filter=latest&per_page=100`);
@@ -104,15 +110,12 @@ jobs:
               status: job.status,
               conclusion: job.conclusion,
             }));
-            for (const requiredJob of definition.requiredJobs) {
+            const requiredJobsSuccessful = definition.requiredJobs.every((requiredJob) => {
               const job = jobs.find((candidate) => candidate.name === requiredJob);
-              if (!job || job.status !== 'completed' || job.conclusion !== 'success') {
-                throw new Error(`${definition.name} required job ${requiredJob} is not successful`);
-              }
-            }
-            if (jobs.some((job) => job.status !== 'completed' || job.conclusion !== 'success')) {
-              throw new Error(`${definition.name} contains a non-successful job`);
-            }
+              return job?.status === 'completed' && job?.conclusion === 'success';
+            });
+            const allJobsSuccessful = jobs.length > 0
+              && jobs.every((job) => job.status === 'completed' && job.conclusion === 'success');
 
             const artifactsResponse = await api(`/actions/runs/${run.id}/artifacts?per_page=100`);
             const artifacts = artifactsResponse.artifacts.map((artifact) => ({
@@ -123,13 +126,23 @@ jobs:
               createdAt: artifact.created_at,
               expiresAt: artifact.expires_at,
             }));
-            for (const requiredArtifact of definition.requiredArtifacts) {
+            const requiredArtifactsValid = definition.requiredArtifacts.every((requiredArtifact) => {
               const artifact = artifacts.find((candidate) => candidate.name === requiredArtifact);
-              if (!artifact || artifact.expired !== false
-                  || !/^sha256:[a-f0-9]{64}$/.test(artifact.digest ?? '')) {
-                throw new Error(`${definition.name} required Artifact ${requiredArtifact} is invalid`);
-              }
-            }
+              return artifact?.expired === false
+                && /^sha256:[a-f0-9]{64}$/.test(artifact?.digest ?? '');
+            });
+
+            const exactIdentity = run.name === definition.name
+              && run.path === definition.path
+              && run.event === 'push'
+              && run.head_branch === 'main'
+              && run.head_sha === targetSha;
+            const runSuccessful = run.status === 'completed' && run.conclusion === 'success';
+            verified[definition.key] = exactIdentity
+              && runSuccessful
+              && requiredJobsSuccessful
+              && allJobsSuccessful
+              && requiredArtifactsValid;
 
             observedRuns[definition.key] = {
               id: run.id,
@@ -146,9 +159,18 @@ jobs:
               updatedAt: run.updated_at,
               jobs,
               artifacts,
+              verification: {
+                exactIdentity,
+                runSuccessful,
+                requiredJobsSuccessful,
+                allJobsSuccessful,
+                requiredArtifactsValid,
+              },
             };
           }
 
+          const exactMainPushVerified = verified.validation === true;
+          const independentR2AAcceptanceVerified = verified.r2aAcceptance === true;
           const evidence = {
             schemaVersion: 'm2-r2a-post-merge-observation/v1',
             releaseId: 'M2-RC1',
@@ -160,9 +182,10 @@ jobs:
             },
             runs: observedRuns,
             decision: {
-              exactMainPushVerified: true,
-              independentR2AAcceptanceVerified: true,
-              eligibleToBeginR2BPreflight: true,
+              exactMainPushVerified,
+              independentR2AAcceptanceVerified,
+              eligibleToBeginR2BPreflight: exactMainPushVerified
+                && independentR2AAcceptanceVerified,
               productionEligible: false,
               resolvedBlockers: [
                 'main-branch-final-ci-not-verified',
@@ -179,7 +202,15 @@ jobs:
           process.stdout.write(`${JSON.stringify(evidence, null, 2)}\n`);
           NODE
 
-      - name: Validate observation boundary
+      - name: Upload exact R2-A post-merge observation
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-r2a-post-merge-observation
+          path: /tmp/m2-r2a-post-merge-observation.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Enforce R2-A post-merge gate
         shell: bash
         run: |
           set -euo pipefail
@@ -189,21 +220,17 @@ jobs:
           if (evidence.target?.sha !== '5acb578ec799d3ab6d1c6e217787231cba23c104') {
             throw new Error('Observed main SHA is invalid');
           }
-          if (evidence.decision?.exactMainPushVerified !== true
-              || evidence.decision?.independentR2AAcceptanceVerified !== true
-              || evidence.decision?.eligibleToBeginR2BPreflight !== true) {
-            throw new Error('R2-A post-merge observation is incomplete');
+          if (evidence.decision?.exactMainPushVerified !== true) {
+            throw new Error('Exact main push Validation is not verified');
+          }
+          if (evidence.decision?.independentR2AAcceptanceVerified !== true) {
+            throw new Error('Independent R2-A acceptance is not verified');
+          }
+          if (evidence.decision?.eligibleToBeginR2BPreflight !== true) {
+            throw new Error('R2-B preflight remains blocked');
           }
           if (evidence.decision?.productionEligible !== false
               || evidence.decision?.openBlockers?.length !== 4) {
             throw new Error('R2-A post-merge boundary changed');
           }
           NODE
-
-      - name: Upload exact R2-A post-merge observation
-        uses: actions/upload-artifact@v4
-        with:
-          name: m2-r2a-post-merge-observation
-          path: /tmp/m2-r2a-post-merge-observation.json
-          if-no-files-found: error
-          retention-days: 90
