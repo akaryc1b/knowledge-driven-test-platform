@@ -19,6 +19,7 @@ on:
       - 'schemas/release/schema-catalog.json'
       - 'schemas/release/v3/m2-final-release-closure*.schema.json'
       - 'scripts/validate-m2-final-release-closure.js'
+      - 'scripts/observe-m2-r3-post-merge.js'
   push:
     branches: [main]
     paths:
@@ -42,6 +43,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   validate-closure:
@@ -166,3 +168,60 @@ jobs:
           path: /tmp/m2-final-closure-postgres-test.log
           if-no-files-found: error
           retention-days: 90
+
+  observe-post-merge:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out observer branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Collect exact M2-RC1 R3 post-merge evidence
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          TARGET_SHA: 14cc48e35f8084a1c4baf3489daca7da1c21eab4
+        run: node scripts/observe-m2-r3-post-merge.js > /tmp/m2-r3-post-merge-observation.json
+      - name: Upload exact M2-RC1 R3 post-merge observation
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-r3-post-merge-observation
+          path: /tmp/m2-r3-post-merge-observation.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Enforce M2-RC1 R3 post-merge gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const evidence = JSON.parse(await readFile('/tmp/m2-r3-post-merge-observation.json', 'utf8'));
+          if (evidence.target?.sha !== '14cc48e35f8084a1c4baf3489daca7da1c21eab4') {
+            throw new Error('Observed main SHA is invalid');
+          }
+          if (evidence.decision?.exactMainValidationVerified !== true
+              || evidence.decision?.finalClosureVerified !== true
+              || evidence.decision?.historicalR2AAntiRegressionVerified !== true
+              || evidence.decision?.portableReadinessAntiRegressionVerified !== true
+              || evidence.decision?.m2Rc1FinalClosureAccepted !== true) {
+            throw new Error('M2-RC1 R3 post-merge verification is incomplete');
+          }
+          if (evidence.decision?.m2Rc1Closed !== true
+              || evidence.decision?.repositoryReleaseReady !== true
+              || evidence.decision?.environmentPromotionEvaluated !== false
+              || evidence.decision?.environmentPromotionEligible !== null
+              || evidence.decision?.m3PlanningReady !== true
+              || evidence.decision?.m3ImplementationStarted !== false
+              || evidence.decision?.nextRequiredSlice !== 'M3-R0'
+              || evidence.decision?.repositoryBlockers?.length !== 0) {
+            throw new Error('M2-RC1 final closure boundary changed');
+          }
+          if (Object.values(evidence.safetyBoundary ?? {}).some((value) => value !== false)) {
+            throw new Error('Post-merge observation safety boundary changed');
+          }
+          NODE
