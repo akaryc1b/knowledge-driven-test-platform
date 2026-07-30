@@ -1,0 +1,137 @@
+{
+  "schemaVersion": "m2-portable-release-readiness/v1",
+  "releaseId": "M2-RC1",
+  "version": "0.12.0",
+  "phase": "PORTABLE_RELEASE_READINESS",
+  "contractBaseSha": "286bdab429ee7365082b8b5abaff1b5b981d9ef7",
+  "releaseSourceSha": "6bef789da58bbb7f2edd2a2024ba9a0bbf8e22a7",
+  "immutableImage": {
+    "reference": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service@sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13",
+    "digest": "sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13",
+    "releaseWorkflowRunId": 30440674461,
+    "sbomDigest": "sha256:94a4a77a76f4802c9ff4a238e63854e1619d2ce46fd6a5eaef1e2698eb033702",
+    "provenanceAttestationId": "37705043",
+    "sbomAttestationId": "37705058"
+  },
+  "repositoryVerification": {
+    "mainPushValidationRunId": 30517143338,
+    "independentR2AValidationRunId": 30517143343,
+    "postMergeObservationRunId": 30517188902,
+    "postMergeObservationArtifactId": 8749328707,
+    "postMergeObservationArtifactDigest": "sha256:1348879aa0a9610141d443be950c97c136965bdc734dcac1c7379c0513b19ebb"
+  },
+  "historicalEvidence": {
+    "productionPromotion": {
+      "path": "releases/m2/production-promotion.json",
+      "canonicalDigest": "sha256:4125d5f08ec559e2bc6012ab501879432493af012b4d70665eb1d653c4190f5d",
+      "role": "HISTORICAL_ENVIRONMENT_PROMOTION_RECORD"
+    },
+    "externalEvidenceIntake": {
+      "path": "releases/m2/r2a-external-evidence-intake.json",
+      "canonicalDigest": "sha256:54413977a3030847fdef7e3aa77c2a1c2924677f0555a4fabdba888f829a6d18",
+      "role": "HISTORICAL_OPTIONAL_DEPLOYMENT_EVIDENCE_CONTRACT"
+    },
+    "imageBinding": {
+      "path": "releases/m2/r1b-image-binding.json",
+      "canonicalDigest": "sha256:adb6374bee157b7b64d25b6fdfe1b35ea2d4e5e92a08b029c0fbc5e66c33c0a7"
+    },
+    "deploymentManifest": {
+      "path": "deploy/kubernetes/read-only-governance-service/deployment.yaml",
+      "canonicalDigest": "sha256:fb2cb10f42f8d3473c1997c514ec11eb66bfb06f7542c3404c328c39f8763a45"
+    }
+  },
+  "runtimeConfiguration": {
+    "deliveryModel": "OPERATOR_SUPPLIED",
+    "providerAgnostic": true,
+    "repositoryStoresSecretValues": false,
+    "repositoryRequiresProviderMetadata": false,
+    "configMapRefName": "kdtp-read-only-governance-config",
+    "secretRefName": "kdtp-read-only-governance-secrets",
+    "requiredInputs": [
+      {
+        "name": "KDTP_DATABASE_URL",
+        "classification": "SENSITIVE_OR_IDENTITY_BOUND",
+        "repositoryValueAllowed": false,
+        "deliveryMechanisms": [
+          "kubernetes-secret",
+          "external-secret-provider",
+          "workload-identity-adapter"
+        ]
+      },
+      {
+        "name": "KDTP_OIDC_ISSUER",
+        "classification": "NON_SECRET_CONFIGURATION",
+        "repositoryValueAllowed": true,
+        "deliveryMechanisms": [
+          "config-map",
+          "environment-overlay"
+        ]
+      },
+      {
+        "name": "KDTP_OIDC_JWKS_URI",
+        "classification": "NON_SECRET_CONFIGURATION",
+        "repositoryValueAllowed": true,
+        "deliveryMechanisms": [
+          "config-map",
+          "environment-overlay"
+        ]
+      },
+      {
+        "name": "KDTP_OIDC_AUDIENCE",
+        "classification": "NON_SECRET_CONFIGURATION",
+        "repositoryValueAllowed": true,
+        "deliveryMechanisms": [
+          "config-map",
+          "environment-overlay"
+        ]
+      },
+      {
+        "name": "KDTP_OIDC_SUBJECT_MAPPINGS_JSON",
+        "classification": "SECURITY_CONFIGURATION",
+        "repositoryValueAllowed": false,
+        "deliveryMechanisms": [
+          "kubernetes-secret",
+          "environment-overlay"
+        ]
+      }
+    ],
+    "placeholders": [
+      {
+        "name": "KDTP_OIDC_ISSUER",
+        "path": "deploy/kubernetes/read-only-governance-service/configmap.yaml",
+        "mustBeReplacedByOperator": true
+      },
+      {
+        "name": "KDTP_OIDC_JWKS_URI",
+        "path": "deploy/kubernetes/read-only-governance-service/configmap.yaml",
+        "mustBeReplacedByOperator": true
+      }
+    ]
+  },
+  "repositoryNonRequirements": [
+    "production-secret-provider-evidence",
+    "provider-specific-secret-version-record",
+    "target-cluster-identity",
+    "change-approval-record",
+    "release-owner-approval-record"
+  ],
+  "deploymentOperatorResponsibilities": [
+    "supply-required-runtime-configuration",
+    "replace-environment-placeholders",
+    "protect-sensitive-runtime-values",
+    "validate-target-environment",
+    "complete-local-change-governance-if-required"
+  ],
+  "decision": {
+    "repositoryReleaseReady": true,
+    "environmentPromotionEvaluated": false,
+    "environmentPromotionEligible": null,
+    "repositoryBlockers": [],
+    "deploymentOperatorGates": [
+      "runtime-configuration-supplied",
+      "environment-placeholders-replaced",
+      "target-environment-validated",
+      "local-governance-completed-if-required"
+    ]
+  }
+}

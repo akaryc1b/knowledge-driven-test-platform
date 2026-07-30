@@ -73,6 +73,14 @@
     {
       "schemaVersion": "m2-r2a-external-evidence-intake-evidence/v1",
       "path": "schemas/release/v3/m2-r2a-external-evidence-intake-evidence.schema.json"
+    },
+    {
+      "schemaVersion": "m2-portable-release-readiness/v1",
+      "path": "schemas/release/v3/m2-portable-release-readiness.schema.json"
+    },
+    {
+      "schemaVersion": "m2-portable-release-readiness-evidence/v1",
+      "path": "schemas/release/v3/m2-portable-release-readiness-evidence.schema.json"
     }
   ],
   "m2ReleaseCandidate": "m2-governed-planning-release-candidate/v1",
@@ -90,5 +98,7 @@
   "m2ChangeApprovalInput": "m2-change-approval-input/v1",
   "m2ReleaseOwnerApprovalInput": "m2-release-owner-approval-input/v1",
   "m2ExternalEvidenceIntake": "m2-external-evidence-intake/v1",
-  "m2R2AExternalEvidenceIntakeEvidence": "m2-r2a-external-evidence-intake-evidence/v1"
+  "m2R2AExternalEvidenceIntakeEvidence": "m2-r2a-external-evidence-intake-evidence/v1",
+  "m2PortableReleaseReadiness": "m2-portable-release-readiness/v1",
+  "m2PortableReleaseReadinessEvidence": "m2-portable-release-readiness-evidence/v1"
 }
