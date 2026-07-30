@@ -49,6 +49,30 @@
     {
       "schemaVersion": "m2-r1b-image-binding-evidence/v1",
       "path": "schemas/release/v3/m2-r1b-image-binding-evidence.schema.json"
+    },
+    {
+      "schemaVersion": "m2-production-secret-references-input/v1",
+      "path": "schemas/release/v3/m2-production-secret-references-input.schema.json"
+    },
+    {
+      "schemaVersion": "m2-target-cluster-validation-input/v1",
+      "path": "schemas/release/v3/m2-target-cluster-validation-input.schema.json"
+    },
+    {
+      "schemaVersion": "m2-change-approval-input/v1",
+      "path": "schemas/release/v3/m2-change-approval-input.schema.json"
+    },
+    {
+      "schemaVersion": "m2-release-owner-approval-input/v1",
+      "path": "schemas/release/v3/m2-release-owner-approval-input.schema.json"
+    },
+    {
+      "schemaVersion": "m2-external-evidence-intake/v1",
+      "path": "schemas/release/v3/m2-external-evidence-intake.schema.json"
+    },
+    {
+      "schemaVersion": "m2-r2a-external-evidence-intake-evidence/v1",
+      "path": "schemas/release/v3/m2-r2a-external-evidence-intake-evidence.schema.json"
     }
   ],
   "m2ReleaseCandidate": "m2-governed-planning-release-candidate/v1",
@@ -60,5 +84,11 @@
   "m2MainBranchCiEvidence": "m2-main-branch-ci-evidence/v1",
   "m2ReleaseImageEvidence": "m2-release-image-evidence/v1",
   "m2R1BImageBinding": "m2-r1b-image-binding/v1",
-  "m2R1BImageBindingEvidence": "m2-r1b-image-binding-evidence/v1"
+  "m2R1BImageBindingEvidence": "m2-r1b-image-binding-evidence/v1",
+  "m2ProductionSecretReferencesInput": "m2-production-secret-references-input/v1",
+  "m2TargetClusterValidationInput": "m2-target-cluster-validation-input/v1",
+  "m2ChangeApprovalInput": "m2-change-approval-input/v1",
+  "m2ReleaseOwnerApprovalInput": "m2-release-owner-approval-input/v1",
+  "m2ExternalEvidenceIntake": "m2-external-evidence-intake/v1",
+  "m2R2AExternalEvidenceIntakeEvidence": "m2-r2a-external-evidence-intake-evidence/v1"
 }
