@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "currentAdapterDescriptor": "execution-adapter-descriptor/v1",
+  "currentExecutionRequest": "execution-request/v1",
+  "currentExecutionFailure": "execution-failure/v1",
+  "currentExecutionResult": "execution-result/v1",
+  "currentExecutionEvidence": "execution-evidence/v1",
+  "currentValidationEvidence": "m3-r0-execution-contract-evidence/v1",
+  "schemas": {
+    "execution-adapter-descriptor/v1": "schemas/execution/v1/execution-adapter-descriptor.schema.json",
+    "execution-request/v1": "schemas/execution/v1/execution-request.schema.json",
+    "execution-failure/v1": "schemas/execution/v1/execution-failure.schema.json",
+    "execution-result/v1": "schemas/execution/v1/execution-result.schema.json",
+    "execution-evidence/v1": "schemas/execution/v1/execution-evidence.schema.json",
+    "m3-r0-execution-contract-evidence/v1": "schemas/execution/v1/m3-r0-execution-contract-evidence.schema.json"
+  }
+}
