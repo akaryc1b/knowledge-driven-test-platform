@@ -8,6 +8,8 @@
 - 不可变知识快照；
 - 示例项目和 CI。
 
+状态：完成。
+
 ## M1 — Registry and Governance
 
 - 知识注册服务；
@@ -16,21 +18,32 @@
 - JSON Schema 与版本迁移；
 - 快照持久化。
 
+状态：完成并形成 M1-RC1。
+
 ## M2 — Test Planning
 
 - 边界到测试矩阵；
 - 风险优先级；
 - 变更影响分析；
-- 覆盖缺口和孤儿测试识别。
+- 覆盖缺口和孤儿测试识别；
+- Durable Registry、Governance、Orchestration 与只读查询；
+- 不可变镜像和 Portable Release Readiness。
+
+状态：M2-RC1 仓库级发布收口完成。
 
 ## M3 — k6 Execution Adapters
 
+入口 Gate：M2-RC1 Final Release Closure 已建立。第一个允许切片为 `M3-R0 — Execution Adapter Foundation`。
+
+- Adapter、Request、Result 与 Evidence 合同；
 - API 自动化；
 - 接口性能；
 - Browser；
 - WebSocket；
 - xk6 扩展绑定；
 - 统一报告和证据。
+
+M3-R0 仅允许 Contract-only 工作，不执行 k6，不创建 Worker/Queue/Scheduler。
 
 ## M4 — Multi-Project Operations
 
