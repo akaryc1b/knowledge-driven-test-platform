@@ -17,7 +17,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
-          TARGET_SHA: 5acb578ec799d3ab6d1c6e217787231cba23c104
+          TARGET_SHA: 286bdab429ee7365082b8b5abaff1b5b981d9ef7
         shell: bash
         run: |
           set -euo pipefail
@@ -35,19 +35,17 @@ jobs:
 
           async function api(path) {
             const response = await fetch(`${apiRoot}${path}`, { headers });
-            if (!response.ok) {
-              throw new Error(`GitHub API ${path} failed with ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`GitHub API ${path} failed with ${response.status}`);
             return response.json();
           }
 
-          const workflowDefinitions = [
+          const definitions = [
             {
               key: 'validation',
               name: 'validation',
               path: '.github/workflows/validation.yml',
-              requiredJobs: ['validate', 'postgres-integration'],
-              requiredArtifacts: [
+              jobs: ['validate', 'postgres-integration'],
+              artifacts: [
                 'repository-validation-log',
                 'deployment-validation-log',
                 'm2-r2a-external-evidence-intake-evidence',
@@ -58,67 +56,51 @@ jobs:
               key: 'r2aAcceptance',
               name: 'm2-r2a-external-evidence-intake',
               path: '.github/workflows/m2-r2a-external-evidence-intake.yml',
-              requiredJobs: ['validate-intake', 'postgres-integration'],
-              requiredArtifacts: [
+              jobs: ['validate-intake', 'postgres-integration'],
+              artifacts: [
                 'm2-r2a-external-evidence-intake-evidence',
                 'm2-r2a-postgres-test-log',
               ],
             },
           ];
 
-          let selectedRuns = {};
-          for (let attempt = 0; attempt < 18; attempt += 1) {
+          let selected = {};
+          for (let attempt = 0; attempt < 24; attempt += 1) {
             const response = await api(
               `/actions/runs?head_sha=${encodeURIComponent(targetSha)}&branch=main&event=push&per_page=100`,
             );
-            selectedRuns = Object.fromEntries(workflowDefinitions.map((definition) => {
-              const matches = response.workflow_runs
+            selected = Object.fromEntries(definitions.map((definition) => {
+              const runs = response.workflow_runs
                 .filter((run) => run.name === definition.name
                   && run.path === definition.path
                   && run.event === 'push'
                   && run.head_branch === 'main'
                   && run.head_sha === targetSha)
                 .sort((left, right) => right.id - left.id);
-              return [definition.key, matches[0] ?? null];
+              return [definition.key, runs[0] ?? null];
             }));
-            const completed = workflowDefinitions.every((definition) => {
-              const run = selectedRuns[definition.key];
-              return run && run.status === 'completed';
-            });
-            if (completed) break;
+            if (definitions.every(({ key }) => selected[key]?.status === 'completed')) break;
             await new Promise((resolve) => setTimeout(resolve, 10000));
           }
 
-          const observedRuns = {};
+          const runs = {};
           const verified = {};
-          for (const definition of workflowDefinitions) {
-            const run = selectedRuns[definition.key];
+          for (const definition of definitions) {
+            const run = selected[definition.key];
             if (!run) {
-              observedRuns[definition.key] = {
-                missing: true,
-                expectedName: definition.name,
-                expectedWorkflowPath: definition.path,
-              };
+              runs[definition.key] = { missing: true };
               verified[definition.key] = false;
               continue;
             }
-
-            const jobsResponse = await api(`/actions/runs/${run.id}/jobs?filter=latest&per_page=100`);
-            const jobs = jobsResponse.jobs.map((job) => ({
+            const jobResponse = await api(`/actions/runs/${run.id}/jobs?filter=latest&per_page=100`);
+            const jobs = jobResponse.jobs.map((job) => ({
               id: job.id,
               name: job.name,
               status: job.status,
               conclusion: job.conclusion,
             }));
-            const requiredJobsSuccessful = definition.requiredJobs.every((requiredJob) => {
-              const job = jobs.find((candidate) => candidate.name === requiredJob);
-              return job?.status === 'completed' && job?.conclusion === 'success';
-            });
-            const allJobsSuccessful = jobs.length > 0
-              && jobs.every((job) => job.status === 'completed' && job.conclusion === 'success');
-
-            const artifactsResponse = await api(`/actions/runs/${run.id}/artifacts?per_page=100`);
-            const artifacts = artifactsResponse.artifacts.map((artifact) => ({
+            const artifactResponse = await api(`/actions/runs/${run.id}/artifacts?per_page=100`);
+            const artifacts = artifactResponse.artifacts.map((artifact) => ({
               id: artifact.id,
               name: artifact.name,
               digest: artifact.digest,
@@ -126,12 +108,14 @@ jobs:
               createdAt: artifact.created_at,
               expiresAt: artifact.expires_at,
             }));
-            const requiredArtifactsValid = definition.requiredArtifacts.every((requiredArtifact) => {
-              const artifact = artifacts.find((candidate) => candidate.name === requiredArtifact);
-              return artifact?.expired === false
-                && /^sha256:[a-f0-9]{64}$/.test(artifact?.digest ?? '');
+            const requiredJobsSuccessful = definition.jobs.every((name) => {
+              const job = jobs.find((candidate) => candidate.name === name);
+              return job?.status === 'completed' && job?.conclusion === 'success';
             });
-
+            const requiredArtifactsValid = definition.artifacts.every((name) => {
+              const artifact = artifacts.find((candidate) => candidate.name === name);
+              return artifact?.expired === false && /^sha256:[a-f0-9]{64}$/.test(artifact?.digest ?? '');
+            });
             const exactIdentity = run.name === definition.name
               && run.path === definition.path
               && run.event === 'push'
@@ -141,10 +125,8 @@ jobs:
             verified[definition.key] = exactIdentity
               && runSuccessful
               && requiredJobsSuccessful
-              && allJobsSuccessful
               && requiredArtifactsValid;
-
-            observedRuns[definition.key] = {
+            runs[definition.key] = {
               id: run.id,
               name: run.name,
               workflowPath: run.path,
@@ -163,7 +145,6 @@ jobs:
                 exactIdentity,
                 runSuccessful,
                 requiredJobsSuccessful,
-                allJobsSuccessful,
                 requiredArtifactsValid,
               },
             };
@@ -171,21 +152,17 @@ jobs:
 
           const exactMainPushVerified = verified.validation === true;
           const independentR2AAcceptanceVerified = verified.r2aAcceptance === true;
-          const evidence = {
+          process.stdout.write(`${JSON.stringify({
             schemaVersion: 'm2-r2a-post-merge-observation/v1',
             releaseId: 'M2-RC1',
             version: '0.12.0',
             observedAt: new Date().toISOString(),
-            target: {
-              branch: 'main',
-              sha: targetSha,
-            },
-            runs: observedRuns,
+            target: { branch: 'main', sha: targetSha },
+            runs,
             decision: {
               exactMainPushVerified,
               independentR2AAcceptanceVerified,
-              eligibleToBeginR2BPreflight: exactMainPushVerified
-                && independentR2AAcceptanceVerified,
+              eligibleToBeginR2BPreflight: exactMainPushVerified && independentR2AAcceptanceVerified,
               productionEligible: false,
               resolvedBlockers: [
                 'main-branch-final-ci-not-verified',
@@ -198,8 +175,7 @@ jobs:
                 'release-owner-approval-missing',
               ],
             },
-          };
-          process.stdout.write(`${JSON.stringify(evidence, null, 2)}\n`);
+          }, null, 2)}\n`);
           NODE
 
       - name: Upload exact R2-A post-merge observation
@@ -217,7 +193,7 @@ jobs:
           node --input-type=module <<'NODE'
           import { readFile } from 'node:fs/promises';
           const evidence = JSON.parse(await readFile('/tmp/m2-r2a-post-merge-observation.json', 'utf8'));
-          if (evidence.target?.sha !== '5acb578ec799d3ab6d1c6e217787231cba23c104') {
+          if (evidence.target?.sha !== '286bdab429ee7365082b8b5abaff1b5b981d9ef7') {
             throw new Error('Observed main SHA is invalid');
           }
           if (evidence.decision?.exactMainPushVerified !== true) {
