@@ -1,26 +1,41 @@
-# M2-RC1 发布候选说明
+# M2-RC1 发布说明
 
-## 目的
+## 当前状态
 
-M2-RC1 是治理型确定性测试规划的首个候选。它证明已发布知识可形成不可变 Snapshot，并经过 Capability Catalog、确定性 Planner、Coverage、Provenance、持久化治理和只读服务查询形成可审计的 `FROZEN` Test Plan。
+M2-RC1 已完成仓库级发布收口。
 
-## 候选范围
+```text
+repositoryReleaseReady=true
+environmentPromotionEvaluated=false
+environmentPromotionEligible=null
+repositoryBlockers=[]
+```
 
-- M2-A～M2-C：合同、能力目录、确定性 Planner；
-- M2-D～M2-F：PostgreSQL Registry、治理、原子 Orchestration；
-- M2-G～M2-H：五条计划查询路由与统一只读服务组合；
-- M2-I：独立候选、Schema/Stack digest 与正式验收证据。
+M2-RC1 不再是“堆叠尚未合并”的候选状态。M2-A～M2-I、合并后验收、不可变 GHCR 发布、Registry digest 绑定、Portable Release Readiness 和最终 main-push 验证均已完成。
 
-## 验收
+## 能力范围
 
-- PR #12～#19 堆叠连续；
-- PostgreSQL 18 中完成 Generate → Submit → Review → Approve → Freeze → Reload；
-- PostgreSQL、JWKS、RS256 JWT、Membership 与十条只读路由端到端；
-- PostgreSQL/JWKS 故障只影响 readiness，恢复无需重启；
-- 缺少 Token、跨项目访问和全部写方法被拒绝；
-- Docker 非 Root、只读根文件系统和部署校验通过；
-- M1-RC1 证据继续生成且未被修改。
+- M2-A～M2-C：合同、Capability Catalog、确定性 Planner、Coverage、Provenance 与 DAG；
+- M2-D～M2-F：PostgreSQL Registry、治理、CAS、Review、Freeze 与原子 Orchestration；
+- M2-G～M2-H：五条 Test Plan 查询路由与统一只读服务；
+- M2-I：Release Candidate、Schema/Stack digest 与正式候选证据；
+- M2-RC1：堆叠合并、main 验收、不可变镜像、SBOM、Attestation、Deployment binding 与可移植发布就绪。
 
-## 不等于生产批准
+## 最终证据
 
-`productionEligible=false`。M2 堆叠尚未合并，且缺少外部镜像 digest、生产 Secret 引用、目标集群验证、变更审批、合并后 main CI 与独立发布负责人签署。
+- Release source SHA：`6bef789da58bbb7f2edd2a2024ba9a0bbf8e22a7`；
+- Immutable image digest：`sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13`；
+- Portable Readiness base main：`286bdab429ee7365082b8b5abaff1b5b981d9ef7`；
+- Final closure base main：`70b06e28e48c38d8b7feed29177144d35cb96069`；
+- Final observation Artifact：`8751973494`；
+- Final observation digest：`sha256:38263d550408d8ca96e9c951ec2f22ccfde2bc587229ae991dfc8f1eca8fad24`。
+
+## 部署边界
+
+仓库发布就绪不等于某个环境已经部署。部署方负责提供运行时配置、替换模板占位值、验证目标环境，并完成自己的本地治理流程。
+
+仓库不要求特定 Secret Provider、目标集群 ID 或审批单编号，也不保存真实 Secret 值。
+
+## 下一阶段
+
+下一阶段为 `M3-R0 — Execution Adapter Foundation`。M3-R0 仅建立合同和安全边界，不执行 k6，不创建 Worker、Queue、Scheduler 或 Kubernetes Job。

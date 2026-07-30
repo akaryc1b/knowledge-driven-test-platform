@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/release/v3/m2-final-release-closure.schema.json",
+  "title": "M2 Final Release Closure v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "releaseId",
+    "version",
+    "phase",
+    "closureBaseSha",
+    "source",
+    "portableReadiness",
+    "postMergeVerification",
+    "historicalEvidence",
+    "decision",
+    "safetyBoundary"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "m2-final-release-closure/v1" },
+    "releaseId": { "const": "M2-RC1" },
+    "version": { "const": "0.12.0" },
+    "phase": { "const": "FINAL_RELEASE_CLOSURE" },
+    "closureBaseSha": { "const": "70b06e28e48c38d8b7feed29177144d35cb96069" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mergePullRequest", "expectedHeadSha", "mergeSha"],
+      "properties": {
+        "mergePullRequest": { "const": 38 },
+        "expectedHeadSha": { "const": "7880dc9e95e80327960030e9e003189202c4a85f" },
+        "mergeSha": { "const": "70b06e28e48c38d8b7feed29177144d35cb96069" }
+      }
+    },
+    "portableReadiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "canonicalDigest", "repositoryReleaseReady", "environmentPromotionEvaluated", "environmentPromotionEligible"],
+      "properties": {
+        "path": { "const": "releases/m2/portable-release-readiness.json" },
+        "canonicalDigest": { "const": "sha256:32a5487c9e83edebc7f3d84b192cdfedf17f58edab904991555d922b5e2d5995" },
+        "repositoryReleaseReady": { "const": true },
+        "environmentPromotionEvaluated": { "const": false },
+        "environmentPromotionEligible": { "type": "null" }
+      }
+    },
+    "postMergeVerification": { "type": "object" },
+    "historicalEvidence": { "type": "object" },
+    "decision": {
+      "const": {
+        "m2Rc1Closed": true,
+        "repositoryReleaseReady": true,
+        "environmentPromotionEvaluated": false,
+        "environmentPromotionEligible": null,
+        "m3PlanningReady": true,
+        "m3ImplementationStarted": false,
+        "nextRequiredSlice": "M3-R0",
+        "repositoryBlockers": []
+      }
+    },
+    "safetyBoundary": {
+      "const": {
+        "secretAccessed": false,
+        "secretCreated": false,
+        "targetClusterAccessed": false,
+        "targetClusterModified": false,
+        "approvalCreated": false,
+        "rolloutExecuted": false,
+        "imagePublished": false,
+        "registryDigestChanged": false,
+        "executionAdapterImplemented": false,
+        "externalProcessExecuted": false,
+        "workerAdded": false,
+        "queueAdded": false,
+        "schedulerAdded": false
+      }
+    }
+  }
+}

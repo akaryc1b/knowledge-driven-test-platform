@@ -46,11 +46,12 @@
 - [M2-I M2 Release Acceptance](03-roadmap/m2-i-release-acceptance.md)
 - [M2-RC1 Post-Merge Acceptance Closure](03-roadmap/m2-rc1-post-merge-acceptance.md)
 - [M2-RC1 Release Readiness](03-roadmap/m2-rc1-production-promotion.md)
+- [M3-R0 Execution Adapter Foundation](03-roadmap/m3-r0-execution-adapter-foundation.md)
 
 ## 发布与治理
 
 - [M1-RC1 发布候选说明](releases/M1-RC1.md)
-- [M2-RC1 发布候选说明](releases/M2-RC1.md)
+- [M2-RC1 发布说明](releases/M2-RC1.md)
 - [M2-RC1 合并后验收](releases/M2-RC1-main-acceptance.md)
 - [M2-RC1 Historical Production Promotion](releases/M2-RC1-production-promotion.md)
 - [M2-RC1 R0 Main CI Closure](releases/M2-RC1-r0-main-ci-closure.md)
@@ -58,6 +59,7 @@
 - [M2-RC1 R1-B Immutable Image Binding](releases/M2-RC1-r1b-image-binding.md)
 - [M2-RC1 R2-A External Evidence Intake](releases/M2-RC1-r2a-external-evidence-intake.md)
 - [M2-RC1 R2-Rebaseline Portable Release Readiness](releases/M2-RC1-r2-rebaseline-portable-release-readiness.md)
+- [M2-RC1 Final Release Closure](releases/M2-RC1-final-release-closure.md)
 - [M1 发布验收矩阵](04-governance/m1-release-acceptance-matrix.md)
 - [M2 Release Readiness 与历史 Promotion 验收矩阵](04-governance/m2-production-promotion-acceptance-matrix.md)
 - [知识治理](04-governance/knowledge-governance.md)

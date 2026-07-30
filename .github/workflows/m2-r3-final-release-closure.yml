@@ -1,0 +1,168 @@
+name: m2-r3-final-release-closure
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/validation.yml'
+      - '.github/workflows/m2-r3-final-release-closure.yml'
+      - 'apps/read-only-governance-service/test/m2-final-release-closure*.test.js'
+      - 'docs/02-development/development-handoff.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/03-roadmap/m2-rc1-production-promotion.md'
+      - 'docs/03-roadmap/m3-r0-execution-adapter-foundation.md'
+      - 'docs/04-governance/m2-production-promotion-acceptance-matrix.md'
+      - 'docs/releases/M2-RC1.md'
+      - 'docs/releases/M2-RC1-final-release-closure.md'
+      - 'docs/README.md'
+      - 'package.json'
+      - 'releases/m2/final-release-closure.json'
+      - 'schemas/release/schema-catalog.json'
+      - 'schemas/release/v3/m2-final-release-closure*.schema.json'
+      - 'scripts/validate-m2-final-release-closure.js'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/validation.yml'
+      - '.github/workflows/m2-r3-final-release-closure.yml'
+      - 'apps/read-only-governance-service/test/m2-final-release-closure*.test.js'
+      - 'docs/02-development/development-handoff.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/03-roadmap/m2-rc1-production-promotion.md'
+      - 'docs/03-roadmap/m3-r0-execution-adapter-foundation.md'
+      - 'docs/04-governance/m2-production-promotion-acceptance-matrix.md'
+      - 'docs/releases/M2-RC1.md'
+      - 'docs/releases/M2-RC1-final-release-closure.md'
+      - 'docs/README.md'
+      - 'package.json'
+      - 'releases/m2/final-release-closure.json'
+      - 'schemas/release/schema-catalog.json'
+      - 'schemas/release/v3/m2-final-release-closure*.schema.json'
+      - 'scripts/validate-m2-final-release-closure.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-closure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Run focused M2 final closure tests
+        run: node --test apps/read-only-governance-service/test/m2-final-release-closure.test.js
+      - name: Run full Node test suite
+        run: npm test
+      - name: Run repository validation
+        run: npm run validate
+      - name: Validate immutable Deployment
+        run: npm run validate:deployment
+      - name: Validate portable release readiness
+        run: npm run validate:m2-portable-release-readiness
+      - name: Validate M2 final release closure
+        env:
+          FINAL_CLOSURE_EVIDENCE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          GITHUB_SHA="$FINAL_CLOSURE_EVIDENCE_SOURCE_SHA" npm run --silent validate:m2-final-release-closure > /tmp/m2-final-release-closure-evidence.json
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const evidence = JSON.parse(await readFile('/tmp/m2-final-release-closure-evidence.json', 'utf8'));
+          if (evidence.decision?.m2Rc1Closed !== true
+              || evidence.decision?.repositoryReleaseReady !== true
+              || evidence.decision?.m3PlanningReady !== true
+              || evidence.decision?.m3ImplementationStarted !== false
+              || evidence.decision?.repositoryBlockers?.length !== 0) {
+            throw new Error('M2 final release closure decision is invalid');
+          }
+          if (evidence.decision?.environmentPromotionEvaluated !== false
+              || evidence.decision?.environmentPromotionEligible !== null) {
+            throw new Error('Environment promotion boundary changed');
+          }
+          if (Object.values(evidence.safetyBoundary ?? {}).some((value) => value !== false)) {
+            throw new Error('M2 final closure safety boundary changed');
+          }
+          NODE
+      - name: Build non-root read-only service image
+        run: docker build -f apps/read-only-governance-service/Dockerfile -t kdtp-read-only-service:m2-final-closure .
+      - name: Verify container user
+        run: test "$(docker image inspect kdtp-read-only-service:m2-final-closure --format '{{.Config.User}}')" = "node"
+      - name: Verify hardened container runtime
+        run: docker run --rm --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cap-drop=ALL --security-opt no-new-privileges kdtp-read-only-service:m2-final-closure node --version
+      - name: Upload M2 final release closure evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-final-release-closure-evidence
+          path: |
+            /tmp/m2-final-release-closure-evidence.json
+            releases/m2/final-release-closure.json
+            releases/m2/portable-release-readiness.json
+            schemas/release/v3/m2-final-release-closure.schema.json
+            schemas/release/v3/m2-final-release-closure-evidence.schema.json
+            docs/releases/M2-RC1-final-release-closure.md
+            docs/03-roadmap/m3-r0-execution-adapter-foundation.md
+          if-no-files-found: error
+          retention-days: 90
+
+  postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: kdtp_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kdtp_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+      KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Install PostgreSQL client dependency without changing the lockfile
+        run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
+      - name: Run full PostgreSQL 18 integration suite
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:postgres 2>&1 | tee /tmp/m2-final-closure-postgres-test.log
+      - name: Run all PostgreSQL examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run --silent example:postgres > /tmp/postgres-registry.json
+          npm run --silent example:governance:postgres > /tmp/postgres-governance.json
+          npm run --silent example:plan-registry:postgres > /tmp/postgres-test-plan-registry.json
+          npm run --silent example:planning-orchestration:postgres > /tmp/postgres-planning-orchestration.json
+      - name: Upload M2 final closure PostgreSQL test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-final-closure-postgres-test-log
+          path: /tmp/m2-final-closure-postgres-test.log
+          if-no-files-found: error
+          retention-days: 90
