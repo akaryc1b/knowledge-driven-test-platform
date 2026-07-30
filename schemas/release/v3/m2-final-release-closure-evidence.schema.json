@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/release/v3/m2-final-release-closure-evidence.schema.json",
+  "title": "M2 Final Release Closure Evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "releaseId",
+    "version",
+    "generatedAt",
+    "source",
+    "digests",
+    "decision",
+    "safetyBoundary"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "m2-final-release-closure-evidence/v1" },
+    "releaseId": { "const": "M2-RC1" },
+    "version": { "const": "0.12.0" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch", "commitSha"],
+      "properties": {
+        "branch": { "type": "string", "minLength": 1 },
+        "commitSha": {
+          "anyOf": [
+            { "const": "local" },
+            { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+          ]
+        }
+      }
+    },
+    "digests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finalReleaseClosure", "portableReleaseReadiness"],
+      "properties": {
+        "finalReleaseClosure": { "const": "sha256:7b4c3165e3913d857e45cb22f918cde0ae6cbacdd0f8298b45209c87ca297f2b" },
+        "portableReleaseReadiness": { "const": "sha256:32a5487c9e83edebc7f3d84b192cdfedf17f58edab904991555d922b5e2d5995" }
+      }
+    },
+    "decision": {
+      "const": {
+        "m2Rc1Closed": true,
+        "repositoryReleaseReady": true,
+        "environmentPromotionEvaluated": false,
+        "environmentPromotionEligible": null,
+        "m3PlanningReady": true,
+        "m3ImplementationStarted": false,
+        "nextRequiredSlice": "M3-R0",
+        "repositoryBlockers": []
+      }
+    },
+    "safetyBoundary": {
+      "const": {
+        "secretAccessed": false,
+        "secretCreated": false,
+        "targetClusterAccessed": false,
+        "targetClusterModified": false,
+        "approvalCreated": false,
+        "rolloutExecuted": false,
+        "imagePublished": false,
+        "registryDigestChanged": false,
+        "executionAdapterImplemented": false,
+        "externalProcessExecuted": false,
+        "workerAdded": false,
+        "queueAdded": false,
+        "schedulerAdded": false
+      }
+    }
+  }
+}
