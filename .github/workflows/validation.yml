@@ -82,6 +82,16 @@ jobs:
           name: m2-r2a-external-evidence-intake-evidence
           path: /tmp/m2-r2a-external-evidence-intake-evidence.json
           if-no-files-found: error
+      - name: Validate M2 final release closure
+        env:
+          FINAL_CLOSURE_EVIDENCE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: GITHUB_SHA="$FINAL_CLOSURE_EVIDENCE_SOURCE_SHA" npm run --silent validate:m2-final-release-closure > /tmp/m2-final-release-closure-evidence.json
+      - name: Upload M2 final release closure evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-final-release-closure-evidence
+          path: /tmp/m2-final-release-closure-evidence.json
+          if-no-files-found: error
       - name: Collect immutable main push CI evidence
         env:
           GITHUB_TOKEN: ${{ github.token }}
