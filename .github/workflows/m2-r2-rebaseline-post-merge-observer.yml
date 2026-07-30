@@ -1,4 +1,5 @@
 name: m2-r2-rebaseline-post-merge-observer
+# Synchronize trigger after control PR creation; no verification semantics changed.
 
 on:
   pull_request:
