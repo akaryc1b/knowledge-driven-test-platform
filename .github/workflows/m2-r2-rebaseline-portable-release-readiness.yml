@@ -1,0 +1,171 @@
+name: m2-r2-rebaseline-portable-release-readiness
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m2-r2-rebaseline-portable-release-readiness.yml'
+      - 'apps/read-only-governance-service/test/m2-portable-release-readiness*.test.js'
+      - 'deploy/kubernetes/read-only-governance-service/README.md'
+      - 'docs/03-roadmap/m2-rc1-production-promotion.md'
+      - 'docs/04-governance/m2-production-promotion-acceptance-matrix.md'
+      - 'docs/releases/M2-RC1-r2-rebaseline-portable-release-readiness.md'
+      - 'docs/README.md'
+      - 'package.json'
+      - 'releases/m2/portable-release-readiness.json'
+      - 'schemas/release/schema-catalog.json'
+      - 'schemas/release/v3/m2-portable-release-readiness*.schema.json'
+      - 'scripts/validate-m2-portable-release-readiness.js'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/m2-r2-rebaseline-portable-release-readiness.yml'
+      - 'apps/read-only-governance-service/test/m2-portable-release-readiness*.test.js'
+      - 'deploy/kubernetes/read-only-governance-service/README.md'
+      - 'docs/03-roadmap/m2-rc1-production-promotion.md'
+      - 'docs/04-governance/m2-production-promotion-acceptance-matrix.md'
+      - 'docs/releases/M2-RC1-r2-rebaseline-portable-release-readiness.md'
+      - 'docs/README.md'
+      - 'package.json'
+      - 'releases/m2/portable-release-readiness.json'
+      - 'schemas/release/schema-catalog.json'
+      - 'schemas/release/v3/m2-portable-release-readiness*.schema.json'
+      - 'scripts/validate-m2-portable-release-readiness.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Run focused portable readiness tests
+        run: node --test apps/read-only-governance-service/test/m2-portable-release-readiness.test.js
+      - name: Run full Node test suite
+        run: npm test
+      - name: Run repository validation
+        run: npm run validate
+      - name: Validate immutable Deployment
+        run: npm run validate:deployment
+      - name: Validate historical Production Promotion
+        run: npm run validate:m2-production-promotion
+      - name: Validate historical R2-A intake
+        run: npm run validate:m2-r2a-external-evidence-intake
+      - name: Validate portable release readiness
+        env:
+          READINESS_EVIDENCE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          GITHUB_SHA="$READINESS_EVIDENCE_SOURCE_SHA" npm run --silent validate:m2-portable-release-readiness > /tmp/m2-portable-release-readiness-evidence.json
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const evidence = JSON.parse(await readFile(
+            '/tmp/m2-portable-release-readiness-evidence.json',
+            'utf8',
+          ));
+          if (evidence.decision?.repositoryReleaseReady !== true) {
+            throw new Error('Repository release readiness is not verified');
+          }
+          if (evidence.decision?.environmentPromotionEvaluated !== false
+              || evidence.decision?.environmentPromotionEligible !== null) {
+            throw new Error('Environment promotion must remain unevaluated');
+          }
+          if (evidence.decision?.repositoryBlockers?.length !== 0) {
+            throw new Error('Repository release readiness contains blockers');
+          }
+          if (evidence.runtimeConfiguration?.providerAgnostic !== true
+              || evidence.runtimeConfiguration?.repositoryStoresSecretValues !== false
+              || evidence.runtimeConfiguration?.repositoryRequiresProviderMetadata !== false) {
+            throw new Error('Portable runtime configuration boundary changed');
+          }
+          NODE
+      - name: Build non-root read-only service image
+        run: docker build -f apps/read-only-governance-service/Dockerfile -t kdtp-read-only-service:r2-rebaseline .
+      - name: Verify container user
+        run: test "$(docker image inspect kdtp-read-only-service:r2-rebaseline --format '{{.Config.User}}')" = "node"
+      - name: Verify hardened container runtime
+        run: docker run --rm --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cap-drop=ALL --security-opt no-new-privileges kdtp-read-only-service:r2-rebaseline node --version
+      - name: Upload portable release readiness evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-portable-release-readiness-evidence
+          path: |
+            /tmp/m2-portable-release-readiness-evidence.json
+            releases/m2/portable-release-readiness.json
+            releases/m2/production-promotion.json
+            releases/m2/r2a-external-evidence-intake.json
+            releases/m2/r1b-image-binding.json
+            releases/m2/release-image-evidence.json
+            schemas/release/v3/m2-portable-release-readiness.schema.json
+            schemas/release/v3/m2-portable-release-readiness-evidence.schema.json
+            deploy/kubernetes/read-only-governance-service/deployment.yaml
+            deploy/kubernetes/read-only-governance-service/configmap.yaml
+            deploy/kubernetes/read-only-governance-service/kustomization.yaml
+            deploy/kubernetes/read-only-governance-service/README.md
+          if-no-files-found: error
+          retention-days: 90
+
+  postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: kdtp_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kdtp_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+      KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Install PostgreSQL client dependency without changing the lockfile
+        run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
+      - name: Run full PostgreSQL 18 integration suite
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:postgres 2>&1 | tee /tmp/r2-rebaseline-postgres-test.log
+      - name: Run all PostgreSQL examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run --silent example:postgres > /tmp/postgres-registry.json
+          npm run --silent example:governance:postgres > /tmp/postgres-governance.json
+          npm run --silent example:plan-registry:postgres > /tmp/postgres-test-plan-registry.json
+          npm run --silent example:planning-orchestration:postgres > /tmp/postgres-planning-orchestration.json
+      - name: Upload portable readiness PostgreSQL test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-portable-readiness-postgres-test-log
+          path: /tmp/r2-rebaseline-postgres-test.log
+          if-no-files-found: error
+          retention-days: 90
