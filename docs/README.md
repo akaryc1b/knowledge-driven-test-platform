@@ -60,8 +60,10 @@
 - [M2-RC1 R2-A External Evidence Intake](releases/M2-RC1-r2a-external-evidence-intake.md)
 - [M2-RC1 R2-Rebaseline Portable Release Readiness](releases/M2-RC1-r2-rebaseline-portable-release-readiness.md)
 - [M2-RC1 Final Release Closure](releases/M2-RC1-final-release-closure.md)
+- [M3-R0 Execution Contract Foundation](releases/M3-R0-execution-contract-foundation.md)
 - [M1 发布验收矩阵](04-governance/m1-release-acceptance-matrix.md)
 - [M2 Release Readiness 与历史 Promotion 验收矩阵](04-governance/m2-production-promotion-acceptance-matrix.md)
+- [M3-R0 Execution Contract 验收矩阵](04-governance/m3-r0-execution-contract-acceptance-matrix.md)
 - [知识治理](04-governance/knowledge-governance.md)
 - [多项目安全与隔离](04-governance/security-and-isolation.md)
 
@@ -93,3 +95,4 @@
 - [ADR-0024：保留候选证据并追加合并后验收](05-adr/ADR-0024-post-merge-release-acceptance.md)
 - [ADR-0025：以追加证据而非改写历史完成生产晋级](05-adr/ADR-0025-production-promotion-evidence.md)
 - [ADR-0026：以精确 main SHA 和 Registry digest 发布 GHCR 镜像](05-adr/ADR-0026-immutable-ghcr-release-image.md)
+- [ADR-0027：先建立不可变执行合同，再实现 Adapter](05-adr/ADR-0027-contract-first-execution-boundary.md)
