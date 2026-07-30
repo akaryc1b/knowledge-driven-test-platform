@@ -1,0 +1,175 @@
+name: m2-r2a-external-evidence-intake
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/validation.yml'
+      - '.github/workflows/m2-r2a-external-evidence-intake.yml'
+      - 'apps/read-only-governance-service/test/m2-r2a-external-evidence-intake*.test.js'
+      - 'docs/03-roadmap/m2-rc1-production-promotion.md'
+      - 'docs/04-governance/m2-production-promotion-acceptance-matrix.md'
+      - 'docs/releases/M2-RC1-r2a-external-evidence-intake.md'
+      - 'docs/README.md'
+      - 'package.json'
+      - 'releases/m2/r2a-external-evidence-intake.json'
+      - 'schemas/release/schema-catalog.json'
+      - 'schemas/release/v3/m2-*-input.schema.json'
+      - 'schemas/release/v3/m2-external-evidence-intake.schema.json'
+      - 'schemas/release/v3/m2-r2a-external-evidence-intake-evidence.schema.json'
+      - 'scripts/validate-m2-external-evidence-intake.js'
+      - 'scripts/validate-m2-production-promotion-repository.js'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/validation.yml'
+      - '.github/workflows/m2-r2a-external-evidence-intake.yml'
+      - 'apps/read-only-governance-service/test/m2-r2a-external-evidence-intake*.test.js'
+      - 'docs/03-roadmap/m2-rc1-production-promotion.md'
+      - 'docs/04-governance/m2-production-promotion-acceptance-matrix.md'
+      - 'docs/releases/M2-RC1-r2a-external-evidence-intake.md'
+      - 'docs/README.md'
+      - 'package.json'
+      - 'releases/m2/r2a-external-evidence-intake.json'
+      - 'schemas/release/schema-catalog.json'
+      - 'schemas/release/v3/m2-*-input.schema.json'
+      - 'schemas/release/v3/m2-external-evidence-intake.schema.json'
+      - 'schemas/release/v3/m2-r2a-external-evidence-intake-evidence.schema.json'
+      - 'scripts/validate-m2-external-evidence-intake.js'
+      - 'scripts/validate-m2-production-promotion-repository.js'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-intake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Run focused R2-A tests
+        run: node --test apps/read-only-governance-service/test/m2-r2a-external-evidence-intake.test.js
+      - name: Run full Node test suite
+        run: npm test
+      - name: Run repository validation
+        run: npm run validate
+      - name: Validate immutable Deployment
+        run: npm run validate:deployment
+      - name: Validate current Production Promotion
+        run: npm run validate:m2-production-promotion
+      - name: Validate historical main CI evidence
+        run: npm run validate:m2-main-ci-evidence
+      - name: Validate R0 closure
+        run: npm run validate:m2-r0-main-ci-closure
+      - name: Validate R1-B immutable image binding
+        run: npm run validate:m2-r1b-image-binding
+      - name: Validate R2-A sensitive-material and anti-fabrication gates
+        env:
+          R2A_EVIDENCE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          GITHUB_SHA="$R2A_EVIDENCE_SOURCE_SHA" npm run --silent validate:m2-r2a-external-evidence-intake > /tmp/m2-r2a-external-evidence-intake-evidence.json
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const evidence = JSON.parse(await readFile('/tmp/m2-r2a-external-evidence-intake-evidence.json', 'utf8'));
+          if (evidence.decision?.promotionMutationAllowed !== false) {
+            throw new Error('R2-A must not allow Promotion mutation');
+          }
+          if (evidence.decision?.productionEligible !== false) {
+            throw new Error('R2-A must remain production ineligible');
+          }
+          if (evidence.decision?.openBlockers?.length !== 4) {
+            throw new Error('R2-A open blocker count is invalid');
+          }
+          if (Object.values(evidence.statuses ?? {}).some((status) => status !== 'NOT_PROVIDED')) {
+            throw new Error('R2-A repository evidence must remain NOT_PROVIDED');
+          }
+          NODE
+      - name: Build non-root read-only service image
+        run: docker build -f apps/read-only-governance-service/Dockerfile -t kdtp-read-only-service:r2a .
+      - name: Verify container user
+        run: test "$(docker image inspect kdtp-read-only-service:r2a --format '{{.Config.User}}')" = "node"
+      - name: Verify hardened container runtime
+        run: docker run --rm --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m --cap-drop=ALL --security-opt no-new-privileges kdtp-read-only-service:r2a node --version
+      - name: Upload R2-A external evidence intake evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-r2a-external-evidence-intake-evidence
+          path: |
+            /tmp/m2-r2a-external-evidence-intake-evidence.json
+            releases/m2/r2a-external-evidence-intake.json
+            releases/m2/production-promotion.json
+            releases/m2/r1b-image-binding.json
+            releases/m2/release-image-evidence.json
+            schemas/release/v3/m2-production-secret-references-input.schema.json
+            schemas/release/v3/m2-target-cluster-validation-input.schema.json
+            schemas/release/v3/m2-change-approval-input.schema.json
+            schemas/release/v3/m2-release-owner-approval-input.schema.json
+            schemas/release/v3/m2-external-evidence-intake.schema.json
+            schemas/release/v3/m2-r2a-external-evidence-intake-evidence.schema.json
+            deploy/kubernetes/read-only-governance-service/deployment.yaml
+          if-no-files-found: error
+          retention-days: 90
+
+  postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: kdtp_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kdtp_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+      KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Install PostgreSQL client dependency without changing the lockfile
+        run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
+      - name: Run full PostgreSQL 18 integration suite
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:postgres 2>&1 | tee /tmp/r2a-postgres-test.log
+      - name: Run all PostgreSQL examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run --silent example:postgres > /tmp/postgres-registry.json
+          npm run --silent example:governance:postgres > /tmp/postgres-governance.json
+          npm run --silent example:plan-registry:postgres > /tmp/postgres-test-plan-registry.json
+          npm run --silent example:planning-orchestration:postgres > /tmp/postgres-planning-orchestration.json
+      - name: Upload R2-A PostgreSQL test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-r2a-postgres-test-log
+          path: /tmp/r2a-postgres-test.log
+          if-no-files-found: error
+          retention-days: 90
