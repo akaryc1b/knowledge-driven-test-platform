@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/release/v3/m2-r1b-image-binding.schema.json",
+  "title": "M2 R1-B Immutable Image Binding v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "releaseId",
+    "version",
+    "boundAt",
+    "source",
+    "release",
+    "deployment",
+    "decision"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "m2-r1b-image-binding/v1" },
+    "releaseId": { "const": "M2-RC1" },
+    "version": { "const": "0.12.0" },
+    "boundAt": { "type": "string", "format": "date-time" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch", "sha", "mainCi"],
+      "properties": {
+        "branch": { "const": "main" },
+        "sha": { "$ref": "#/$defs/sha" },
+        "mainCi": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["runId", "validateJobId", "postgresJobId", "artifacts"],
+          "properties": {
+            "runId": { "type": "integer", "minimum": 1 },
+            "validateJobId": { "type": "integer", "minimum": 1 },
+            "postgresJobId": { "type": "integer", "minimum": 1 },
+            "artifacts": { "$ref": "#/$defs/ciArtifacts" }
+          }
+        }
+      }
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["workflow", "runId", "evidenceArtifact", "evidence"],
+      "properties": {
+        "workflow": { "const": ".github/workflows/m2-release-image.yml" },
+        "runId": { "type": "integer", "minimum": 1 },
+        "evidenceArtifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "name", "digest"],
+          "properties": {
+            "id": { "type": "integer", "minimum": 1 },
+            "name": { "type": "string", "minLength": 1 },
+            "digest": { "$ref": "#/$defs/digest" }
+          }
+        },
+        "evidence": { "$ref": "#/$defs/fileEvidence" }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "image", "manifestDigest"],
+      "properties": {
+        "path": { "const": "deploy/kubernetes/read-only-governance-service/deployment.yaml" },
+        "image": {
+          "type": "string",
+          "pattern": "^ghcr\\.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service@sha256:[a-f0-9]{64}$"
+        },
+        "manifestDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "externalRegistryDigestAvailable",
+        "deploymentUsesImmutableDigest",
+        "eligibleForProductionEvidenceBinding",
+        "productionEligible",
+        "remainingBlockers"
+      ],
+      "properties": {
+        "externalRegistryDigestAvailable": { "const": true },
+        "deploymentUsesImmutableDigest": { "const": true },
+        "eligibleForProductionEvidenceBinding": { "const": true },
+        "productionEligible": { "const": false },
+        "remainingBlockers": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/remainingBlocker" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "fileEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "digest"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "ciArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "m1ReleaseEvidence",
+        "m2ReleaseEvidence",
+        "m2PostMergeEvidence",
+        "postgresValidation",
+        "repositoryValidation",
+        "deploymentValidation"
+      ],
+      "properties": {
+        "m1ReleaseEvidence": { "$ref": "#/$defs/digest" },
+        "m2ReleaseEvidence": { "$ref": "#/$defs/digest" },
+        "m2PostMergeEvidence": { "$ref": "#/$defs/digest" },
+        "postgresValidation": { "$ref": "#/$defs/digest" },
+        "repositoryValidation": { "$ref": "#/$defs/digest" },
+        "deploymentValidation": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "remainingBlocker": {
+      "enum": [
+        "production-secrets-not-configured",
+        "target-cluster-validation-not-run",
+        "change-approval-missing",
+        "release-owner-approval-missing"
+      ]
+    }
+  }
+}

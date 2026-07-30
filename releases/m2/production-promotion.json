@@ -15,51 +15,51 @@
   },
   "promotionSource": {
     "branch": "main",
-    "mainSha": "edf09333d9be9ea6839b8cf4d18efed95cfba821"
+    "mainSha": "6bef789da58bbb7f2edd2a2024ba9a0bbf8e22a7"
   },
   "mainBranchFinalCi": {
     "status": "PASSED",
     "event": "push",
-    "sourceSha": "edf09333d9be9ea6839b8cf4d18efed95cfba821",
-    "runId": 30423781549,
+    "sourceSha": "6bef789da58bbb7f2edd2a2024ba9a0bbf8e22a7",
+    "runId": 30440545497,
     "artifacts": {
-      "m1ReleaseEvidence": "sha256:5fd6a0a992fc5042ec24e22ec5a9dbd83c73fd8f41179676b2cc0d0ec3b7c27b",
-      "m2ReleaseEvidence": "sha256:52fa0384bf868e7dbe4115fcb5755eed971f624346d70f201c0c52e7530ba0c1",
-      "m2PostMergeEvidence": "sha256:5b5cd301970cddd6aeea29b70108a128983262480a79d39d6371f3c5ef48b6ae",
-      "postgresValidation": "sha256:8008931c382ed28db60829d7ae729c3fb35547ec546dd5357c01498eac6dcd42",
-      "repositoryValidation": "sha256:1fd29192b102e0767a91d11649c6056f4a6261e8159f8dee34698a3ffd849cf1",
-      "deploymentValidation": "sha256:99a28a45d3841ac234b05ca22442980871a9534ee2d92247b1d16b116b49d5a6"
+      "m1ReleaseEvidence": "sha256:0be9d9ff76be9fe05e7acf45c62eb2ec6dd5742d2568ddc0586bed74e105ccb7",
+      "m2ReleaseEvidence": "sha256:c0c257db57e9a8b98b24d2c27da343289654d84627c547055cfa68ac72f449cf",
+      "m2PostMergeEvidence": "sha256:937a97d6dd782b80c9ee6ae2d90472d1e21a9d086a4d16db960739988a1c2ab4",
+      "postgresValidation": "sha256:db2892e2d22c39cf782042cbd447f81b386b8f9a47366f189470834f6e9a3fa1",
+      "repositoryValidation": "sha256:8cb381ea153ebbc12ee3eccff5ef3ea7ece8e99d9ea57e4d036ca19ede0bdaf3",
+      "deploymentValidation": "sha256:7be5a15fb53eabef201fa9b7eadf5f234f0f6c69205359e05237db683c750b3c"
     }
   },
   "imageRelease": {
-    "status": "MISSING",
+    "status": "PUBLISHED",
     "repository": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service",
-    "immutableReference": null,
-    "registryDigest": null,
-    "sourceSha": null,
-    "buildRunId": null,
+    "immutableReference": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service@sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13",
+    "registryDigest": "sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13",
+    "sourceSha": "6bef789da58bbb7f2edd2a2024ba9a0bbf8e22a7",
+    "buildRunId": 30440674461,
     "sbom": {
-      "status": "MISSING",
-      "format": null,
-      "digest": null
+      "status": "GENERATED",
+      "format": "spdx-json",
+      "digest": "sha256:94a4a77a76f4802c9ff4a238e63854e1619d2ce46fd6a5eaef1e2698eb033702"
     },
     "provenanceAttestation": {
-      "status": "MISSING",
-      "attestationId": null,
-      "url": null,
-      "bundleDigest": null
+      "status": "VERIFIED",
+      "attestationId": "37705043",
+      "url": "https://github.com/akaryc1b/knowledge-driven-test-platform/attestations/37705043",
+      "bundleDigest": "sha256:9713617e86d763075dff8e5b1394a1c7a97c0f8ef4d05a2310670daa5d90b6be"
     },
     "sbomAttestation": {
-      "status": "MISSING",
-      "attestationId": null,
-      "url": null,
-      "bundleDigest": null
+      "status": "VERIFIED",
+      "attestationId": "37705058",
+      "url": "https://github.com/akaryc1b/knowledge-driven-test-platform/attestations/37705058",
+      "bundleDigest": "sha256:0191ec23424d1e0128ded4a3a57dc2f489b6ab07629210d84de27e008d5cdc84"
     },
     "pullVerification": {
-      "status": "NOT_RUN",
-      "verifiedReference": null,
-      "resolvedDigest": null,
-      "verifiedAt": null
+      "status": "PASSED",
+      "verifiedReference": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service@sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13",
+      "resolvedDigest": "sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13",
+      "verifiedAt": "2026-07-29T09:43:00.000Z"
     }
   },
   "secrets": {
@@ -94,10 +94,10 @@
   "decision": {
     "productionEligible": false,
     "resolvedBlockers": [
-      "main-branch-final-ci-not-verified"
+      "main-branch-final-ci-not-verified",
+      "external-registry-digest-missing"
     ],
     "openBlockers": [
-      "external-registry-digest-missing",
       "production-secrets-not-configured",
       "target-cluster-validation-not-run",
       "change-approval-missing",

@@ -7,7 +7,7 @@ export const M2_R0_MAIN_SHA = 'edf09333d9be9ea6839b8cf4d18efed95cfba821';
 
 export async function collectM2R0MainCiClosureEvidence(options = {}) {
   const basePromotion = options.promotion
-    ?? JSON.parse(await readFile(options.promotionPath ?? 'releases/m2/production-promotion.json', 'utf8'));
+    ?? JSON.parse(await readFile(options.promotionPath ?? 'releases/m2/r0-production-promotion.json', 'utf8'));
   const promotion = structuredClone(basePromotion);
   promotion.promotionSource = {
     branch: 'main',

@@ -63,7 +63,7 @@
         "containers": [
           {
             "name": "read-only-governance",
-            "image": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service:0.11.0",
+            "image": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service@sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13",
             "imagePullPolicy": "IfNotPresent",
             "ports": [
               {

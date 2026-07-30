@@ -2,7 +2,7 @@
 
 ## R0 — Production Promotion Contract
 
-状态：PR #22 已合并；R0 main-CI closure 在独立 PR 中完成验证与永久绑定。
+状态：完成并已合并。
 
 交付：
 
@@ -17,63 +17,72 @@
 9. R0 merge commit `edf09333d9be9ea6839b8cf4d18efed95cfba821` 的真实成功 push run；
 10. 独立 `r0-main-ci-closure.json` 与防篡改 Validator。
 
-R0 成功 closure 已为以下证据建立永久绑定：
+R0 关闭：
 
-- main push run `30423781549`；
-- Validate job `90485717866`；
-- PostgreSQL job `90485717817`；
-- 成功的 Deployment Validator step；
-- M1、M2 Candidate、M2 Post-Merge、PostgreSQL、Repository 与 Deployment Artifact digest。
-
-因此只关闭 `main-branch-final-ci-not-verified`。R0 不发布镜像，不修改部署镜像引用，不关闭任何缺少真实外部证据的 blocker。
+- `main-branch-final-ci-not-verified`。
 
 ## R1-A — Immutable GHCR Image Release
 
-状态：在独立堆叠 Draft PR 中实施，尚未合并或执行真实 GHCR 发布。
+状态：完成。真实发布 Workflow run `30440674461` 成功。
 
 交付：
 
 1. 仅由 `workflow_dispatch` 启动的受控发布 Workflow；
-2. 验证输入 `source_sha` 位于 `main` 历史；
-3. 检出精确 SHA并执行完整 Node、Repository、Deployment、M1/M2/Post-Merge/Production Promotion、main-CI closure 与 PostgreSQL 18 验收；
-4. 构建并推送 GHCR 镜像；
-5. 输出真实 Registry digest；
+2. 精确 `main@6bef789da58bbb7f2edd2a2024ba9a0bbf8e22a7` 来源验证；
+3. 完整 Node、Repository、Deployment、M1/M2/Post-Merge/Promotion、main-CI closure 与 PostgreSQL 18 验收；
+4. GHCR 构建与推送；
+5. Registry digest `sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13`；
 6. 非 Root 与 hardened runtime 验证；
-7. 生成 SPDX JSON SBOM；
-8. 生成 provenance 与 SBOM attestation；
-9. 拉取不可变引用并复核 digest；
-10. 上传无敏感信息的镜像发布证据 Artifact。
+7. SPDX JSON SBOM；
+8. provenance 与 SBOM attestation；
+9. 不可变引用回拉和 digest 复核；
+10. `m2-release-image-evidence/v1` Artifact。
 
-如果 Packages、`packages: write`、`id-token: write`、`attestations: write` 或 GHCR 权限不足，Workflow 必须失败并保留 blocker。
+R1-A 只创建真实外部证据，不修改 Promotion 或 Deployment。
 
 ## R1-B — Registry Digest Binding
 
-状态：条件切片，尚未开始。
-
-只有 R1-A 产生真实 Registry digest、SBOM digest、Attestation 标识和 pull verification 后才允许开始。
+状态：本独立 Draft PR 正在实施，尚未合并。
 
 交付：
 
 1. 将 Deployment 从可变标签绑定到完整 `@sha256:` 引用；
-2. 将真实 build run、source SHA、SBOM、Attestation 和 manifest digest 追加到 Production Promotion 记录；
-3. 仅在证据一致时关闭 `external-registry-digest-missing`；
-4. 保持其余 Secret、Cluster 与审批 blocker 开放。
+2. 将真实 build run、source SHA、main CI、SBOM、Attestation 和 pull verification 写入 Production Promotion；
+3. 保存 R1-A release evidence 的仓库副本；
+4. 新增 `m2-r1b-image-binding/v1` 与 evidence schema；
+5. 独立重算 release evidence、binding、Promotion 与 Deployment canonical digest；
+6. 永久 PR/push Validation Artifact；
+7. 只读手动 R1-B 验收 Workflow；
+8. 仅关闭 `external-registry-digest-missing`。
+
+R1-B 不配置 Secret、不访问目标集群、不创建审批，也不执行生产 rollout。
 
 ## 当前 Blocker
 
 已解决：
 
-- `main-branch-final-ci-not-verified`。
+- `main-branch-final-ci-not-verified`；
+- `external-registry-digest-missing`。
 
 继续开放：
 
-- `external-registry-digest-missing`；
 - `production-secrets-not-configured`；
 - `target-cluster-validation-not-run`；
 - `change-approval-missing`；
 - `release-owner-approval-missing`。
 
 `productionEligible=false`。
+
+## 后续条件切片
+
+只有在取得真实、非占位、可独立验证的外部证据后，才允许分别推进：
+
+- Production Secret Provider 与版本化引用；
+- 目标集群只读验证；
+- Change Approval；
+- Release Owner Approval。
+
+任何后续切片都不得由 R1-B 代为声明完成。
 
 ## 冻结范围
 

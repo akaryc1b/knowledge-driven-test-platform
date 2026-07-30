@@ -7,14 +7,10 @@ on:
       - 'scripts/collect-m2-r0-main-ci-closure.js'
       - 'scripts/collect-m2-main-branch-ci-evidence.js'
       - 'scripts/validate-m2-r0-main-ci-closure.js'
-      - 'scripts/validate-m2-production-promotion.js'
-      - 'scripts/validate-m2-production-promotion-repository.js'
-      - 'releases/m2/production-promotion.json'
+      - 'releases/m2/r0-production-promotion.json'
       - 'releases/m2/r0-main-ci-closure.json'
       - 'docs/releases/M2-RC1-r0-main-ci-closure.md'
       - 'apps/read-only-governance-service/test/m2-r0-main-ci-closure.test.js'
-      - 'apps/read-only-governance-service/test/m2-production-promotion.test.js'
-      - 'package.json'
 
 permissions:
   contents: read
@@ -31,12 +27,9 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
       - name: Run closure-focused tests
-        run: node --test apps/read-only-governance-service/test/m2-r0-main-ci-closure.test.js apps/read-only-governance-service/test/m2-production-promotion.test.js
-      - name: Validate Production Promotion and permanent closure
-        run: |
-          set -euo pipefail
-          npm run validate:m2-production-promotion
-          npm run validate:m2-r0-main-ci-closure
+        run: node --test apps/read-only-governance-service/test/m2-r0-main-ci-closure.test.js
+      - name: Validate permanent R0 closure
+        run: npm run validate:m2-r0-main-ci-closure
       - name: Collect exact R0 main push CI evidence
         env:
           GITHUB_TOKEN: ${{ github.token }}

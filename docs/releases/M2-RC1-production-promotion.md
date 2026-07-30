@@ -2,109 +2,108 @@
 
 ## 目标
 
-本阶段在不改写 M2 合并前候选与合并后验收记录的前提下，追加第三阶段、独立、可审计的生产晋级契约。
+本阶段在不改写 M2 合并前候选与合并后验收记录的前提下，追加独立、可审计的生产晋级契约。
 
-Production Promotion Validator 只验证仓库中已经存在的声明，不主动查询或推断 GitHub Actions、GHCR、Secret Provider、目标集群或审批系统状态。外部查询由独立、只读 collector 执行，并把结果固化为可审计证据。
+Production Promotion 只接受仓库内已经固定的证据。GitHub Actions、GHCR 和 Attestation 的真实结果必须先由受控 Workflow 产生，再通过 R1-B 绑定记录固化；不得由 Validator 猜测或补造。
 
-## 不可变前置证据
+## 不可变历史证据
 
 - `releases/m2/planning-release-candidate.json`
   - canonical SHA-256：`5ab9439d357921119d7ca9387e661cf3f28b8420a27b3dd201df57c6419b6697`
 - `releases/m2/post-merge-acceptance.json`
   - canonical SHA-256：`d073efec5aa587caf7f54eedd219a494b876d2913cb8e110981c374e79501e25`
-- 当前准备晋级的 `main` SHA：`edf09333d9be9ea6839b8cf4d18efed95cfba821`
+- 原 R0 closure：`releases/m2/r0-main-ci-closure.json`
+- 历史失败观测：`releases/m2/main-branch-ci-observation.json`
 
-以上两份历史证据不得被生产晋级记录覆盖或修改。Validator 必须重新读取并计算其 canonical digest。
+以上历史记录继续保留，不因 R1-B 改写或删除。
 
-## Production Promotion 证据域
+## 当前晋级源
 
-生产晋级记录必须绑定：
+R1-B 绑定的精确来源：
 
-- release ID 与版本；
-- 原 M2 candidate digest；
-- post-merge acceptance digest；
-- 精确 `main` SHA；
-- 最终 `main` push CI run 与永久 Artifact digest；
-- GHCR 完整不可变镜像引用与 Registry digest；
-- SBOM digest；
-- provenance 与 SBOM attestation 引用；
-- Secret Provider 和仅包含引用的 Secret 记录；
-- 目标集群验证记录；
-- Change Approval；
-- Release Owner Approval；
-- resolved/open blockers 与 `productionEligible`。
+- `main` SHA：`6bef789da58bbb7f2edd2a2024ba9a0bbf8e22a7`；
+- main push Validation run：`30440545497`；
+- Validate job：`90538558839`；
+- PostgreSQL 18 job：`90538558723`；
+- Deployment Validator：通过；
+- 四个 PostgreSQL examples：通过；
+- 六类永久 Artifact digest：完整。
+
+## 已发布镜像
+
+```text
+ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service@sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13
+```
+
+发布证据：
+
+- build run：`30440674461`；
+- release evidence Artifact ID：`8719335176`；
+- Artifact digest：`sha256:03d7a7aa35b99436237494dae1f1048b828812651e4b39b4c8c82ea41a6aeef5`；
+- digest pull verification：`PASSED`；
+- SPDX JSON SBOM：`sha256:94a4a77a76f4802c9ff4a238e63854e1619d2ce46fd6a5eaef1e2698eb033702`；
+- provenance attestation ID：`37705043`；
+- SBOM attestation ID：`37705058`。
+
+仓库内的 `releases/m2/release-image-evidence.json` 与 `releases/m2/r1b-image-binding.json` 将这些真实外部结果绑定到 Promotion 和 Deployment。
 
 ## Blocker 关闭规则
 
-| Blocker | 唯一允许的关闭证据 |
-|---|---|
-| `main-branch-final-ci-not-verified` | 精确 `main` SHA、真实 push run ID、成功的 Validate/PostgreSQL jobs、成功的 Deployment Validator step，以及该 run 实际生成的 M1/M2/post-merge/PostgreSQL/Repository/Deployment Validation Artifact digest |
-| `external-registry-digest-missing` | GHCR `@sha256:` 不可变引用、同值 Registry digest、build run ID、source SHA、SBOM digest、provenance 与 SBOM attestation、digest pull verification |
-| `production-secrets-not-configured` | 已允许的 Secret Provider、至少一个版本化 Secret 引用、配置时间；不得包含 Secret 值 |
-| `target-cluster-validation-not-run` | 非占位 cluster reference、验证 run ID、source SHA、镜像 digest、deployment manifest digest 与通过时间 |
-| `change-approval-missing` | 非占位审批系统、审批号、批准时间 |
-| `release-owner-approval-missing` | 非占位审批系统、审批号、批准时间 |
+| Blocker | 唯一允许的关闭证据 | 当前状态 |
+|---|---|---|
+| `main-branch-final-ci-not-verified` | 精确 main SHA、真实 push run、成功 jobs/Deployment step 与六类 Artifact digest | 已解决 |
+| `external-registry-digest-missing` | GHCR `@sha256:` 引用、Registry digest、build run、source SHA、SBOM、双 Attestation、digest pull verification 与 R1-B binding | 已解决 |
+| `production-secrets-not-configured` | 允许的 Secret Provider、版本化引用、配置时间；不得包含 Secret 值 | 开放 |
+| `target-cluster-validation-not-run` | cluster ref、验证 run、source/image/manifest digest 与通过时间 | 开放 |
+| `change-approval-missing` | 非占位审批系统、审批号、批准时间 | 开放 |
+| `release-owner-approval-missing` | 非占位审批系统、审批号、批准时间 | 开放 |
 
-`resolvedBlockers` 必须严格由对应证据推导。`openBlockers` 非空时，`productionEligible` 必须为 `false`；只有六项强制 blocker 全部由证据关闭后才允许为 `true`。
+`resolvedBlockers` 必须严格由对应证据推导。只要 `openBlockers` 非空，`productionEligible` 就必须为 `false`。
 
-## Main push CI 证据链
+## R1-B 永久绑定
 
-### 历史失败观测
+R1-B Validator 独立重算：
 
-`releases/m2/main-branch-ci-observation.json` 保存旧 `main@991b5f0...` 的真实失败结果：
+- release image evidence canonical digest；
+- R1-B binding canonical digest；
+- Production Promotion canonical digest；
+- Deployment manifest canonical digest。
 
-- run `30356400001`；
-- Validate job `90265505895` 失败；
-- PostgreSQL job `90265505920` 成功；
-- Deployment Validator 被跳过；
-- `eligibleForClosure=false`。
+它同时验证：
 
-该记录必须继续不可变保存。后续成功证据不得覆盖或删除这段历史。
-
-### R0 成功 closure
-
-R0 merge commit：
-
-`edf09333d9be9ea6839b8cf4d18efed95cfba821`
-
-只读 collector 已确认：
-
-- push run：`30423781549`；
-- Validate job：`90485717866`，`success`；
-- Deployment Validator step：`success`；
-- PostgreSQL job：`90485717817`，`success`；
-- 六份强制 Artifact 均存在且未过期；
-- `eligibleForClosure=true`。
-
-永久证据保存在 `releases/m2/r0-main-ci-closure.json`，并由独立 Validator 固定校验 run、job、step、Artifact ID 与 digest。
-
-因此 Production Promotion 当前只关闭：
-
-- `main-branch-final-ci-not-verified`。
+- source SHA、main CI run/jobs/Artifacts；
+- release Workflow run 与 Artifact ID/digest；
+- Registry digest、不可变引用、SBOM 和双 Attestation；
+- Promotion imageRelease 与 release evidence 完全一致；
+- Deployment 使用相同 `@sha256:` 引用；
+- Secret、集群与审批字段继续保持安全缺失状态。
 
 ## 当前安全状态
 
 已解决：
 
-- `main-branch-final-ci-not-verified`。
+- `main-branch-final-ci-not-verified`；
+- `external-registry-digest-missing`。
 
 继续开放：
 
-- `external-registry-digest-missing`；
 - `production-secrets-not-configured`；
 - `target-cluster-validation-not-run`；
 - `change-approval-missing`；
 - `release-owner-approval-missing`。
 
-镜像、Secret、目标集群和审批字段继续保持安全缺失状态，不存在的 digest/标识继续为 `null`。`productionEligible=false`。
+因此：
 
-不得使用示例 SHA、重复字符 digest、本地 Docker Image ID、占位审批号或可变镜像标签关闭剩余 blocker。
+```text
+productionEligible=false
+```
 
 ## 明确不在范围内
 
+- 自动生产部署或 rollout；
+- 创建或提交真实 Secret；
+- 访问目标集群；
+- 创建 Change/Release Owner 审批；
 - M2-J 或任何 M3 功能；
 - Worker、Queue、Scheduler、Kubernetes Job；
-- 测试执行、结果采集、Allure、k6/xk6、Playwright；
-- 自动生产部署；
-- 创建或提交真实 Secret；
-- 在未取得真实外部证据时宣布可生产晋级。
+- 测试执行、结果采集、Allure、k6/xk6 或 Playwright。

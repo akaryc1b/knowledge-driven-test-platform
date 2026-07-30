@@ -1,143 +1,56 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { canonicalize, sha256 } from '@kdtp/knowledge-core';
 import {
   loadM2ProductionPromotion,
   validateM2ProductionPromotion,
-} from '../../../scripts/validate-m2-production-promotion.js';
+} from '../../../scripts/validate-m2-production-promotion-r1b.js';
 
 const CANDIDATE_DIGEST = '5ab9439d357921119d7ca9387e661cf3f28b8420a27b3dd201df57c6419b6697';
 const POST_MERGE_DIGEST = 'd073efec5aa587caf7f54eedd219a494b876d2913cb8e110981c374e79501e25';
-const MAIN_SHA = 'edf09333d9be9ea6839b8cf4d18efed95cfba821';
+const SOURCE_SHA = '6bef789da58bbb7f2edd2a2024ba9a0bbf8e22a7';
+const REGISTRY_DIGEST = 'sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13';
 const IMAGE_REPOSITORY = 'ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service';
-const BLOCKERS = [
+const IMMUTABLE_REFERENCE = `${IMAGE_REPOSITORY}@${REGISTRY_DIGEST}`;
+const RESOLVED_BLOCKERS = [
   'main-branch-final-ci-not-verified',
   'external-registry-digest-missing',
+];
+const OPEN_BLOCKERS = [
   'production-secrets-not-configured',
   'target-cluster-validation-not-run',
   'change-approval-missing',
   'release-owner-approval-missing',
 ];
 
-function digest(label) {
-  return `sha256:${createHash('sha256').update(label).digest('hex')}`;
-}
-
-async function completedPromotion() {
-  const promotion = structuredClone(await loadM2ProductionPromotion());
-  const imageDigest = digest('m2-registry-image');
-  const immutableReference = `${IMAGE_REPOSITORY}@${imageDigest}`;
-  promotion.mainBranchFinalCi = {
-    status: 'PASSED',
-    event: 'push',
-    sourceSha: MAIN_SHA,
-    runId: 30360001234,
-    artifacts: {
-      m1ReleaseEvidence: digest('m1-release-evidence'),
-      m2ReleaseEvidence: digest('m2-release-evidence'),
-      m2PostMergeEvidence: digest('m2-post-merge-evidence'),
-      postgresValidation: digest('postgres-validation'),
-      repositoryValidation: digest('repository-validation'),
-      deploymentValidation: digest('deployment-validation'),
-    },
-  };
-  promotion.imageRelease = {
-    status: 'PUBLISHED',
-    repository: IMAGE_REPOSITORY,
-    immutableReference,
-    registryDigest: imageDigest,
-    sourceSha: MAIN_SHA,
-    buildRunId: 30360004567,
-    sbom: {
-      status: 'GENERATED',
-      format: 'spdx-json',
-      digest: digest('image-sbom'),
-    },
-    provenanceAttestation: {
-      status: 'VERIFIED',
-      attestationId: 'attestation-provenance-84291',
-      url: 'https://github.com/akaryc1b/knowledge-driven-test-platform/attestations/84291',
-      bundleDigest: digest('provenance-bundle'),
-    },
-    sbomAttestation: {
-      status: 'VERIFIED',
-      attestationId: 'attestation-sbom-84292',
-      url: 'https://github.com/akaryc1b/knowledge-driven-test-platform/attestations/84292',
-      bundleDigest: digest('sbom-bundle'),
-    },
-    pullVerification: {
-      status: 'PASSED',
-      verifiedReference: immutableReference,
-      resolvedDigest: imageDigest,
-      verifiedAt: '2026-07-28T13:10:00.000Z',
-    },
-  };
-  promotion.secrets = {
-    status: 'CONFIGURED',
-    provider: 'gcp-secret-manager',
-    references: [
-      {
-        name: 'database-connection',
-        reference: 'projects/kdtp-production/secrets/database-connection/versions/42',
-      },
-      {
-        name: 'oidc-subject-mapping',
-        reference: 'projects/kdtp-production/secrets/oidc-subject-mapping/versions/17',
-      },
-    ],
-    configuredAt: '2026-07-28T13:15:00.000Z',
-  };
-  promotion.targetClusterValidation = {
-    status: 'PASSED',
-    clusterRef: 'cluster:kdtp-production-us-east-1',
-    validationRunId: 'cluster-validation-20260728-0017',
-    sourceSha: MAIN_SHA,
-    imageDigest,
-    deploymentManifestDigest: digest('production-deployment-manifest'),
-    validatedAt: '2026-07-28T13:20:00.000Z',
-  };
-  promotion.approvals = {
-    change: {
-      status: 'APPROVED',
-      system: 'change-management',
-      approvalId: 'CHG-2026-000842',
-      approvedAt: '2026-07-28T13:25:00.000Z',
-    },
-    releaseOwner: {
-      status: 'APPROVED',
-      system: 'release-governance',
-      approvalId: 'REL-2026-000119',
-      approvedAt: '2026-07-28T13:30:00.000Z',
-    },
-  };
-  promotion.decision = {
-    productionEligible: true,
-    resolvedBlockers: [...BLOCKERS],
-    openBlockers: [],
-  };
-  return promotion;
-}
-
-test('M2 production promotion preserves history and closes only verified main CI', async () => {
-  const evidence = await validateM2ProductionPromotion({
-    generatedAt: '2026-07-29T05:10:00.000Z',
+async function validationOptions(overrides = {}) {
+  return {
+    generatedAt: '2026-07-29T10:15:00.000Z',
     commitSha: 'local',
-    branch: 'agent/m2-rc1-r0-main-ci-closure',
-  });
+    branch: 'agent/m2-rc1-r1b-immutable-image-binding',
+    ...overrides,
+  };
+}
+
+test('M2 production promotion binds the real immutable image and closes only R1-B', async () => {
+  const evidence = await validateM2ProductionPromotion(await validationOptions());
   assert.equal(evidence.schemaVersion, 'm2-production-promotion-evidence/v1');
   assert.equal(evidence.digests.candidate, CANDIDATE_DIGEST);
   assert.equal(evidence.digests.postMergeAcceptance, POST_MERGE_DIGEST);
-  assert.equal(evidence.promotionSource.mainSha, MAIN_SHA);
-  assert.equal(evidence.mainBranchFinalCi.status, 'PASSED');
-  assert.equal(evidence.mainBranchFinalCi.runId, 30423781549);
-  assert.deepEqual(evidence.decision.resolvedBlockers, [BLOCKERS[0]]);
-  assert.deepEqual(evidence.decision.openBlockers, BLOCKERS.slice(1));
+  assert.equal(evidence.promotionSource.mainSha, SOURCE_SHA);
+  assert.equal(evidence.mainBranchFinalCi.runId, 30440545497);
+  assert.equal(evidence.imageRelease.status, 'PUBLISHED');
+  assert.equal(evidence.imageRelease.immutableReference, IMMUTABLE_REFERENCE);
+  assert.equal(evidence.imageRelease.registryDigest, REGISTRY_DIGEST);
+  assert.equal(evidence.imageRelease.buildRunId, 30440674461);
+  assert.equal(evidence.imageRelease.pullVerification.status, 'PASSED');
+  assert.deepEqual(evidence.decision.resolvedBlockers, RESOLVED_BLOCKERS);
+  assert.deepEqual(evidence.decision.openBlockers, OPEN_BLOCKERS);
   assert.equal(evidence.decision.productionEligible, false);
 });
 
-test('M2 production promotion independently recomputes candidate and post-merge digests', async () => {
+test('M2 production promotion preserves the original candidate and post-merge records', async () => {
   const candidate = JSON.parse(await readFile('releases/m2/planning-release-candidate.json', 'utf8'));
   const postMerge = JSON.parse(await readFile('releases/m2/post-merge-acceptance.json', 'utf8'));
   assert.equal(sha256(canonicalize(candidate)), CANDIDATE_DIGEST);
@@ -146,100 +59,61 @@ test('M2 production promotion independently recomputes candidate and post-merge 
   const changedCandidate = structuredClone(candidate);
   changedCandidate.version = '0.12.1';
   await assert.rejects(
-    validateM2ProductionPromotion({ candidate: changedCandidate }),
+    validateM2ProductionPromotion(await validationOptions({ candidate: changedCandidate })),
     /candidate was modified/,
   );
 
   const changedPostMerge = structuredClone(postMerge);
   changedPostMerge.decision.productionEligible = true;
   await assert.rejects(
-    validateM2ProductionPromotion({ postMergeAcceptance: changedPostMerge }),
+    validateM2ProductionPromotion(await validationOptions({ postMergeAcceptance: changedPostMerge })),
     /post-merge acceptance was modified/,
   );
 });
 
-test('M2 production promotion rejects fabricated CI, mutable images and local image IDs', async () => {
-  const promotion = await loadM2ProductionPromotion();
-
-  const fabricatedCi = structuredClone(promotion);
-  fabricatedCi.mainBranchFinalCi.status = 'PASSED';
-  fabricatedCi.mainBranchFinalCi.runId = 30360009999;
-  for (const key of Object.keys(fabricatedCi.mainBranchFinalCi.artifacts)) {
-    fabricatedCi.mainBranchFinalCi.artifacts[key] = `sha256:${'a'.repeat(64)}`;
-  }
-  fabricatedCi.decision.resolvedBlockers = [BLOCKERS[0]];
-  fabricatedCi.decision.openBlockers = BLOCKERS.slice(1);
+test('M2 production promotion rejects mutable images and fabricated release evidence', async () => {
+  const mutable = structuredClone(await loadM2ProductionPromotion());
+  mutable.imageRelease.immutableReference = `${IMAGE_REPOSITORY}:0.12.0`;
   await assert.rejects(
-    validateM2ProductionPromotion({ promotion: fabricatedCi }),
-    /placeholder digest/,
+    validateM2ProductionPromotion(await validationOptions({ promotion: mutable })),
+    /published image binding|immutable image references/,
   );
 
-  const mutableImage = structuredClone(await completedPromotion());
-  mutableImage.imageRelease.immutableReference = `${IMAGE_REPOSITORY}:0.12.0`;
+  const fabricatedRun = structuredClone(await loadM2ProductionPromotion());
+  fabricatedRun.imageRelease.buildRunId = 30449999999;
   await assert.rejects(
-    validateM2ProductionPromotion({ promotion: mutableImage }),
-    /immutable Registry reference|mutable image tag/,
+    validateM2ProductionPromotion(await validationOptions({ promotion: fabricatedRun })),
+    /published image binding|release run IDs/,
   );
 
-  const localImageId = structuredClone(await completedPromotion());
-  localImageId.imageRelease.immutableReference = `docker-image://${localImageId.imageRelease.registryDigest}`;
+  const fabricatedCi = structuredClone(await loadM2ProductionPromotion());
+  fabricatedCi.mainBranchFinalCi.artifacts.repositoryValidation = `sha256:${'a'.repeat(64)}`;
   await assert.rejects(
-    validateM2ProductionPromotion({ promotion: localImageId }),
-    /immutable Registry reference/,
+    validateM2ProductionPromotion(await validationOptions({ promotion: fabricatedCi })),
+    /Artifact digests changed/,
   );
 });
 
-test('M2 production promotion rejects placeholder approvals and sensitive material', async () => {
-  const placeholderApproval = await completedPromotion();
-  placeholderApproval.approvals.change.approvalId = 'CHG-PLACEHOLDER';
+test('M2 production promotion keeps Secrets, cluster and approvals unresolved', async () => {
+  const premature = structuredClone(await loadM2ProductionPromotion());
+  premature.decision.productionEligible = true;
   await assert.rejects(
-    validateM2ProductionPromotion({ promotion: placeholderApproval }),
-    /cannot be a placeholder/,
+    validateM2ProductionPromotion(await validationOptions({ promotion: premature })),
+    /cannot make the release production eligible/,
   );
 
-  const secret = await loadM2ProductionPromotion();
-  secret.secrets = {
+  const fakeSecret = structuredClone(await loadM2ProductionPromotion());
+  fakeSecret.secrets = {
     status: 'CONFIGURED',
     provider: 'gcp-secret-manager',
     references: [{
       name: 'database-connection',
-      reference: 'postgresql://release:secret@database.internal/kdtp',
+      reference: 'projects/kdtp/secrets/database/versions/42',
     }],
-    configuredAt: '2026-07-28T13:15:00.000Z',
+    configuredAt: '2026-07-29T10:20:00.000Z',
   };
   await assert.rejects(
-    validateM2ProductionPromotion({ promotion: secret }),
-    /versioned provider reference|sensitive material/,
-  );
-});
-
-test('M2 production promotion permits eligibility only after every evidence domain is complete', async () => {
-  const promotion = await completedPromotion();
-  const evidence = await validateM2ProductionPromotion({
-    promotion,
-    generatedAt: '2026-07-28T13:35:00.000Z',
-    commitSha: MAIN_SHA,
-    branch: 'agent/m2-rc1-production-promotion-contract',
-  });
-  assert.equal(evidence.decision.productionEligible, true);
-  assert.deepEqual(evidence.decision.resolvedBlockers, BLOCKERS);
-  assert.deepEqual(evidence.decision.openBlockers, []);
-
-  const premature = structuredClone(promotion);
-  premature.targetClusterValidation.status = 'NOT_RUN';
-  for (const key of [
-    'clusterRef',
-    'validationRunId',
-    'sourceSha',
-    'imageDigest',
-    'deploymentManifestDigest',
-    'validatedAt',
-  ]) premature.targetClusterValidation[key] = null;
-  premature.decision.productionEligible = true;
-  premature.decision.resolvedBlockers = BLOCKERS.filter((blocker) => blocker !== 'target-cluster-validation-not-run');
-  premature.decision.openBlockers = ['target-cluster-validation-not-run'];
-  await assert.rejects(
-    validateM2ProductionPromotion({ promotion: premature }),
-    /Open blockers require productionEligible=false/,
+    validateM2ProductionPromotion(await validationOptions({ promotion: fakeSecret })),
+    /must not configure production Secrets/,
   );
 });

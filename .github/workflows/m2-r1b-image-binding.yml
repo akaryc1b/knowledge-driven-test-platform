@@ -1,0 +1,65 @@
+name: m2-r1b-image-binding
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-binding:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run focused R1-B tests
+        run: node --test apps/read-only-governance-service/test/m2-r1b-image-binding.test.js apps/read-only-governance-service/test/m2-production-promotion.test.js
+
+      - name: Validate immutable Deployment
+        run: npm run validate:deployment
+
+      - name: Validate current Production Promotion
+        run: npm run validate:m2-production-promotion
+
+      - name: Generate R1-B binding evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run --silent validate:m2-r1b-image-binding > /tmp/m2-r1b-image-binding-evidence.json
+          node --input-type=module <<'EOF'
+          import { readFile } from 'node:fs/promises';
+          const evidence = JSON.parse(await readFile('/tmp/m2-r1b-image-binding-evidence.json', 'utf8'));
+          if (evidence.decision?.eligibleForProductionEvidenceBinding !== true) {
+            throw new Error('R1-B binding is not eligible');
+          }
+          if (evidence.decision?.productionEligible !== false) {
+            throw new Error('R1-B must remain production ineligible');
+          }
+          if (evidence.decision?.remainingBlockers?.length !== 4) {
+            throw new Error('R1-B remaining blocker count is invalid');
+          }
+          EOF
+
+      - name: Upload R1-B binding evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m2-r1b-image-binding-evidence
+          path: |
+            /tmp/m2-r1b-image-binding-evidence.json
+            releases/m2/r1b-image-binding.json
+            releases/m2/release-image-evidence.json
+            releases/m2/production-promotion.json
+            deploy/kubernetes/read-only-governance-service/deployment.yaml
+          if-no-files-found: error
+          retention-days: 90

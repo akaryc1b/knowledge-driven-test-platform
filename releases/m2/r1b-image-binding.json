@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "m2-r1b-image-binding/v1",
+  "releaseId": "M2-RC1",
+  "version": "0.12.0",
+  "boundAt": "2026-07-29T10:11:00.000Z",
+  "source": {
+    "branch": "main",
+    "sha": "6bef789da58bbb7f2edd2a2024ba9a0bbf8e22a7",
+    "mainCi": {
+      "runId": 30440545497,
+      "validateJobId": 90538558839,
+      "postgresJobId": 90538558723,
+      "artifacts": {
+        "m1ReleaseEvidence": "sha256:0be9d9ff76be9fe05e7acf45c62eb2ec6dd5742d2568ddc0586bed74e105ccb7",
+        "m2ReleaseEvidence": "sha256:c0c257db57e9a8b98b24d2c27da343289654d84627c547055cfa68ac72f449cf",
+        "m2PostMergeEvidence": "sha256:937a97d6dd782b80c9ee6ae2d90472d1e21a9d086a4d16db960739988a1c2ab4",
+        "postgresValidation": "sha256:db2892e2d22c39cf782042cbd447f81b386b8f9a47366f189470834f6e9a3fa1",
+        "repositoryValidation": "sha256:8cb381ea153ebbc12ee3eccff5ef3ea7ece8e99d9ea57e4d036ca19ede0bdaf3",
+        "deploymentValidation": "sha256:7be5a15fb53eabef201fa9b7eadf5f234f0f6c69205359e05237db683c750b3c"
+      }
+    }
+  },
+  "release": {
+    "workflow": ".github/workflows/m2-release-image.yml",
+    "runId": 30440674461,
+    "evidenceArtifact": {
+      "id": 8719335176,
+      "name": "m2-release-image-evidence-6bef789da58b",
+      "digest": "sha256:03d7a7aa35b99436237494dae1f1048b828812651e4b39b4c8c82ea41a6aeef5"
+    },
+    "evidence": {
+      "path": "releases/m2/release-image-evidence.json",
+      "digest": "sha256:dcc912aada0bb5f4337cec0682ee081ac40fe4e1bf2cb6ad6203df3b3c45492a"
+    }
+  },
+  "deployment": {
+    "path": "deploy/kubernetes/read-only-governance-service/deployment.yaml",
+    "image": "ghcr.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service@sha256:9ea3d4ac1ece9aa3d47c658a0781e15ce9eafdfc56a20eb041251298b465ab13",
+    "manifestDigest": "sha256:fb2cb10f42f8d3473c1997c514ec11eb66bfb06f7542c3404c328c39f8763a45"
+  },
+  "decision": {
+    "externalRegistryDigestAvailable": true,
+    "deploymentUsesImmutableDigest": true,
+    "eligibleForProductionEvidenceBinding": true,
+    "productionEligible": false,
+    "remainingBlockers": [
+      "production-secrets-not-configured",
+      "target-cluster-validation-not-run",
+      "change-approval-missing",
+      "release-owner-approval-missing"
+    ]
+  }
+}

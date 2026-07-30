@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/release/v3/m2-r1b-image-binding-evidence.schema.json",
+  "title": "M2 R1-B Immutable Image Binding Evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "releaseId",
+    "version",
+    "generatedAt",
+    "source",
+    "digests",
+    "release",
+    "image",
+    "deployment",
+    "decision"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "m2-r1b-image-binding-evidence/v1" },
+    "releaseId": { "const": "M2-RC1" },
+    "version": { "const": "0.12.0" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["branch", "commitSha"],
+      "properties": {
+        "branch": { "type": "string", "minLength": 1 },
+        "commitSha": {
+          "anyOf": [
+            { "$ref": "#/$defs/sha" },
+            { "const": "local" }
+          ]
+        }
+      }
+    },
+    "digests": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding", "releaseImageEvidence", "productionPromotion", "deploymentManifest"],
+      "properties": {
+        "binding": { "$ref": "#/$defs/digest" },
+        "releaseImageEvidence": { "$ref": "#/$defs/digest" },
+        "productionPromotion": { "$ref": "#/$defs/digest" },
+        "deploymentManifest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runId", "artifactId", "artifactDigest"],
+      "properties": {
+        "runId": { "type": "integer", "minimum": 1 },
+        "artifactId": { "type": "integer", "minimum": 1 },
+        "artifactDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["immutableReference", "registryDigest", "sbomDigest", "provenanceBundleDigest", "sbomBundleDigest"],
+      "properties": {
+        "immutableReference": {
+          "type": "string",
+          "pattern": "^ghcr\\.io/akaryc1b/knowledge-driven-test-platform/read-only-governance-service@sha256:[a-f0-9]{64}$"
+        },
+        "registryDigest": { "$ref": "#/$defs/digest" },
+        "sbomDigest": { "$ref": "#/$defs/digest" },
+        "provenanceBundleDigest": { "$ref": "#/$defs/digest" },
+        "sbomBundleDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "image", "manifestDigest"],
+      "properties": {
+        "path": { "const": "deploy/kubernetes/read-only-governance-service/deployment.yaml" },
+        "image": { "type": "string", "minLength": 1 },
+        "manifestDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eligibleForProductionEvidenceBinding", "productionEligible", "remainingBlockers"],
+      "properties": {
+        "eligibleForProductionEvidenceBinding": { "const": true },
+        "productionEligible": { "const": false },
+        "remainingBlockers": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}
