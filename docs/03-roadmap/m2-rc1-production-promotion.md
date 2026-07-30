@@ -42,7 +42,7 @@ R1-A 只创建真实外部证据，不修改 Promotion 或 Deployment。
 
 ## R1-B — Registry Digest Binding
 
-状态：本独立 Draft PR 正在实施，尚未合并。
+状态：完成并已合并。Merge commit：`ebfa1a16f95146b48f11934aecc3d41bcd605f57`。
 
 交付：
 
@@ -56,6 +56,34 @@ R1-A 只创建真实外部证据，不修改 Promotion 或 Deployment。
 8. 仅关闭 `external-registry-digest-missing`。
 
 R1-B 不配置 Secret、不访问目标集群、不创建审批，也不执行生产 rollout。
+
+## R2-A — External Evidence Intake Contract
+
+状态：当前独立安全切片。
+
+交付：
+
+1. 四类版本化输入 Schema：Production Secret References、Target Cluster Validation、Change Approval、Release Owner Approval；
+2. 统一 `NOT_PROVIDED`、`PROVIDED_UNVERIFIED`、`VERIFIED`、`REJECTED` 状态模型；
+3. 统一 evidence intake Validator；
+4. release/version/source/image/Deployment digest 绑定；
+5. Provider allow-list、版本化 Secret reference、严格 timestamp 与外部 ID 规则；
+6. 防 placeholder、防 fabricated digest、防敏感信息泄漏和 fail-closed 测试；
+7. 通用 Validation 与独立 R2-A PR/main-push Workflow；
+8. 全量 Node、PostgreSQL 18、四个 PostgreSQL examples、Docker hardened runtime 与永久 Artifact。
+
+R2-A 仓库记录中的四类输入必须全部保持 `NOT_PROVIDED`，不得修改 Production Promotion，不能关闭任何剩余 blocker。
+
+## 后续条件切片
+
+必须严格按顺序推进，并在前一切片正式合并及精确 main 验证后开始：
+
+1. R2-B：真实 Production Secret Provider 与版本化引用；
+2. R2-C：真实目标 Kubernetes 集群只读与 server-side dry-run 验证；
+3. R2-D：真实 Change Approval；
+4. R2-E：真实 Release Owner Approval 与最终资格推导。
+
+外部权限或真实证据不存在时，停止在对应 Gate，不得填写占位值、推测状态或提前关闭 blocker。
 
 ## 当前 Blocker
 
@@ -73,17 +101,6 @@ R1-B 不配置 Secret、不访问目标集群、不创建审批，也不执行�
 
 `productionEligible=false`。
 
-## 后续条件切片
-
-只有在取得真实、非占位、可独立验证的外部证据后，才允许分别推进：
-
-- Production Secret Provider 与版本化引用；
-- 目标集群只读验证；
-- Change Approval；
-- Release Owner Approval。
-
-任何后续切片都不得由 R1-B 代为声明完成。
-
 ## 冻结范围
 
-本 Roadmap 不启动 M2-J 或 M3，不增加执行型测试基础设施，不创建生产资源，也不自动合并任何 PR。
+本 Roadmap 不启动 M2-J 或 M3，不增加执行型测试基础设施，不创建生产资源，不执行生产 rollout，也不自动合并任何 PR。

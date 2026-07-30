@@ -25,6 +25,21 @@
 | PP-21 | R1-B release evidence | release Workflow、Artifact ID/digest 与仓库证据副本交叉校验 | 通过：run `30440674461` | release evidence canonical digest 精确匹配 |
 | PP-22 | Deployment digest binding | Deployment image 与发布不可变引用完全相同 | 通过 | manifest canonical digest 与 binding 一致 |
 | PP-23 | R1-B 不越权 | Secret、cluster、approval 仍缺失且 `productionEligible=false` | 通过 | 四项外部 blocker 继续开放 |
+| PP-24 | R2-A 输入状态模型 | 四态枚举与状态/载荷/验证元数据组合校验 | 通过 | 仅接受 `NOT_PROVIDED`、`PROVIDED_UNVERIFIED`、`VERIFIED`、`REJECTED` |
+| PP-25 | R2-A 输入绑定 | contract base、release source、image 与 Deployment digest 交叉校验 | 通过 | 与 R1-B 真实证据精确一致 |
+| PP-26 | R2-A 外部 ID 与时间 | external record ID equality、canonical UTC 与时间顺序 | 通过 | ID 一致且 `verifiedAt >= providedAt` |
+| PP-27 | R2-A Secret Provider contract | 既有五项 allow-list 与 Provider-specific versioned reference | 通过 | 不含值且禁止 `latest` |
+| PP-28 | R2-A fail closed | 未验证或拒绝输入不允许修改 Promotion | 通过 | `promotionMutationAllowed=false` 且四项输入均 `NOT_PROVIDED` |
+| PP-29 | R2-A 永久门禁 | 通用和独立 PR/main-push Workflow、Node/PG18/Docker/Artifact | 待 PR CI | 全部 Jobs 成功且 Artifact 永久记录 |
+
+## R2-A 状态语义
+
+1. `NOT_PROVIDED`：没有外部证据，blocker 保持开放。
+2. `PROVIDED_UNVERIFIED`：格式正确但没有真实外部验证，blocker 保持开放。
+3. `VERIFIED`：外部来源、ID、时间和绑定全部通过；仅允许后续对应安全切片据此推导 blocker。
+4. `REJECTED`：输入无效或验证失败，blocker 保持开放。
+
+R2-A 本身不得基于 `VERIFIED` 测试夹具改写 Production Promotion。仓库持久记录必须全部为 `NOT_PROVIDED`。
 
 ## 强制 Blocker 顺序
 
