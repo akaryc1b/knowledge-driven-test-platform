@@ -75,6 +75,20 @@ function validateSchemas(resultSchema, evidenceSchema) {
   'M3-R2 P2 Evidence next slice must remain M3-R2-P3');
 }
 
+function rendererImplementationSources(sources) {
+  return [
+    sources.renderer,
+    sources.rendererAssertionValidation,
+    sources.rendererDocument,
+    sources.rendererInput,
+    sources.rendererOperation,
+    sources.rendererOperationValidation,
+    sources.rendererOrder,
+    sources.rendererShared,
+    sources.rendererStatic,
+  ];
+}
+
 function validateWiring({ packageJson, packageManifest, sources }) {
   assertP2(packageManifest.name === '@kdtp/k6-api-adapter'
       && packageManifest.exports === './src/index.js',
@@ -99,14 +113,7 @@ function validateWiring({ packageJson, packageManifest, sources }) {
       && validateScript.endsWith('validate-m2-final-release-closure.js'),
   'Repository validation order must preserve R0, P1, P2 and M2 final closure');
 
-  const implementation = [
-    sources.index,
-    sources.renderer,
-    sources.rendererDocument,
-    sources.rendererInput,
-    sources.rendererShared,
-    sources.rendererStatic,
-  ].join('\n');
+  const implementation = [sources.index, ...rendererImplementationSources(sources)].join('\n');
   for (const marker of [
     "export * from './source-renderer.js'",
     'renderK6ApiSource',
@@ -135,13 +142,7 @@ function validateWiring({ packageJson, packageManifest, sources }) {
 }
 
 function validateStaticBoundary(sources) {
-  const implementation = [
-    sources.renderer,
-    sources.rendererDocument,
-    sources.rendererInput,
-    sources.rendererShared,
-    sources.rendererStatic,
-  ].join('\n');
+  const implementation = rendererImplementationSources(sources).join('\n');
   for (const pattern of [
     /from\s+['"](?:node:)?child_process['"]/,
     /from\s+['"](?:node:)?fs['"]/,

@@ -254,8 +254,12 @@ jobs:
             packages/k6-api-adapter/src/errors.js
             packages/k6-api-adapter/src/source-contract.js
             packages/k6-api-adapter/src/source-renderer.js
+            packages/k6-api-adapter/src/source-renderer-assertion-validation.js
             packages/k6-api-adapter/src/source-renderer-document.js
             packages/k6-api-adapter/src/source-renderer-input.js
+            packages/k6-api-adapter/src/source-renderer-operation.js
+            packages/k6-api-adapter/src/source-renderer-operation-validation.js
+            packages/k6-api-adapter/src/source-renderer-order.js
             packages/k6-api-adapter/src/source-renderer-shared.js
             packages/k6-api-adapter/src/source-renderer-static.js
             packages/k6-api-adapter/src/index.js
@@ -263,14 +267,15 @@ jobs:
             packages/k6-api-adapter/test/source-renderer-result.test.js
             packages/k6-api-adapter/test/source-renderer-safety.test.js
             packages/k6-api-adapter/test/source-renderer-schema.test.js
-            packages/k6-api-adapter/test/source-renderer-support.test.js
             packages/k6-api-adapter/test/source-renderer-tamper.test.js
-            packages/k6-api-adapter/test/source-renderer-test-helpers.js
+            packages/k6-api-adapter/test/p2-test-helpers.js
+            packages/k6-api-adapter/test/source-renderer-test-support.js
             schemas/execution/k6-api-source/p2-schema-catalog.json
             schemas/execution/k6-api-source/v1/k6-api-source-result.schema.json
             schemas/execution/k6-api-source/v1/m3-r2-source-generation-p2-evidence.schema.json
             examples/k6-api-source-renderer.js
             examples/k6-api-source-renderer-fixture.js
+            examples/k6-api-source-renderer-fixture-data.js
             scripts/m3-r2-p2-baseline.js
             scripts/m3-r2-p2-repository.js
             scripts/validate-m3-r2-source-generation-p2.js
