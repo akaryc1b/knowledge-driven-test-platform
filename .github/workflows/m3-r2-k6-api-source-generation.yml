@@ -1,0 +1,176 @@
+name: m3-r2-k6-api-source-generation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r2-k6-api-source-generation.yml'
+      - 'packages/k6-api-adapter/**'
+      - 'schemas/execution/k6-api/**'
+      - 'scripts/validate-m3-r1-k6-api-spec-compiler.js'
+      - 'scripts/validate-m3-r2-source-generation-r0.js'
+      - 'docs/02-development/development-handoff.md'
+      - 'docs/03-roadmap/m3-r2-governed-k6-api-source-generation.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/04-governance/m3-r2-source-generation-acceptance-matrix.md'
+      - 'docs/05-adr/ADR-0029-governed-deterministic-k6-source-generation.md'
+      - 'docs/06-security/m3-r2-source-generation-threat-model.md'
+      - 'docs/releases/M3-R2-k6-api-source-generation.md'
+      - 'docs/README.md'
+      - 'package.json'
+      - 'package-lock.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/m3-r2-k6-api-source-generation.yml'
+      - 'packages/k6-api-adapter/**'
+      - 'schemas/execution/k6-api/**'
+      - 'scripts/validate-m3-r1-k6-api-spec-compiler.js'
+      - 'scripts/validate-m3-r2-source-generation-r0.js'
+      - 'docs/02-development/development-handoff.md'
+      - 'docs/03-roadmap/m3-r2-governed-k6-api-source-generation.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/04-governance/m3-r2-source-generation-acceptance-matrix.md'
+      - 'docs/05-adr/ADR-0029-governed-deterministic-k6-source-generation.md'
+      - 'docs/06-security/m3-r2-source-generation-threat-model.md'
+      - 'docs/releases/M3-R2-k6-api-source-generation.md'
+      - 'docs/README.md'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-r0:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Run focused M3-R1 and R0 tests
+        run: node --test packages/k6-api-adapter/test/*.test.js
+      - name: Run full Node test suite
+        run: npm test
+      - name: Run repository validation
+        run: npm run validate
+      - name: Run M3-R0 anti-regression
+        run: npm run validate:m3-r0-execution-contracts
+      - name: Run M3-R1 anti-regression
+        run: npm run validate:m3-r1-k6-api-spec-compiler
+      - name: Generate R0 scope-freeze and threat-model evidence
+        env:
+          M3_R2_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          M3_R2_SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          GITHUB_SHA="$M3_R2_SOURCE_SHA" \
+          GITHUB_REF_NAME="$M3_R2_SOURCE_BRANCH" \
+            npm run --silent validate:m3-r2-source-generation-r0 \
+            > /tmp/m3-r2-source-generation-r0-evidence.json
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const evidence = JSON.parse(await readFile(
+            '/tmp/m3-r2-source-generation-r0-evidence.json', 'utf8'));
+          const decision = evidence.decision ?? {};
+          if (decision.sourceGenerationScopeFrozen !== true
+              || decision.runtimeBoundaryDefined !== true
+              || decision.threatModelAccepted !== true
+              || decision.sourceGenerationStarted !== false
+              || decision.sourceGenerated !== false
+              || decision.sourceExecuted !== false
+              || decision.executionRuntimeStarted !== false
+              || decision.nextRequiredSlice !== 'M3-R2-P1'
+              || decision.repositoryBlockers?.length !== 0) {
+            throw new Error('M3-R2 R0 decision is invalid');
+          }
+          if (evidence.reviewClosure?.closed !== true
+              || evidence.reviewClosure?.findings?.length !== 3) {
+            throw new Error('M3-R1 post-merge review blockers are not closed');
+          }
+          if (Object.values(evidence.safetyBoundary ?? {}).some((value) => value !== false)) {
+            throw new Error('M3-R2 R0 non-execution safety boundary changed');
+          }
+          NODE
+      - name: Upload M3-R2 R0 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r2-source-generation-r0-evidence
+          path: |
+            /tmp/m3-r2-source-generation-r0-evidence.json
+            packages/k6-api-adapter/src/safety.js
+            packages/k6-api-adapter/src/compiler.js
+            packages/k6-api-adapter/test/review-hardening.test.js
+            schemas/execution/k6-api/v1/k6-api-assertion.schema.json
+            scripts/validate-m3-r2-source-generation-r0.js
+            docs/02-development/development-handoff.md
+            docs/03-roadmap/m3-r2-governed-k6-api-source-generation.md
+            docs/04-governance/m3-r2-source-generation-acceptance-matrix.md
+            docs/05-adr/ADR-0029-governed-deterministic-k6-source-generation.md
+            docs/06-security/m3-r2-source-generation-threat-model.md
+            docs/releases/M3-R2-k6-api-source-generation.md
+          if-no-files-found: error
+          retention-days: 90
+
+  postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: kdtp_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kdtp_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+      KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Install PostgreSQL client dependency without changing the lockfile
+        run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
+      - name: Run PostgreSQL 18 integration suite
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:postgres 2>&1 | tee /tmp/m3-r2-r0-postgres-test.log
+      - name: Run all PostgreSQL examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run --silent example:postgres > /tmp/postgres-registry.json
+          npm run --silent example:governance:postgres > /tmp/postgres-governance.json
+          npm run --silent example:plan-registry:postgres > /tmp/postgres-test-plan-registry.json
+          npm run --silent example:planning-orchestration:postgres \
+            > /tmp/postgres-planning-orchestration.json
+      - name: Upload M3-R2 R0 PostgreSQL log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r2-source-generation-r0-postgres-log
+          path: /tmp/m3-r2-r0-postgres-test.log
+          if-no-files-found: error
+          retention-days: 90

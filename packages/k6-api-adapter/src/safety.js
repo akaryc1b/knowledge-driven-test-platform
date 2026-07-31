@@ -16,7 +16,7 @@ const NETWORK_URL = /\b(?:https?|wss?):\/\//i;
 const FILE_URI = /\bfile:\/\//i;
 const ABSOLUTE_FILE_PATH = /^(?:[A-Za-z]:\\|\/(?:tmp|var|etc|home|Users|opt|root)(?:\/|$))/;
 const SHELL_FRAGMENT = /(?:^#!\/|\$\(|`[^`]+`|\s(?:&&|\|\||;|\|)\s|\b(?:curl|wget|bash|sh|powershell|cmd\.exe)\b)/i;
-const JS_SOURCE = /(?:\bexport\s+default\s+function\b|\bimport\s+.+\s+from\s+['"]|\bfunction\s*\([^)]*\)\s*\{|=>\s*\{)/;
+const JS_SOURCE = /(?:\bexport\s+default\s+function\b|\bimport\s+.+\s+from\s+['"]|\b(?:async\s+)?function(?:\s*\*)?\s*(?:[A-Za-z_$][A-Za-z0-9_$]*\s*)?\([^)]*\)\s*\{|=>\s*\{)/;
 
 export function assertK6ApiCompilationSafe(value, path = '$') {
   assertNoSensitiveExecutionData(value, path);
