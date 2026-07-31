@@ -33,9 +33,9 @@
 
 ## M3 — k6 Execution Adapters
 
-入口 Gate：M2-RC1 Final Release Closure 已建立。第一个允许切片为 `M3-R0 — Execution Adapter Foundation`。
+当前切片：`M3-R0 — Execution Adapter Foundation`，仅建立 Contract-only 合同、Schema、状态机与安全边界。
 
-- Adapter、Request、Result 与 Evidence 合同；
+- Adapter、Request、Failure、Result 与 Evidence 合同；
 - API 自动化；
 - 接口性能；
 - Browser；
@@ -43,7 +43,7 @@
 - xk6 扩展绑定；
 - 统一报告和证据。
 
-M3-R0 仅允许 Contract-only 工作，不执行 k6，不创建 Worker/Queue/Scheduler。
+M3-R0 不执行 k6，不导入外部进程，不访问目标环境，不创建 Worker/Queue/Scheduler。真实 Adapter 实现必须从 M3-R1 开始并单独验收。
 
 ## M4 — Multi-Project Operations
 

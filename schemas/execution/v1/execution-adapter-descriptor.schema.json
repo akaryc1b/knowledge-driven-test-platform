@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/v1/execution-adapter-descriptor.schema.json",
+  "title": "Execution Adapter Descriptor v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "adapterId",
+    "adapterType",
+    "version",
+    "implementationStatus",
+    "supportedCapabilities",
+    "acceptedIntentKinds",
+    "outputArtifactKinds",
+    "cancellationMode",
+    "descriptorDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "execution-adapter-descriptor/v1"
+    },
+    "adapterId": {
+      "type": "string",
+      "pattern": "^adapter-[a-z0-9-]+-[a-f0-9]{12}$"
+    },
+    "adapterType": {
+      "enum": [
+        "k6-api",
+        "k6-performance",
+        "k6-browser",
+        "k6-websocket",
+        "xk6-extension"
+      ]
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "implementationStatus": {
+      "const": "CONTRACT_ONLY"
+    },
+    "supportedCapabilities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capabilityId",
+          "version"
+        ],
+        "properties": {
+          "capabilityId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._:-]{2,255}$"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+          }
+        }
+      }
+    },
+    "acceptedIntentKinds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
+      }
+    },
+    "outputArtifactKinds": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9]*(?:[._-][a-z0-9]+)*$"
+      }
+    },
+    "cancellationMode": {
+      "enum": [
+        "COOPERATIVE",
+        "UNSUPPORTED"
+      ]
+    },
+    "descriptorDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

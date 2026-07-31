@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/v1/execution-failure.schema.json",
+  "title": "Execution Failure v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "category",
+    "code",
+    "retryable",
+    "message",
+    "occurredAt",
+    "details",
+    "failureDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "execution-failure/v1"
+    },
+    "category": {
+      "enum": [
+        "VALIDATION",
+        "AUTHORIZATION",
+        "CAPABILITY_UNSUPPORTED",
+        "INPUT_UNAVAILABLE",
+        "ADAPTER_CONFIGURATION",
+        "EXECUTION",
+        "TIMEOUT",
+        "INFRASTRUCTURE",
+        "RESULT_VALIDATION",
+        "INTERNAL"
+      ]
+    },
+    "code": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{2,63}$"
+    },
+    "retryable": {
+      "type": "boolean"
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "details": {},
+    "failureDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
