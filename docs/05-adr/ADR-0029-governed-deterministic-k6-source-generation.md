@@ -2,23 +2,55 @@
 
 ## 状态
 
-Accepted for M3-R2-R0.
+Accepted for M3-R2-P1 Contract Foundation.
 
 ## 背景
 
-M3-R1 已将 FROZEN Test Plan 编译为中立、不可执行的 `K6ApiExecutionSpec`。下一步需要把该 IR 转换为受控 k6 JavaScript，但生成文本与执行文本必须继续隔离。合并后的 PR #44 又出现了三个有效 P2 Review，说明 source generation 不能建立在未关闭的完整性与 Schema 缺陷之上。
+M3-R1 已将 FROZEN Test Plan 编译为中立、不可执行的 `K6ApiExecutionSpec`。M3-R2-R0 随后关闭 PR #44 合并后的三个合同缺陷，并冻结 Source Generation 与 Runtime 的隔离边界。P1 需要在不生成 JavaScript 的前提下，把未来 renderer 可接受的输入、固定配置、身份绑定和资源上限发布为 versioned contract。
 
 ## 决策
 
-M3-R2 采用三段信任边界：
+M3-R2 继续采用三段信任边界：
 
 1. Compiler 负责治理输入到中立 IR；
-2. Source Generator 只负责从已验证 IR 到确定性 UTF-8 文本；
-3. Runtime 由未来独立 M3-R3 承担，M3-R2 不实现。
+2. Source Contract 负责固定未来 Generator 的合法配置和请求；
+3. Source Generator 从 P2 才可实现纯内存确定性 rendering；
+4. Runtime 由未来独立 M3-R3 承担，M3-R2 不实现。
 
-Generator 必须是纯内存、固定模板、固定模块 allow-list、固定排序和固定转义的 renderer。它不得接受任意源码片段，不得写入调用方路径，不得读取文件、环境变量或凭据，不得访问网络，不得启动 VM、外部进程、容器或 Kubernetes 资源，也不得执行输出。
+P1 在现有 `@kdtp/k6-api-adapter` 包内增加合同层，而不创建 Generator 包。P1 发布：
 
-Source identity 必须至少绑定：
+- `K6ApiSourceRenderingPolicy`；
+- `K6ApiSourceGeneratorDescriptor`；
+- `K6ApiSourceGenerationRequest`；
+- 对应 Draft 2020-12 Schema Catalog、Validator、测试、示例和永久 CI 证据。
+
+Descriptor 的 `implementationStatus` 固定为 `CONTRACT_ONLY`。允许模块固定为精确的 `k6` 与 `k6/http`，不支持 wildcard、动态模块、调用方模板或任意源码。
+
+## Canonical Rendering Policy
+
+P1 固定未来 renderer 必须遵守的策略：
+
+```text
+encoding=UTF-8
+bom=false
+lineEnding=LF
+indentationSpaces=2
+quoteStyle=SINGLE
+trailingNewline=true
+objectKeyOrdering=LEXICOGRAPHIC
+moduleOrdering=LEXICOGRAPHIC
+groupOrdering=GROUP_ID
+operationOrdering=DEPENDENCY_THEN_OPERATION_ID
+assertionOrdering=KIND_PATH_EXPECTED
+thresholdOrdering=METRIC_OPERATOR_VALUE
+variableNameDerivation=IMMUTABLE_ID_SHA256_12
+```
+
+P1 只定义策略，不执行 rendering。
+
+## Identity 决策
+
+Future Source identity 必须绑定：
 
 ```text
 generatorId
@@ -28,29 +60,54 @@ specDigest
 bundleDigest
 compilationEvidenceDigest
 sourceFormatVersion
-canonicalRenderingPolicy
+canonicalRenderingPolicyDigest
+allowedModulesDigest
 ```
 
-生成时间、CI Run、Artifact ID、PR 编号、工作目录、主机、操作系统和 Node 安装路径不得进入 Source identity。
+以下元数据明确排除在 Source identity 外：
 
-## R0 predecessor correction
+```text
+requestedAt
+requestedBy
+generatedAt
+prNumber
+ciRunId
+artifactId
+workingDirectory
+host
+operatingSystem
+```
 
-R0 在引入任何 Source contract 前关闭：
+请求元数据仍进入 Source Generation Request envelope digest，因此审计信息变化不会改变未来 Source identity，但会改变 request digest。
 
-- named function declaration executable-material bypass；
-- Compilation Evidence digest 未绑定 `decision`/`safetyBoundary`；
-- Assertion Schema 未使用 discriminated union。
+## Binding 与资源上限
 
-这些修复属于 M3-R1 合同加固，不生成源码，也不扩大运行能力。
+P1 Request 必须独立复核：
+
+- Spec、Bundle 和 Compilation Evidence 的版本与 digest；
+- Bundle 到 Spec、Evidence 到 Spec/Bundle 的精确绑定；
+- Compiler 版本、input contract、Test Plan、Knowledge Snapshot、Environment 和 capability 绑定；
+- M3-R1 非执行 decision 与全部安全声明；
+- operation、group、assertion、threshold、Artifact、string、depth 与 serialized-byte 上限。
+
+任何未知字段、可执行源码、网络 URL、绝对路径、凭据、Secret、module escalation、policy drift、limit drift 或 `IMPLEMENTED` 状态都 fail closed。
 
 ## 结果
 
-后续 P1–P5 可以在可验证的 IR 与明确的 canonical rendering policy 上推进。代价是 M3-R2 不具备运行价值；任何执行、Secret 解析、目标网络访问或结果采集必须重新授权并进入 M3-R3。
+P1 建立了 P2 可消费的严格合同，但没有 renderer、source bytes、source Artifact、静态 parser 或 Runtime。P2 必须在独立安全切片中实现，且整个 M3-R2 继续禁止执行生成结果。
 
 ```text
+sourceGenerationContractReady=true
+sourceGenerationScopeFrozen=true
+runtimeBoundaryDefined=true
 sourceGenerationStarted=false
+sourceGenerated=false
 sourceExecuted=false
 executionRuntimeStarted=false
 k6Invoked=false
 externalProcessExecuted=false
+targetNetworkAccessed=false
+secretAccessed=false
+nextRequiredSlice=M3-R2-P2
+repositoryBlockers=[]
 ```
