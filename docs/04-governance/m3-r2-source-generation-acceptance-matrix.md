@@ -37,4 +37,45 @@ nextRequiredSlice=M3-R2-P1
 repositoryBlockers=[]
 ```
 
-This matrix accepts only R0. It does not accept P1–P5, does not grant Formal Acceptance for M3-R2 as a whole, and does not authorize Ready, merge or M3-R3.
+## P1 controls
+
+| ID | Control | P1 acceptance condition |
+|---|---|---|
+| SG-P1-01 | Rendering Policy Schema | `k6-api-source-rendering-policy/v1` is strict, versioned and digest-bound |
+| SG-P1-02 | Encoding contract | UTF-8, no BOM, LF, two spaces, single quotes and trailing newline are fixed |
+| SG-P1-03 | Ordering contract | Object keys/modules are lexicographic and semantic collections have fixed order rules |
+| SG-P1-04 | Identity exclusions | Request time, requester, CI, PR, host, OS and working directory are excluded from Source identity |
+| SG-P1-05 | Generator Descriptor | Descriptor is `CONTRACT_ONLY`, deterministic and rejects caller overrides |
+| SG-P1-06 | Module allow-list | Allowed modules are exactly `k6` and `k6/http`; no wildcard or dynamic module is accepted |
+| SG-P1-07 | Resource limits | Spec bytes, groups, operations, assertions, thresholds, Artifacts, strings and depth are bounded |
+| SG-P1-08 | Request Schema | `k6-api-source-generation-request/v1` is strict and contains no source or runtime fields |
+| SG-P1-09 | Compilation binding | Request binds exact M3-R1 Spec, Bundle and Compilation Evidence IDs and digests |
+| SG-P1-10 | Context binding | Project, environment, plan, snapshot, capability, Artifact manifest and source intent bindings are preserved |
+| SG-P1-11 | Source identity seed | Generator, configuration, Spec, Bundle, Evidence, format, policy and module digests are identity inputs |
+| SG-P1-12 | Metadata separation | Metadata may change request digest but cannot change request ID or Source identity digest |
+| SG-P1-13 | Integrity gates | Spec, Bundle, Evidence, descriptor, policy, limit and request tampering fail closed |
+| SG-P1-14 | Injection gates | Source, callback, network URL, filesystem path, shell, Secret and unknown fields are rejected |
+| SG-P1-15 | No renderer | No `packages/k6-api-source-generator`, renderer, source text, source bytes or source Artifact exists |
+| SG-P1-16 | Non-execution | k6/xk6/Playwright, process, VM, eval, dynamic import, network, database and Secret access remain absent |
+| SG-P1-17 | Permanent workflow | Exact-Head focused/full/PG18/repository/R0/M3-R1 checks and P1 Artifact are required |
+| SG-P1-18 | Merge control | P1 remains Draft; P1 completion does not authorize P2, Ready, merge or M3-R3 |
+
+## P1 decision
+
+```text
+sourceGenerationContractReady=true
+sourceGenerationScopeFrozen=true
+runtimeBoundaryDefined=true
+sourceGenerationStarted=false
+sourceGenerated=false
+sourceExecuted=false
+executionRuntimeStarted=false
+k6Invoked=false
+externalProcessExecuted=false
+targetNetworkAccessed=false
+secretAccessed=false
+nextRequiredSlice=M3-R2-P2
+repositoryBlockers=[]
+```
+
+This matrix accepts R0 and P1 only. It does not accept P2–P5, does not grant Formal Acceptance for M3-R2 as a whole, and does not authorize Ready, merge or M3-R3.
