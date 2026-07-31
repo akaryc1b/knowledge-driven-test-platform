@@ -47,6 +47,7 @@
 - [M2-RC1 Post-Merge Acceptance Closure](03-roadmap/m2-rc1-post-merge-acceptance.md)
 - [M2-RC1 Release Readiness](03-roadmap/m2-rc1-production-promotion.md)
 - [M3-R0 Execution Adapter Foundation](03-roadmap/m3-r0-execution-adapter-foundation.md)
+- [M3-R1 Deterministic Non-Executing k6 API Spec Compiler](03-roadmap/m3-r1-k6-api-spec-compiler.md)
 
 ## 发布与治理
 
@@ -61,9 +62,11 @@
 - [M2-RC1 R2-Rebaseline Portable Release Readiness](releases/M2-RC1-r2-rebaseline-portable-release-readiness.md)
 - [M2-RC1 Final Release Closure](releases/M2-RC1-final-release-closure.md)
 - [M3-R0 Execution Contract Foundation](releases/M3-R0-execution-contract-foundation.md)
+- [M3-R1 k6 API Spec Compiler](releases/M3-R1-k6-api-spec-compiler.md)
 - [M1 发布验收矩阵](04-governance/m1-release-acceptance-matrix.md)
 - [M2 Release Readiness 与历史 Promotion 验收矩阵](04-governance/m2-production-promotion-acceptance-matrix.md)
 - [M3-R0 Execution Contract 验收矩阵](04-governance/m3-r0-execution-contract-acceptance-matrix.md)
+- [M3-R1 k6 API Spec Compiler 验收矩阵](04-governance/m3-r1-k6-api-spec-compiler-acceptance-matrix.md)
 - [知识治理](04-governance/knowledge-governance.md)
 - [多项目安全与隔离](04-governance/security-and-isolation.md)
 
@@ -96,3 +99,4 @@
 - [ADR-0025：以追加证据而非改写历史完成生产晋级](05-adr/ADR-0025-production-promotion-evidence.md)
 - [ADR-0026：以精确 main SHA 和 Registry digest 发布 GHCR 镜像](05-adr/ADR-0026-immutable-ghcr-release-image.md)
 - [ADR-0027：先建立不可变执行合同，再实现 Adapter](05-adr/ADR-0027-contract-first-execution-boundary.md)
+- [ADR-0028：以中立 IR 隔离 k6 API 编译与执行](05-adr/ADR-0028-deterministic-non-executing-k6-api-spec-compiler.md)

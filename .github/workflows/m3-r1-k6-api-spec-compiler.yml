@@ -6,7 +6,33 @@ on:
       - '.github/workflows/m3-r1-k6-api-spec-compiler.yml'
       - 'packages/k6-api-adapter/**'
       - 'schemas/execution/k6-api/**'
+      - 'scripts/validate-m3-r1-k6-api-spec-compiler.js'
       - 'examples/k6-api-spec-compiler.js'
+      - 'docs/02-development/development-handoff.md'
+      - 'docs/03-roadmap/m3-r1-k6-api-spec-compiler.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/04-governance/m3-r1-k6-api-spec-compiler-acceptance-matrix.md'
+      - 'docs/05-adr/ADR-0028-deterministic-non-executing-k6-api-spec-compiler.md'
+      - 'docs/releases/M3-R1-k6-api-spec-compiler.md'
+      - 'docs/README.md'
+      - 'package.json'
+      - 'package-lock.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/m3-r1-k6-api-spec-compiler.yml'
+      - 'packages/k6-api-adapter/**'
+      - 'schemas/execution/k6-api/**'
+      - 'scripts/validate-m3-r1-k6-api-spec-compiler.js'
+      - 'examples/k6-api-spec-compiler.js'
+      - 'docs/02-development/development-handoff.md'
+      - 'docs/03-roadmap/m3-r1-k6-api-spec-compiler.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/04-governance/m3-r1-k6-api-spec-compiler-acceptance-matrix.md'
+      - 'docs/05-adr/ADR-0028-deterministic-non-executing-k6-api-spec-compiler.md'
+      - 'docs/releases/M3-R1-k6-api-spec-compiler.md'
+      - 'docs/README.md'
+      - 'package.json'
       - 'package-lock.json'
   workflow_dispatch:
 
@@ -33,18 +59,41 @@ jobs:
         run: npm test
       - name: Run repository validation
         run: npm run validate
-      - name: Generate non-executing compilation evidence
+      - name: Generate deterministic compilation and acceptance evidence
+        env:
+          M3_R1_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         shell: bash
         run: |
           set -euo pipefail
-          node examples/k6-api-spec-compiler.js > /tmp/m3-r1-k6-api-compilation.json
+          npm run --silent example:k6-api-spec-compiler > /tmp/m3-r1-k6-api-compilation.json
+          GITHUB_SHA="$M3_R1_SOURCE_SHA" npm run --silent validate:m3-r1-k6-api-spec-compiler > /tmp/m3-r1-k6-api-spec-compiler-evidence.json
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const evidence = JSON.parse(await readFile('/tmp/m3-r1-k6-api-spec-compiler-evidence.json', 'utf8'));
+          if (evidence.decision?.apiAdapterCompilerReady !== true
+              || evidence.decision?.executionRuntimeStarted !== false
+              || evidence.decision?.k6Invoked !== false
+              || evidence.decision?.externalProcessExecuted !== false
+              || evidence.decision?.nextRequiredSlice !== 'M3-R2'
+              || evidence.decision?.repositoryBlockers?.length !== 0) {
+            throw new Error('M3-R1 compiler decision is invalid');
+          }
+          if (Object.values(evidence.safetyBoundary ?? {}).some((value) => value !== false)) {
+            throw new Error('M3-R1 non-execution safety boundary changed');
+          }
+          NODE
       - name: Upload M3-R1 compiler evidence
         uses: actions/upload-artifact@v4
         with:
           name: m3-r1-k6-api-spec-compiler-evidence
           path: |
             /tmp/m3-r1-k6-api-compilation.json
+            /tmp/m3-r1-k6-api-spec-compiler-evidence.json
             schemas/execution/k6-api/schema-catalog.json
             schemas/execution/k6-api/v1/*.schema.json
+            docs/03-roadmap/m3-r1-k6-api-spec-compiler.md
+            docs/04-governance/m3-r1-k6-api-spec-compiler-acceptance-matrix.md
+            docs/05-adr/ADR-0028-deterministic-non-executing-k6-api-spec-compiler.md
+            docs/releases/M3-R1-k6-api-spec-compiler.md
           if-no-files-found: error
           retention-days: 90
