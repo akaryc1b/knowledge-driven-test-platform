@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "currentExecutionSpec": "k6-api-execution-spec/v1",
+  "currentRequestGroup": "k6-api-request-group/v1",
+  "currentOperation": "k6-api-operation/v1",
+  "currentAssertion": "k6-api-assertion/v1",
+  "currentThreshold": "k6-api-threshold/v1",
+  "currentArtifactBundle": "k6-api-artifact-bundle/v1",
+  "currentCompilationEvidence": "k6-api-compilation-evidence/v1",
+  "schemas": {
+    "k6-api-execution-spec/v1": "schemas/execution/k6-api/v1/k6-api-execution-spec.schema.json",
+    "k6-api-request-group/v1": "schemas/execution/k6-api/v1/k6-api-request-group.schema.json",
+    "k6-api-operation/v1": "schemas/execution/k6-api/v1/k6-api-operation.schema.json",
+    "k6-api-assertion/v1": "schemas/execution/k6-api/v1/k6-api-assertion.schema.json",
+    "k6-api-threshold/v1": "schemas/execution/k6-api/v1/k6-api-threshold.schema.json",
+    "k6-api-artifact-bundle/v1": "schemas/execution/k6-api/v1/k6-api-artifact-bundle.schema.json",
+    "k6-api-compilation-evidence/v1": "schemas/execution/k6-api/v1/k6-api-compilation-evidence.schema.json",
+    "m3-r1-k6-api-spec-compiler-evidence/v1": "schemas/execution/k6-api/v1/m3-r1-k6-api-spec-compiler-evidence.schema.json"
+  },
+  "currentValidationEvidence": "m3-r1-k6-api-spec-compiler-evidence/v1"
+}

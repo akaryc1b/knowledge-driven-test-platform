@@ -33,7 +33,7 @@
 
 ## M3 — k6 Execution Adapters
 
-当前切片：`M3-R0 — Execution Adapter Foundation`，仅建立 Contract-only 合同、Schema、状态机与安全边界。
+M3-R0 Contract Foundation 已完成精确 main 验收。当前切片为 `M3-R1 — Deterministic Non-Executing k6 API Spec Compiler`。
 
 - Adapter、Request、Failure、Result 与 Evidence 合同；
 - API 自动化；
@@ -43,7 +43,7 @@
 - xk6 扩展绑定；
 - 统一报告和证据。
 
-M3-R0 不执行 k6，不导入外部进程，不访问目标环境，不创建 Worker/Queue/Scheduler。真实 Adapter 实现必须从 M3-R1 开始并单独验收。
+M3-R1 只生成中立、不可执行的结构化 IR，不调用 k6，不生成可运行 JavaScript，不导入外部进程，不访问目标环境，不创建 Worker/Queue/Scheduler。受控 source generation 或 runtime boundary 只能在 M3-R2 独立评审。
 
 ## M4 — Multi-Project Operations
 

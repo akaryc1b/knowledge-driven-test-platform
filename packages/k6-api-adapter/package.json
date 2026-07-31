@@ -1,0 +1,12 @@
+{
+  "name": "@kdtp/k6-api-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.js",
+  "dependencies": {
+    "@kdtp/execution-contract": "0.1.0",
+    "@kdtp/knowledge-core": "0.1.0",
+    "@kdtp/test-plan-registry": "0.1.0"
+  }
+}
