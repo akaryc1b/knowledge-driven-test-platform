@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "currentRenderingPolicy": "k6-api-source-rendering-policy/v1",
+  "currentGeneratorDescriptor": "k6-api-source-generator-descriptor/v1",
+  "currentGenerationRequest": "k6-api-source-generation-request/v1",
+  "currentValidationEvidence": "m3-r2-source-generation-p1-evidence/v1",
+  "schemas": {
+    "k6-api-source-rendering-policy/v1": "schemas/execution/k6-api-source/v1/k6-api-source-rendering-policy.schema.json",
+    "k6-api-source-generator-descriptor/v1": "schemas/execution/k6-api-source/v1/k6-api-source-generator-descriptor.schema.json",
+    "k6-api-source-generation-request/v1": "schemas/execution/k6-api-source/v1/k6-api-source-generation-request.schema.json",
+    "m3-r2-source-generation-p1-evidence/v1": "schemas/execution/k6-api-source/v1/m3-r2-source-generation-p1-evidence.schema.json"
+  }
+}
