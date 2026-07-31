@@ -137,24 +137,6 @@
       "maximum": 320000
     },
     "safetyBoundary": {
-      "$ref": "#/$defs/safetyBoundary"
-    },
-    "source": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 16000000,
-      "pattern": "\\n$"
-    },
-    "resultDigest": {
-      "$ref": "#/$defs/digest"
-    }
-  },
-  "$defs": {
-    "digest": {
-      "type": "string",
-      "pattern": "^[a-f0-9]{64}$"
-    },
-    "safetyBoundary": {
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -249,6 +231,21 @@
           "const": false
         }
       }
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16000000,
+      "pattern": "\\n$"
+    },
+    "resultDigest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
     }
   }
 }

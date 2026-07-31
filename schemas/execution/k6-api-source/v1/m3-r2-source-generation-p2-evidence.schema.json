@@ -218,22 +218,6 @@
       }
     },
     "safetyBoundary": {
-      "$ref": "#/$defs/safetyBoundary"
-    },
-    "evidenceDigest": {
-      "$ref": "#/$defs/digest"
-    }
-  },
-  "$defs": {
-    "digest": {
-      "type": "string",
-      "pattern": "^[a-f0-9]{64}$"
-    },
-    "commitSha": {
-      "type": "string",
-      "pattern": "^[a-f0-9]{40}$"
-    },
-    "safetyBoundary": {
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -316,6 +300,19 @@
           "const": false
         }
       }
+    },
+    "evidenceDigest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "commitSha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
     }
   }
 }
