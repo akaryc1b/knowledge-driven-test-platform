@@ -41,13 +41,72 @@ k6Invoked=false
 
 The compiler accepts governed execution contracts and a FROZEN Test Plan, then produces neutral `K6ApiExecutionSpec` IR. It does not produce JavaScript.
 
+### M3-R2 Source Contract
+
+P1 accepts only the exact validated M3-R1 Spec, Bundle and Compilation Evidence. It defines a fixed rendering policy, a fixed contract-only generator descriptor and a digest-bound source-generation request. P1 does not contain a renderer and never creates source bytes.
+
 ### M3-R2 Source Generator
 
-A later M3-R2 phase may accept only a validated M3-R1 Spec plus a versioned source-generation request. It may render a fixed UTF-8 JavaScript artifact entirely in memory. It must not execute, parse by execution, import, persist to a caller-selected path, or transmit the output.
+A later M3-R2 P2 phase may accept only a validated M3-R1 Spec plus the P1 source-generation request. It may render a fixed UTF-8 JavaScript artifact entirely in memory. It must not execute, parse by execution, import, persist to a caller-selected path, or transmit the output.
 
 ### M3-R3 Runtime
 
 Runtime loading, k6 invocation, target-network access, Secret resolution, execution lifecycle and result collection remain outside M3-R2. M3-R2 may define a future artifact interface but must not implement or authorize the consumer.
+
+## P1 versioned contracts
+
+P1 pins three domain contracts and one validation evidence schema:
+
+```text
+k6-api-source-rendering-policy/v1
+k6-api-source-generator-descriptor/v1
+k6-api-source-generation-request/v1
+m3-r2-source-generation-p1-evidence/v1
+```
+
+The Rendering Policy fixes:
+
+- UTF-8 without BOM;
+- LF line endings;
+- two-space indentation;
+- single-quote rendering;
+- one trailing newline;
+- lexicographic object-key and module ordering;
+- semantic group, operation, assertion and threshold ordering;
+- explicit unordered-set fields;
+- deterministic variable-name derivation;
+- metadata fields excluded from Source identity.
+
+The Generator Descriptor is permanently `CONTRACT_ONLY` in P1. Its module allow-list is exactly `k6` and `k6/http`. Its resource limits are fixed and digest-bound. Caller-supplied modules, policies, limits or implementation status are rejected.
+
+The Source Generation Request binds:
+
+```text
+generatorId
+generatorVersion
+generatorConfigurationDigest
+generatorDescriptorDigest
+compilerVersion
+inputContractDigest
+specId
+specDigest
+bundleId
+bundleDigest
+compilationEvidenceId
+compilationEvidenceDigest
+projectId
+environmentDigest
+testPlanDigest
+knowledgeSnapshotDigest
+capabilityDigest
+artifactManifestDigest
+sourceIntentIds
+sourceFormatVersion
+canonicalRenderingPolicyDigest
+allowedModulesDigest
+```
+
+`requestedAt` and `requestedBy` remain request metadata. They may change the request envelope digest but never the Source identity digest.
 
 ## Allowed future source inputs
 
@@ -70,7 +129,7 @@ M3-R2 must reject JavaScript snippets, callbacks, expressions, templates, mutabl
 
 ## Canonical rendering policy
 
-A later generator must define one canonical policy:
+The canonical policy is now versioned and digest-bound by P1:
 
 - UTF-8 without BOM;
 - LF line endings;
@@ -83,7 +142,25 @@ A later generator must define one canonical policy:
 - fixed variable-name derivation from immutable IDs;
 - no timestamps, host paths, PR numbers, Run IDs or machine attributes in source identity.
 
-The same identity inputs must produce byte-for-byte identical source. Any semantic input change must change the source digest.
+The same identity inputs must produce byte-for-byte identical source once P2 exists. Any semantic input change must change the future source digest.
+
+## P1 decision
+
+```text
+sourceGenerationContractReady=true
+sourceGenerationScopeFrozen=true
+runtimeBoundaryDefined=true
+sourceGenerationStarted=false
+sourceGenerated=false
+sourceExecuted=false
+executionRuntimeStarted=false
+k6Invoked=false
+externalProcessExecuted=false
+targetNetworkAccessed=false
+secretAccessed=false
+nextRequiredSlice=M3-R2-P2
+repositoryBlockers=[]
+```
 
 ## Stage order
 
@@ -96,4 +173,4 @@ The same identity inputs must produce byte-for-byte identical source. Any semant
 7. G1 — formal acceptance and exact-Head evidence;
 8. G2/G3 — only after separate exact authorization, Ready, normal Merge Commit and exact-main verification.
 
-`nextRequiredSlice=M3-R2-P1` is a sequencing statement only. It does not authorize P1 in R0 and never authorizes M3-R3.
+`nextRequiredSlice=M3-R2-P2` is a sequencing statement only. It does not authorize P2 and never authorizes M3-R3.
