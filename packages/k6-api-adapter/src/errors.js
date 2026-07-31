@@ -10,3 +10,16 @@ export class K6ApiCompilerError extends Error {
 export function compilerInvariant(condition, code, message, details = {}) {
   if (!condition) throw new K6ApiCompilerError(code, message, details);
 }
+
+export class K6ApiSourceContractError extends Error {
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = 'K6ApiSourceContractError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+export function sourceContractInvariant(condition, code, message, details = {}) {
+  if (!condition) throw new K6ApiSourceContractError(code, message, details);
+}
