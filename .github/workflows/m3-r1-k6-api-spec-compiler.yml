@@ -6,6 +6,7 @@ on:
       - '.github/workflows/m3-r1-k6-api-spec-compiler.yml'
       - 'packages/k6-api-adapter/**'
       - 'schemas/execution/k6-api/**'
+      - 'examples/k6-api-spec-compiler.js'
       - 'package-lock.json'
   workflow_dispatch:
 
@@ -13,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  validate-mapping-contract:
+  validate-compiler:
     runs-on: ubuntu-latest
     steps:
       - name: Check out exact repository state
@@ -26,15 +27,23 @@ jobs:
           node-version: 22
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
-      - name: Run focused M3-R1 mapping contract tests
-        run: node --test packages/k6-api-adapter/test/mapping.test.js
+      - name: Run focused M3-R1 compiler tests
+        run: node --test packages/k6-api-adapter/test/*.test.js
       - name: Run full Node test suite
         run: npm test
-      - name: Upload M3-R1 mapping contract evidence
+      - name: Run repository validation
+        run: npm run validate
+      - name: Generate non-executing compilation evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          node examples/k6-api-spec-compiler.js > /tmp/m3-r1-k6-api-compilation.json
+      - name: Upload M3-R1 compiler evidence
         uses: actions/upload-artifact@v4
         with:
-          name: m3-r1-k6-api-mapping-contract-evidence
+          name: m3-r1-k6-api-spec-compiler-evidence
           path: |
+            /tmp/m3-r1-k6-api-compilation.json
             schemas/execution/k6-api/schema-catalog.json
             schemas/execution/k6-api/v1/*.schema.json
           if-no-files-found: error
