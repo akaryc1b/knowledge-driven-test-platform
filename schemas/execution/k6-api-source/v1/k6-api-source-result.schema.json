@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-source/v1/k6-api-source-result.schema.json",
+  "title": "K6 API Source Result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "sourceIdentity",
+    "generationRequestDigest",
+    "renderingPolicyDigest",
+    "generatorDescriptorDigest",
+    "specDigest",
+    "bundleDigest",
+    "compilationEvidenceDigest",
+    "sourceDigest",
+    "sourceByteLength",
+    "sourceLineCount",
+    "moduleImports",
+    "operationCount",
+    "assertionCount",
+    "thresholdCount",
+    "safetyBoundary",
+    "source",
+    "resultDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "k6-api-source-result/v1"
+    },
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generatorId",
+        "generatorVersion",
+        "generatorConfigurationDigest",
+        "specDigest",
+        "bundleDigest",
+        "compilationEvidenceDigest",
+        "sourceFormatVersion",
+        "canonicalRenderingPolicyDigest",
+        "allowedModulesDigest",
+        "identityDigest"
+      ],
+      "properties": {
+        "generatorId": {
+          "const": "k6-api-deterministic-source"
+        },
+        "generatorVersion": {
+          "const": "1.0.0"
+        },
+        "generatorConfigurationDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "specDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "bundleDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "compilationEvidenceDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "sourceFormatVersion": {
+          "const": "k6-javascript-esm/v1"
+        },
+        "canonicalRenderingPolicyDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "allowedModulesDigest": {
+          "$ref": "#/$defs/digest"
+        },
+        "identityDigest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "generationRequestDigest": {
+      "$ref": "#/$defs/digest"
+    },
+    "renderingPolicyDigest": {
+      "$ref": "#/$defs/digest"
+    },
+    "generatorDescriptorDigest": {
+      "$ref": "#/$defs/digest"
+    },
+    "specDigest": {
+      "$ref": "#/$defs/digest"
+    },
+    "bundleDigest": {
+      "$ref": "#/$defs/digest"
+    },
+    "compilationEvidenceDigest": {
+      "$ref": "#/$defs/digest"
+    },
+    "sourceDigest": {
+      "$ref": "#/$defs/digest"
+    },
+    "sourceByteLength": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16000000
+    },
+    "sourceLineCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16000000
+    },
+    "moduleImports": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "prefixItems": [
+        {
+          "const": "k6"
+        },
+        {
+          "const": "k6/http"
+        }
+      ],
+      "items": false
+    },
+    "operationCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "assertionCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1280000
+    },
+    "thresholdCount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 320000
+    },
+    "safetyBoundary": {
+      "$ref": "#/$defs/safetyBoundary"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 16000000,
+      "pattern": "\\n$"
+    },
+    "resultDigest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "safetyBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceGenerated",
+        "sourceExecuted",
+        "executionRuntimeStarted",
+        "k6Invoked",
+        "xk6Invoked",
+        "playwrightInvoked",
+        "externalProcessExecuted",
+        "nodeVmUsed",
+        "evalUsed",
+        "dynamicImportUsed",
+        "targetNetworkAccessed",
+        "databaseAccessed",
+        "secretAccessed",
+        "filesystemCredentialAccessed",
+        "temporaryExecutionDirectoryCreated",
+        "containerStarted",
+        "kubernetesResourceCreated",
+        "workerAdded",
+        "queueAdded",
+        "schedulerAdded",
+        "runtimeResultCollected",
+        "allureImplemented"
+      ],
+      "properties": {
+        "sourceGenerated": {
+          "const": true
+        },
+        "sourceExecuted": {
+          "const": false
+        },
+        "executionRuntimeStarted": {
+          "const": false
+        },
+        "k6Invoked": {
+          "const": false
+        },
+        "xk6Invoked": {
+          "const": false
+        },
+        "playwrightInvoked": {
+          "const": false
+        },
+        "externalProcessExecuted": {
+          "const": false
+        },
+        "nodeVmUsed": {
+          "const": false
+        },
+        "evalUsed": {
+          "const": false
+        },
+        "dynamicImportUsed": {
+          "const": false
+        },
+        "targetNetworkAccessed": {
+          "const": false
+        },
+        "databaseAccessed": {
+          "const": false
+        },
+        "secretAccessed": {
+          "const": false
+        },
+        "filesystemCredentialAccessed": {
+          "const": false
+        },
+        "temporaryExecutionDirectoryCreated": {
+          "const": false
+        },
+        "containerStarted": {
+          "const": false
+        },
+        "kubernetesResourceCreated": {
+          "const": false
+        },
+        "workerAdded": {
+          "const": false
+        },
+        "queueAdded": {
+          "const": false
+        },
+        "schedulerAdded": {
+          "const": false
+        },
+        "runtimeResultCollected": {
+          "const": false
+        },
+        "allureImplemented": {
+          "const": false
+        }
+      }
+    }
+  }
+}
