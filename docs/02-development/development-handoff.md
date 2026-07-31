@@ -27,9 +27,9 @@ PR #44 在合并后收到三个有效 P2 Review。R0 已将其作为前置 block
 
 这些修改只加固 M3-R1 合同，不生成 Source，不启动 Runtime。
 
-## 当前允许切片
+## R0 已接受边界
 
-当前只完成 M3-R2-R0：
+R0 已完成：
 
 ```text
 sourceGenerationScopeFrozen=true
@@ -42,10 +42,39 @@ executionRuntimeStarted=false
 nextRequiredSlice=M3-R2-P1
 ```
 
-后续 P1 只能增加 versioned Source Generation Contract 与 Schema。未进入 P1 前不得实现 Generator；未进入 P2 前不得生成 JavaScript；整个 M3-R2 不得执行生成结果。
+上述 `nextRequiredSlice=M3-R2-P1` 是 R0 永久证据，不应被改写。
+
+## M3-R2-P1 当前完成状态
+
+P1 只增加 versioned Source Generation Contract 与 Schema：
+
+- `K6ApiSourceRenderingPolicy`：固定 UTF-8、LF、双空格缩进、引号、尾换行、排序和 identity exclusion；
+- `K6ApiSourceGeneratorDescriptor`：固定 `CONTRACT_ONLY` 状态、`k6`/`k6/http` allow-list、资源上限和 configuration digest；
+- `K6ApiSourceGenerationRequest`：只绑定已验证的 M3-R1 Spec、Bundle 与 Compilation Evidence；
+- P1 Validator、示例、测试、Schema Catalog 与只读永久 Workflow。
+
+P1 不包含 renderer，不包含 source bytes，不包含 source artifact，也不实现任何 Runtime。请求元数据不会进入未来 Source identity；Spec、Bundle、Compilation Evidence、Generator Configuration、Source Format 与 Rendering Policy digest 必须进入 identity。
+
+```text
+sourceGenerationContractReady=true
+sourceGenerationScopeFrozen=true
+runtimeBoundaryDefined=true
+sourceGenerationStarted=false
+sourceGenerated=false
+sourceExecuted=false
+executionRuntimeStarted=false
+k6Invoked=false
+externalProcessExecuted=false
+targetNetworkAccessed=false
+secretAccessed=false
+nextRequiredSlice=M3-R2-P2
+repositoryBlockers=[]
+```
+
+`nextRequiredSlice=M3-R2-P2` 只表示顺序，不授权本交接启动 P2。
 
 ## 冻结边界
 
 不得调用 k6、xk6、Playwright、外部进程、Shell、Node VM、`eval`、`Function` 或 dynamic import；不得访问目标网络、数据库、Secret、凭据文件或生产环境；不得创建执行目录、容器、Kubernetes 资源、Worker、Queue、Scheduler、Runtime Result 或 Allure。
 
-R0 Draft PR 不构成 Ready 或 merge 授权。后续合并必须获得绑定 PR 编号和精确 40 位 Head SHA 的独立明确授权，并且只能使用普通 Merge Commit。
+P1 Draft PR 不构成 Ready 或 merge 授权。后续合并必须获得绑定 PR 编号和精确 40 位 Head SHA 的独立明确授权，并且只能使用普通 Merge Commit。
