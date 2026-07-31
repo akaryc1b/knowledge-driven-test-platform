@@ -24,7 +24,7 @@ test('safety rejects ordinary named, async and generator function declarations',
   }
 });
 
-test('evidence integrity preserves the accepted digest and detects changed safety claims', async () => {
+test('compilation evidence digest binds decision and every safety claim while preserving accepted identity', async () => {
   const output = compileK6ApiExecutionSpec(await compilerInput());
   const evidence = output.evidence;
   assert.equal(evidence.evidenceDigest, ACCEPTED_COMPILATION_EVIDENCE_DIGEST);
