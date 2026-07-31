@@ -1,0 +1,169 @@
+name: m3-r0-exact-main-observer
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/m3-r0-exact-main-observer.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  observe-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Observe exact main push workflows
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TARGET_SHA: 42402fb82ca8b357a4c2a6dce56b9ce09c11c820
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { writeFile } from 'node:fs/promises';
+
+          const repository = process.env.GITHUB_REPOSITORY;
+          const targetSha = process.env.TARGET_SHA;
+          const token = process.env.GITHUB_TOKEN;
+          const apiBase = process.env.GITHUB_API_URL;
+          const headers = {
+            Accept: 'application/vnd.github+json',
+            Authorization: `Bearer ${token}`,
+            'X-GitHub-Api-Version': '2022-11-28',
+          };
+          const required = new Map([
+            ['validation', ['validate', 'postgres-integration']],
+            ['m3-r0-execution-contract-foundation', ['validate-contracts']],
+            ['m2-r3-final-release-closure', ['validate-closure', 'postgres-integration']],
+            ['m2-r2-rebaseline-portable-release-readiness', ['validate-readiness', 'postgres-integration']],
+            ['m2-r2a-external-evidence-intake', ['validate-intake', 'postgres-integration']],
+          ]);
+
+          async function api(path) {
+            const response = await fetch(`${apiBase}${path}`, { headers });
+            if (!response.ok) {
+              throw new Error(`GitHub API ${response.status} for ${path}: ${await response.text()}`);
+            }
+            return response.json();
+          }
+
+          const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+          let selected = null;
+          for (let attempt = 1; attempt <= 60; attempt += 1) {
+            const data = await api(`/repos/${repository}/actions/runs?head_sha=${targetSha}&event=push&per_page=100`);
+            const exact = data.workflow_runs.filter((run) =>
+              run.head_sha === targetSha && run.event === 'push');
+            const current = new Map();
+            for (const name of required.keys()) {
+              const run = exact.filter((candidate) => candidate.name === name)
+                .sort((left, right) => right.id - left.id)[0];
+              if (run) current.set(name, run);
+            }
+            const failed = [...current.entries()].find(([, run]) =>
+              run.status === 'completed' && run.conclusion !== 'success');
+            if (failed) {
+              throw new Error(`Required push workflow ${failed[0]} concluded ${failed[1].conclusion}`);
+            }
+            if (current.size === required.size
+                && [...current.values()].every((run) => run.status === 'completed')) {
+              selected = current;
+              break;
+            }
+            if (attempt < 60) await sleep(10_000);
+          }
+          if (!selected) {
+            throw new Error('Timed out waiting for all exact-main push workflows');
+          }
+
+          const evidence = {
+            schemaVersion: 'm3-r0-exact-main-observer/v1',
+            observedAt: new Date().toISOString(),
+            repository,
+            target: {
+              branch: 'main',
+              mergeSha: targetSha,
+              sourcePr: 42,
+              sourceHeadSha: 'b4a7e4ba3b350bfd4b50ef811e12203cc5e5903a',
+            },
+            permissions: {
+              contents: 'read',
+              actions: 'read',
+            },
+            runs: {},
+            decision: {
+              m3R0Accepted: true,
+              contractFoundationReady: true,
+              executionImplementationStarted: false,
+              nextRequiredSlice: 'M3-R1',
+              repositoryBlockers: [],
+            },
+          };
+
+          for (const [name, requiredJobs] of required) {
+            const run = selected.get(name);
+            if (run.status !== 'completed' || run.conclusion !== 'success'
+                || run.head_sha !== targetSha || run.event !== 'push') {
+              throw new Error(`Exact-main run verification failed for ${name}`);
+            }
+            const jobData = await api(`/repos/${repository}/actions/runs/${run.id}/jobs?per_page=100`);
+            const jobs = {};
+            for (const jobName of requiredJobs) {
+              const job = jobData.jobs.find((candidate) => candidate.name === jobName);
+              if (!job || job.status !== 'completed' || job.conclusion !== 'success') {
+                throw new Error(`Required job ${name}/${jobName} is not successful`);
+              }
+              jobs[jobName] = {
+                id: job.id,
+                status: job.status,
+                conclusion: job.conclusion,
+              };
+            }
+            const artifactData = await api(`/repos/${repository}/actions/runs/${run.id}/artifacts?per_page=100`);
+            const artifacts = artifactData.artifacts.map((artifact) => ({
+              id: artifact.id,
+              name: artifact.name,
+              digest: artifact.digest,
+              expired: artifact.expired,
+              createdAt: artifact.created_at,
+              expiresAt: artifact.expires_at,
+            }));
+            if (artifacts.some((artifact) => artifact.expired)) {
+              throw new Error(`Expired Artifact found for ${name}`);
+            }
+            evidence.runs[name] = {
+              id: run.id,
+              runNumber: run.run_number,
+              workflowId: run.workflow_id,
+              event: run.event,
+              headBranch: run.head_branch,
+              headSha: run.head_sha,
+              status: run.status,
+              conclusion: run.conclusion,
+              jobs,
+              artifacts,
+            };
+          }
+
+          const m3Artifacts = evidence.runs['m3-r0-execution-contract-foundation'].artifacts;
+          if (!m3Artifacts.some((artifact) =>
+            artifact.name === 'm3-r0-execution-contract-evidence'
+              && !artifact.expired
+              && /^sha256:[a-f0-9]{64}$/.test(artifact.digest ?? ''))) {
+            throw new Error('Exact-main M3-R0 Evidence Artifact is missing or invalid');
+          }
+
+          await writeFile('/tmp/m3-r0-exact-main-observer-evidence.json',
+            `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
+          console.log(JSON.stringify(evidence, null, 2));
+          NODE
+      - name: Upload exact-main observer evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r0-exact-main-observer-evidence
+          path: /tmp/m3-r0-exact-main-observer-evidence.json
+          if-no-files-found: error
+          retention-days: 90
