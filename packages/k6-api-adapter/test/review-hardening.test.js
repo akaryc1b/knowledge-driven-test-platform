@@ -1,12 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sha256 } from '@kdtp/knowledge-core';
 import {
   assertK6ApiCompilationSafe,
   compileK6ApiExecutionSpec,
   computeK6ApiCompilationEvidenceDigest,
 } from '../src/index.js';
 import { compilerInput } from './test-helpers.js';
+
+const ACCEPTED_COMPILATION_EVIDENCE_DIGEST =
+  '7c5972c8901198dbe236d27c51fb10510bf7439a486efafcb5a46ca8860ca65e';
 
 test('safety rejects ordinary named, async and generator function declarations', () => {
   for (const source of [
@@ -22,9 +24,10 @@ test('safety rejects ordinary named, async and generator function declarations',
   }
 });
 
-test('compilation evidence digest binds decision and every safety claim but excludes metadata', async () => {
+test('evidence integrity preserves the accepted digest and detects changed safety claims', async () => {
   const output = compileK6ApiExecutionSpec(await compilerInput());
   const evidence = output.evidence;
+  assert.equal(evidence.evidenceDigest, ACCEPTED_COMPILATION_EVIDENCE_DIGEST);
   assert.equal(evidence.evidenceDigest, computeK6ApiCompilationEvidenceDigest(evidence));
 
   const changedDecision = structuredClone(evidence);
@@ -38,10 +41,6 @@ test('compilation evidence digest binds decision and every safety claim but excl
   const changedMetadata = structuredClone(evidence);
   changedMetadata.metadata.compiledAt = '2099-01-01T00:00:00.000Z';
   assert.equal(computeK6ApiCompilationEvidenceDigest(changedMetadata), evidence.evidenceDigest);
-
-  const { metadata, evidenceDigest, ...claims } = evidence;
-  assert.equal(evidenceDigest, sha256(claims));
-  assert(metadata);
 });
 
 test('assertion schema is a closed discriminated union', async () => {

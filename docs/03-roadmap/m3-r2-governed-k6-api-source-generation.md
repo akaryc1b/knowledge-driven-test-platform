@@ -17,8 +17,8 @@ PR #45 remains a closed, Draft, unmerged read-only observer. No open PR, M3-R2 b
 A Codex review arrived on PR #44 after the merge. R0 treats its three P2 findings as predecessor-contract blockers and closes them before any source-generation contract or generator is introduced:
 
 1. ordinary named JavaScript function declarations are rejected as executable material;
-2. compilation evidence integrity binds `decision` and every `safetyBoundary` claim while excluding non-identity metadata;
-3. `K6ApiAssertion` is a closed discriminated union.
+2. compilation evidence integrity detects changes to `decision` or any `safetyBoundary` claim while preserving the formally accepted M3-R1 digest for the canonical safe claims;
+3. `K6ApiAssertion` is a closed discriminated union compatible with every valid compiler-emitted assertion.
 
 ## R0 scope
 
@@ -32,6 +32,7 @@ sourceGenerationStarted=false
 sourceGenerated=false
 sourceExecuted=false
 executionRuntimeStarted=false
+k6Invoked=false
 ```
 
 ## Trust boundaries
