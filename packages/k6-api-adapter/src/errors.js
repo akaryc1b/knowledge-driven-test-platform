@@ -1,0 +1,12 @@
+export class K6ApiCompilerError extends Error {
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = 'K6ApiCompilerError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+export function compilerInvariant(condition, code, message, details = {}) {
+  if (!condition) throw new K6ApiCompilerError(code, message, details);
+}
