@@ -1,0 +1,27 @@
+name: m3-r1-bootstrap-source-snapshot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/m3-r1-bootstrap-source-snapshot.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact branch state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Upload read-only repository source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r1-bootstrap-source-snapshot
+          path: .
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
