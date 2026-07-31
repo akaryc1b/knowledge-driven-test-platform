@@ -60,3 +60,5 @@ export const K6_API_SOURCE_LIMITS = Object.freeze({
   maxStringBytes: 8_192,
   maxNestingDepth: 32,
 });
+
+export const K6_API_SOURCE_RESULT_SCHEMA_VERSION = 'k6-api-source-result/v1';
