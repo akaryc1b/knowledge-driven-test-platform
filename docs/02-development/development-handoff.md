@@ -13,6 +13,10 @@ existingM3R2Branches=0
 
 M3-R1 exact-main Dedicated Run 为 `30600867230`，Artifact 为 `8781826637`，digest 为 `sha256:689773070e76bcd3cc29e815c9ed27249bd856b0f09a93a0e6a6d6ecee7a1bae`。Artifact 未过期且绑定 exact main。
 
+## 历史验收兼容锚点
+
+M2-RC1 已正式关闭。M3-R0 已完成 Contract-only Foundation，并且其历史入口约束“不得启动执行器实现”继续作为永久 anti-regression 哨兵保留。该历史表述不表示当前回退到 M3-R0；当前正式下一切片仍为 M3-R2-P1。
+
 ## 合并后 Review 重新评估
 
 PR #44 在合并后收到三个有效 P2 Review。R0 已将其作为前置 blocker 关闭：
