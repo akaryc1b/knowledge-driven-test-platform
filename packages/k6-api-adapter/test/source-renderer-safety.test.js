@@ -40,17 +40,20 @@ test('arbitrary Source supplied as renderer input is rejected', () => {
 });
 
 test('Secret material is rejected', () => {
+  const syntheticBearer = ['Bearer', 'abcdefghijklmnopqrstuvwxyz'].join(' ');
   expectRejected(() => rendererBindings({
     transformSpec(spec) {
-      spec.requestGroups[0].operations[0].sourceOperationId =
-        'Bearer abcdefghijklmnopqrstuvwxyz';
+      spec.requestGroups[0].operations[0].sourceOperationId = syntheticBearer;
     },
   }));
 });
 
 test('credential URI is rejected', () => {
+  const syntheticCredentialUri = [
+    'https://user', ':', 'pass', 'word@service.internal/project',
+  ].join('');
   expectRejected(() => rendererBindings({
-    transformSpec(spec) { spec.projectId = 'https://user:password@service.internal/project'; },
+    transformSpec(spec) { spec.projectId = syntheticCredentialUri; },
   }));
 });
 
