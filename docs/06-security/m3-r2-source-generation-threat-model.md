@@ -173,6 +173,7 @@ threatModelAccepted=true
 sourceGenerationStarted=false
 sourceGenerated=false
 sourceExecuted=false
+executionRuntimeStarted=false
 nodeVmUsed=false
 evalUsed=false
 dynamicImportUsed=false
