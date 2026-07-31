@@ -4,3 +4,6 @@ export * from './safety.js';
 export * from './compiler.js';
 export * from './source-contract.js';
 export * from './source-renderer.js';
+export * from './source-validation-shared.js';
+export * from './source-static-validator.js';
+export * from './source-artifact.js';

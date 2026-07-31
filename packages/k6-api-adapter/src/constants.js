@@ -62,3 +62,12 @@ export const K6_API_SOURCE_LIMITS = Object.freeze({
 });
 
 export const K6_API_SOURCE_RESULT_SCHEMA_VERSION = 'k6-api-source-result/v1';
+
+
+export const K6_API_SOURCE_STATIC_VALIDATOR_ID = 'k6-api-independent-static-validator';
+export const K6_API_SOURCE_STATIC_VALIDATOR_VERSION = '1.0.0';
+export const K6_API_SOURCE_ARTIFACT_SCHEMA_VERSION = 'k6-api-source-artifact/v1';
+export const K6_API_SOURCE_VALIDATION_EVIDENCE_SCHEMA_VERSION =
+  'k6-api-source-validation-evidence/v1';
+export const K6_API_SOURCE_ARTIFACT_KIND = 'k6-api-source';
+export const K6_API_SOURCE_ARTIFACT_MEDIA_TYPE = 'application/javascript';

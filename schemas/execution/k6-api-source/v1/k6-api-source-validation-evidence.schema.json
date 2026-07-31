@@ -1,0 +1,276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.kdtp.local/execution/k6-api-source/v1/k6-api-source-validation-evidence.schema.json",
+  "title": "K6 API Source Validation Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "evidenceId",
+    "validator",
+    "artifactId",
+    "artifactDigest",
+    "sourceIdentity",
+    "sourceDigest",
+    "p2EvidenceDigest",
+    "validationReportDigest",
+    "decision",
+    "safetyBoundary",
+    "evidenceDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "k6-api-source-validation-evidence/v1"
+    },
+    "evidenceId": {
+      "type": "string",
+      "pattern": "^k6source-validation-[a-f0-9]{20}$"
+    },
+    "validator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "validatorId",
+        "validatorVersion",
+        "checkIds"
+      ],
+      "properties": {
+        "validatorId": {
+          "const": "k6-api-independent-static-validator"
+        },
+        "validatorVersion": {
+          "const": "1.0.0"
+        },
+        "checkIds": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "result-contract-integrity"
+            },
+            {
+              "const": "source-identity-integrity"
+            },
+            {
+              "const": "raw-utf8-source-integrity"
+            },
+            {
+              "const": "fixed-module-imports"
+            },
+            {
+              "const": "fixed-top-level-structure"
+            },
+            {
+              "const": "operation-count-integrity"
+            },
+            {
+              "const": "assertion-count-integrity"
+            },
+            {
+              "const": "threshold-count-integrity"
+            },
+            {
+              "const": "path-only-http-targets"
+            },
+            {
+              "const": "forbidden-execution-primitives"
+            },
+            {
+              "const": "forbidden-sensitive-material"
+            },
+            {
+              "const": "non-execution-safety-boundary"
+            }
+          ],
+          "items": false,
+          "minItems": 12,
+          "maxItems": 12
+        }
+      }
+    },
+    "artifactId": {
+      "type": "string",
+      "pattern": "^k6source-artifact-[a-f0-9]{20}$"
+    },
+    "artifactDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceIdentity": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "p2EvidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "validationReportDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "independentStaticValidatorReady",
+        "sourceArtifactContractReady",
+        "sourceGenerated",
+        "sourceStaticallyValidated",
+        "sourceArtifactCreated",
+        "sourcePersisted",
+        "artifactPublished",
+        "sourceExecuted",
+        "executionRuntimeStarted",
+        "nextRequiredSlice",
+        "repositoryBlockers"
+      ],
+      "properties": {
+        "independentStaticValidatorReady": {
+          "const": true
+        },
+        "sourceArtifactContractReady": {
+          "const": true
+        },
+        "sourceGenerated": {
+          "const": true
+        },
+        "sourceStaticallyValidated": {
+          "const": true
+        },
+        "sourceArtifactCreated": {
+          "const": true
+        },
+        "sourcePersisted": {
+          "const": false
+        },
+        "artifactPublished": {
+          "const": false
+        },
+        "sourceExecuted": {
+          "const": false
+        },
+        "executionRuntimeStarted": {
+          "const": false
+        },
+        "nextRequiredSlice": {
+          "const": "M3-R2-P4"
+        },
+        "repositoryBlockers": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    },
+    "safetyBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceArtifactCreated",
+        "sourcePersisted",
+        "artifactPublished",
+        "sourceExecuted",
+        "executionRuntimeStarted",
+        "k6Invoked",
+        "xk6Invoked",
+        "playwrightInvoked",
+        "externalProcessExecuted",
+        "nodeVmUsed",
+        "evalUsed",
+        "dynamicImportUsed",
+        "targetNetworkAccessed",
+        "databaseAccessed",
+        "secretAccessed",
+        "filesystemCredentialAccessed",
+        "temporaryExecutionDirectoryCreated",
+        "containerStarted",
+        "kubernetesResourceCreated",
+        "workerAdded",
+        "queueAdded",
+        "schedulerAdded",
+        "runtimeResultCollected",
+        "allureImplemented"
+      ],
+      "properties": {
+        "sourceArtifactCreated": {
+          "const": true
+        },
+        "sourcePersisted": {
+          "const": false
+        },
+        "artifactPublished": {
+          "const": false
+        },
+        "sourceExecuted": {
+          "const": false
+        },
+        "executionRuntimeStarted": {
+          "const": false
+        },
+        "k6Invoked": {
+          "const": false
+        },
+        "xk6Invoked": {
+          "const": false
+        },
+        "playwrightInvoked": {
+          "const": false
+        },
+        "externalProcessExecuted": {
+          "const": false
+        },
+        "nodeVmUsed": {
+          "const": false
+        },
+        "evalUsed": {
+          "const": false
+        },
+        "dynamicImportUsed": {
+          "const": false
+        },
+        "targetNetworkAccessed": {
+          "const": false
+        },
+        "databaseAccessed": {
+          "const": false
+        },
+        "secretAccessed": {
+          "const": false
+        },
+        "filesystemCredentialAccessed": {
+          "const": false
+        },
+        "temporaryExecutionDirectoryCreated": {
+          "const": false
+        },
+        "containerStarted": {
+          "const": false
+        },
+        "kubernetesResourceCreated": {
+          "const": false
+        },
+        "workerAdded": {
+          "const": false
+        },
+        "queueAdded": {
+          "const": false
+        },
+        "schedulerAdded": {
+          "const": false
+        },
+        "runtimeResultCollected": {
+          "const": false
+        },
+        "allureImplemented": {
+          "const": false
+        }
+      }
+    },
+    "evidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
