@@ -1,0 +1,194 @@
+name: m3-r2-p3-source-artifact-validation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r2-p3-source-artifact-validation.yml'
+      - 'packages/k6-api-adapter/**'
+      - 'schemas/execution/k6-api-source/**'
+      - 'examples/k6-api-source-*.js'
+      - 'scripts/m3-r2-p3-*.js'
+      - 'scripts/validate-m3-r2-source-generation-p*.js'
+      - 'docs/02-development/m3-r2-p3-*'
+      - 'docs/03-roadmap/m3-r2-p3-*'
+      - 'docs/04-governance/m3-r2-p3-*'
+      - 'docs/05-adr/ADR-0031-*'
+      - 'docs/06-security/m3-r2-p3-*'
+      - 'docs/releases/M3-R2-P3-*'
+      - 'package.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/m3-r2-p3-source-artifact-validation.yml'
+      - 'packages/k6-api-adapter/**'
+      - 'schemas/execution/k6-api-source/**'
+      - 'examples/k6-api-source-*.js'
+      - 'scripts/m3-r2-p3-*.js'
+      - 'scripts/validate-m3-r2-source-generation-p*.js'
+      - 'docs/**/m3-r2-p3-*'
+      - 'docs/05-adr/ADR-0031-*'
+      - 'docs/releases/M3-R2-P3-*'
+      - 'package.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-p3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Run focused M3-R2 P3 tests
+        run: |
+          node --test \
+            packages/k6-api-adapter/test/source-static-validator.test.js \
+            packages/k6-api-adapter/test/source-artifact.test.js \
+            packages/k6-api-adapter/test/source-p3-schema.test.js
+      - name: Run all k6 API adapter tests
+        run: node --test packages/k6-api-adapter/test/*.test.js
+      - name: Run full Node test suite
+        run: npm test
+      - name: Run repository validation
+        run: npm run validate
+      - name: Run M3-R2 P2 anti-regression
+        run: npm run validate:m3-r2-source-generation-p2
+      - name: Run M3-R2 P3 validator
+        run: npm run validate:m3-r2-source-generation-p3
+      - name: Generate P3 Source Artifact and validation evidence
+        env:
+          M3_R2_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          M3_R2_SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          GITHUB_SHA="$M3_R2_SOURCE_SHA" \
+          GITHUB_REF_NAME="$M3_R2_SOURCE_BRANCH" \
+            npm run --silent validate:m3-r2-source-generation-p3 \
+            > /tmp/m3-r2-source-generation-p3-evidence.json
+          npm run --silent example:k6-api-source-artifact \
+            > /tmp/m3-r2-p3-artifact-bundle.json
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          const evidence = JSON.parse(await readFile(
+            '/tmp/m3-r2-source-generation-p3-evidence.json', 'utf8'));
+          const bundle = JSON.parse(await readFile(
+            '/tmp/m3-r2-p3-artifact-bundle.json', 'utf8'));
+          if (evidence.decision?.independentStaticValidatorReady !== true
+              || evidence.decision?.sourceArtifactContractReady !== true
+              || evidence.decision?.sourceStaticallyValidated !== true
+              || evidence.decision?.sourceArtifactCreated !== true
+              || evidence.decision?.sourcePersisted !== false
+              || evidence.decision?.artifactPublished !== false
+              || evidence.decision?.sourceExecuted !== false
+              || evidence.decision?.executionRuntimeStarted !== false
+              || evidence.decision?.nextRequiredSlice !== 'M3-R2-P4'
+              || evidence.decision?.repositoryBlockers?.length !== 0) {
+            throw new Error('M3-R2 P3 decision is invalid');
+          }
+          if (Object.values(evidence.safetyBoundary ?? {}).some((value) => value !== false)) {
+            throw new Error('M3-R2 P3 non-execution safety boundary changed');
+          }
+          if (bundle.sourceArtifact?.artifactDigest !== evidence.sourceArtifact?.artifactDigest
+              || bundle.validationEvidence?.evidenceDigest
+                !== evidence.validationEvidence?.evidenceDigest
+              || bundle.sourceResult?.sourceDigest !== evidence.acceptedP2?.sourceDigest) {
+            throw new Error('M3-R2 P3 Artifact or validation Evidence binding is invalid');
+          }
+          await writeFile('/tmp/m3-r2-p3-source-artifact.json',
+            `${JSON.stringify(bundle.sourceArtifact, null, 2)}\n`, 'utf8');
+          await writeFile('/tmp/m3-r2-p3-validation-evidence.json',
+            `${JSON.stringify(bundle.validationEvidence, null, 2)}\n`, 'utf8');
+          await writeFile('/tmp/m3-r2-p3-generated-source.js',
+            bundle.sourceArtifact.source, 'utf8');
+          NODE
+      - name: Upload M3-R2 P3 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r2-source-generation-p3-evidence
+          path: |
+            /tmp/m3-r2-source-generation-p3-evidence.json
+            /tmp/m3-r2-p3-artifact-bundle.json
+            /tmp/m3-r2-p3-source-artifact.json
+            /tmp/m3-r2-p3-validation-evidence.json
+            /tmp/m3-r2-p3-generated-source.js
+            packages/k6-api-adapter/src/constants.js
+            packages/k6-api-adapter/src/errors.js
+            packages/k6-api-adapter/src/source-validation-shared.js
+            packages/k6-api-adapter/src/source-static-validator.js
+            packages/k6-api-adapter/src/source-artifact.js
+            packages/k6-api-adapter/src/index.js
+            packages/k6-api-adapter/test/p3-test-helpers.js
+            packages/k6-api-adapter/test/source-static-validator.test.js
+            packages/k6-api-adapter/test/source-artifact.test.js
+            packages/k6-api-adapter/test/source-p3-schema.test.js
+            schemas/execution/k6-api-source/p3-schema-catalog.json
+            schemas/execution/k6-api-source/v1/k6-api-source-artifact.schema.json
+            schemas/execution/k6-api-source/v1/k6-api-source-validation-evidence.schema.json
+            schemas/execution/k6-api-source/v1/m3-r2-source-generation-p3-evidence.schema.json
+            examples/k6-api-source-artifact.js
+            scripts/m3-r2-p3-baseline.js
+            scripts/m3-r2-p3-repository.js
+            scripts/validate-m3-r2-source-generation-p3.js
+            docs/02-development/m3-r2-p3-handoff.md
+            docs/03-roadmap/m3-r2-p3-independent-source-validation.md
+            docs/04-governance/m3-r2-p3-source-validation-acceptance-matrix.md
+            docs/05-adr/ADR-0031-independent-static-source-validation.md
+            docs/06-security/m3-r2-p3-source-validation-threat-model.md
+            docs/releases/M3-R2-P3-independent-source-validation.md
+          if-no-files-found: error
+          retention-days: 90
+
+  postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: kdtp_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kdtp_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+      KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Install PostgreSQL client dependency without changing the lockfile
+        run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
+      - name: Run PostgreSQL 18 integration suite
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:postgres 2>&1 | tee /tmp/m3-r2-p3-postgres-test.log
+      - name: Upload PostgreSQL log
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r2-source-generation-p3-postgres-log
+          path: /tmp/m3-r2-p3-postgres-test.log
+          if-no-files-found: error
+          retention-days: 90
