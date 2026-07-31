@@ -8,16 +8,18 @@ on:
       - 'schemas/execution/k6-api/**'
       - 'schemas/execution/k6-api-source/**'
       - 'examples/k6-api-source-generation-contract.js'
+      - 'examples/k6-api-source-renderer*.js'
       - 'scripts/validate-m3-r1-k6-api-spec-compiler.js'
       - 'scripts/validate-m3-r2-source-generation-r0.js'
       - 'scripts/validate-m3-r2-source-generation-p1.js'
-      - 'docs/02-development/development-handoff.md'
-      - 'docs/03-roadmap/m3-r2-governed-k6-api-source-generation.md'
-      - 'docs/03-roadmap/roadmap.md'
-      - 'docs/04-governance/m3-r2-source-generation-acceptance-matrix.md'
-      - 'docs/05-adr/ADR-0029-governed-deterministic-k6-source-generation.md'
-      - 'docs/06-security/m3-r2-source-generation-threat-model.md'
-      - 'docs/releases/M3-R2-k6-api-source-generation.md'
+      - 'scripts/validate-m3-r2-source-generation-p2.js'
+      - 'scripts/m3-r2-p2-*.js'
+      - 'docs/02-development/**'
+      - 'docs/03-roadmap/**'
+      - 'docs/04-governance/**'
+      - 'docs/05-adr/**'
+      - 'docs/06-security/**'
+      - 'docs/releases/**'
       - 'docs/README.md'
       - 'package.json'
       - 'package-lock.json'
@@ -29,16 +31,18 @@ on:
       - 'schemas/execution/k6-api/**'
       - 'schemas/execution/k6-api-source/**'
       - 'examples/k6-api-source-generation-contract.js'
+      - 'examples/k6-api-source-renderer*.js'
       - 'scripts/validate-m3-r1-k6-api-spec-compiler.js'
       - 'scripts/validate-m3-r2-source-generation-r0.js'
       - 'scripts/validate-m3-r2-source-generation-p1.js'
-      - 'docs/02-development/development-handoff.md'
-      - 'docs/03-roadmap/m3-r2-governed-k6-api-source-generation.md'
-      - 'docs/03-roadmap/roadmap.md'
-      - 'docs/04-governance/m3-r2-source-generation-acceptance-matrix.md'
-      - 'docs/05-adr/ADR-0029-governed-deterministic-k6-source-generation.md'
-      - 'docs/06-security/m3-r2-source-generation-threat-model.md'
-      - 'docs/releases/M3-R2-k6-api-source-generation.md'
+      - 'scripts/validate-m3-r2-source-generation-p2.js'
+      - 'scripts/m3-r2-p2-*.js'
+      - 'docs/02-development/**'
+      - 'docs/03-roadmap/**'
+      - 'docs/04-governance/**'
+      - 'docs/05-adr/**'
+      - 'docs/06-security/**'
+      - 'docs/releases/**'
       - 'docs/README.md'
       - 'package.json'
       - 'package-lock.json'
@@ -48,7 +52,7 @@ permissions:
   contents: read
 
 jobs:
-  validate-p1:
+  validate-p2:
     runs-on: ubuntu-latest
     steps:
       - name: Check out exact repository state
@@ -68,6 +72,8 @@ jobs:
           node --test \
             packages/k6-api-adapter/test/source-contract.test.js \
             packages/k6-api-adapter/test/source-contract-schema.test.js
+      - name: Run focused M3-R2 P2 renderer tests
+        run: node --test packages/k6-api-adapter/test/source-renderer-*.test.js
       - name: Run full Node test suite
         run: npm test
       - name: Run repository validation
@@ -78,6 +84,8 @@ jobs:
         run: npm run validate:m3-r1-k6-api-spec-compiler
       - name: Run M3-R2 R0 anti-regression
         run: npm run validate:m3-r2-source-generation-r0
+      - name: Run M3-R2 P1 anti-regression
+        run: npm run validate:m3-r2-source-generation-p1
       - name: Generate R0 scope-freeze and threat-model evidence
         env:
           M3_R2_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -190,6 +198,90 @@ jobs:
             docs/releases/M3-R2-k6-api-source-generation.md
           if-no-files-found: error
           retention-days: 90
+      - name: Generate P2 deterministic source evidence
+        env:
+          M3_R2_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          M3_R2_SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          GITHUB_SHA="$M3_R2_SOURCE_SHA" \
+          GITHUB_REF_NAME="$M3_R2_SOURCE_BRANCH" \
+            npm run --silent validate:m3-r2-source-generation-p2 \
+            > /tmp/m3-r2-source-generation-p2-evidence.json
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          import {
+            deterministicK6ApiSourceRendering,
+          } from './examples/k6-api-source-renderer.js';
+          const evidence = JSON.parse(await readFile(
+            '/tmp/m3-r2-source-generation-p2-evidence.json', 'utf8'));
+          const decision = evidence.decision ?? {};
+          if (decision.sourceGenerationContractReady !== true
+              || decision.deterministicSourceRendererReady !== true
+              || decision.sourceGenerationStarted !== true
+              || decision.sourceGenerated !== true
+              || decision.sourceExecuted !== false
+              || decision.executionRuntimeStarted !== false
+              || decision.nextRequiredSlice !== 'M3-R2-P3'
+              || decision.repositoryBlockers?.length !== 0) {
+            throw new Error('M3-R2 P2 decision is invalid');
+          }
+          if (Object.values(evidence.safetyBoundary ?? {}).some((value) => value !== false)) {
+            throw new Error('M3-R2 P2 non-execution safety boundary changed');
+          }
+          const result = deterministicK6ApiSourceRendering();
+          if (result.sourceDigest !== evidence.sourceResult?.sourceDigest
+              || result.sourceByteLength !== evidence.sourceResult?.sourceByteLength
+              || result.sourceLineCount !== evidence.sourceResult?.sourceLineCount
+              || result.sourceIdentity?.identityDigest
+                !== evidence.sourceResult?.sourceIdentity) {
+            throw new Error('M3-R2 P2 Source Result evidence binding is invalid');
+          }
+          await writeFile('/tmp/m3-r2-p2-generated-source.js', result.source, 'utf8');
+          await writeFile('/tmp/m3-r2-p2-source-result.json',
+            `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+          NODE
+      - name: Upload M3-R2 P2 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r2-source-generation-p2-evidence
+          path: |
+            /tmp/m3-r2-source-generation-p2-evidence.json
+            /tmp/m3-r2-p2-source-result.json
+            /tmp/m3-r2-p2-generated-source.js
+            packages/k6-api-adapter/src/constants.js
+            packages/k6-api-adapter/src/errors.js
+            packages/k6-api-adapter/src/source-contract.js
+            packages/k6-api-adapter/src/source-renderer.js
+            packages/k6-api-adapter/src/source-renderer-document.js
+            packages/k6-api-adapter/src/source-renderer-input.js
+            packages/k6-api-adapter/src/source-renderer-shared.js
+            packages/k6-api-adapter/src/source-renderer-static.js
+            packages/k6-api-adapter/src/index.js
+            packages/k6-api-adapter/test/source-renderer-determinism.test.js
+            packages/k6-api-adapter/test/source-renderer-result.test.js
+            packages/k6-api-adapter/test/source-renderer-safety.test.js
+            packages/k6-api-adapter/test/source-renderer-schema.test.js
+            packages/k6-api-adapter/test/source-renderer-support.test.js
+            packages/k6-api-adapter/test/source-renderer-tamper.test.js
+            packages/k6-api-adapter/test/source-renderer-test-helpers.js
+            schemas/execution/k6-api-source/p2-schema-catalog.json
+            schemas/execution/k6-api-source/v1/k6-api-source-result.schema.json
+            schemas/execution/k6-api-source/v1/m3-r2-source-generation-p2-evidence.schema.json
+            examples/k6-api-source-renderer.js
+            examples/k6-api-source-renderer-fixture.js
+            scripts/m3-r2-p2-baseline.js
+            scripts/m3-r2-p2-repository.js
+            scripts/validate-m3-r2-source-generation-p2.js
+            docs/02-development/m3-r2-p2-handoff.md
+            docs/03-roadmap/m3-r2-p2-deterministic-source-renderer.md
+            docs/04-governance/m3-r2-p2-source-renderer-acceptance-matrix.md
+            docs/05-adr/ADR-0030-deterministic-in-memory-k6-source-renderer.md
+            docs/06-security/m3-r2-p2-source-renderer-threat-model.md
+            docs/releases/M3-R2-P2-deterministic-source-renderer.md
+          if-no-files-found: error
+          retention-days: 90
 
   postgres-integration:
     runs-on: ubuntu-latest
@@ -227,7 +319,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          npm run test:postgres 2>&1 | tee /tmp/m3-r2-p1-postgres-test.log
+          npm run test:postgres 2>&1 | tee /tmp/m3-r2-p2-postgres-test.log
       - name: Run all PostgreSQL examples
         shell: bash
         run: |
@@ -237,11 +329,11 @@ jobs:
           npm run --silent example:plan-registry:postgres > /tmp/postgres-test-plan-registry.json
           npm run --silent example:planning-orchestration:postgres \
             > /tmp/postgres-planning-orchestration.json
-      - name: Upload M3-R2 P1 PostgreSQL log
+      - name: Upload M3-R2 P2 PostgreSQL log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: m3-r2-source-generation-p1-postgres-log
-          path: /tmp/m3-r2-p1-postgres-test.log
+          name: m3-r2-source-generation-p2-postgres-log
+          path: /tmp/m3-r2-p2-postgres-test.log
           if-no-files-found: error
           retention-days: 90
