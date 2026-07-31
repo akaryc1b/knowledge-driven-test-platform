@@ -2,37 +2,46 @@
 
 ## Current release state
 
-Only R0 is delivered by this change. R0 revalidates the exact M3-R1 main baseline, closes three post-merge P2 review findings, freezes the source-generation boundary and records the threat model.
+M3-R2-R0 and P1 are delivered in the current Draft PR. R0 froze the boundary and closed predecessor Review blockers. P1 publishes versioned Source Generation contracts and schemas only.
 
 ## R0 delivery
 
-- exact `main@ab93321738222c087e6f3c90fd39e092116cf3c8` rebaseline;
-- PR #44/#45, workflows and Artifact continuity verification;
-- named-function executable-material hardening;
-- integrity binding for Compilation Evidence decision and safety claims;
-- discriminated `K6ApiAssertion` Schema;
-- R0 roadmap, acceptance matrix, ADR and threat model;
-- permanent read-only R0 Workflow and evidence.
+- exact M3-R1 main rebaseline and Artifact continuity;
+- PR #44 post-merge Review closure;
+- source-generation boundary, ADR and Threat Model;
+- read-only permanent evidence.
+
+## P1 delivery
+
+- fixed `K6ApiSourceRenderingPolicy`;
+- fixed `CONTRACT_ONLY` `K6ApiSourceGeneratorDescriptor`;
+- digest-bound `K6ApiSourceGenerationRequest`;
+- exact M3-R1 Spec/Bundle/Compilation Evidence verification;
+- fixed `k6` and `k6/http` module allow-list;
+- canonical identity and metadata-exclusion rules;
+- bounded resource limits;
+- strict Draft 2020-12 schemas and dedicated Schema Catalog;
+- focused tests, example, repository Validator and 90-day CI Artifact.
 
 ## Explicitly not delivered
 
-- no Source Generation Request or source artifact schema;
-- no generator or renderer;
-- no generated JavaScript;
+- no renderer or generator package;
+- no generated JavaScript, source bytes or source text;
 - no static generated-source parser;
-- no source bundle, manifest or provenance;
+- no source Artifact bundle, manifest or provenance;
 - no k6/xk6/Playwright invocation;
-- no external process, VM, network, database or Secret access;
+- no external process, VM, eval, dynamic import, network, database or Secret access;
 - no Worker, Queue, Scheduler, container or Kubernetes execution resource;
+- no Runtime Result or Allure;
 - no npm, image or Registry publication;
 - no M3-R3 Runtime.
 
-## R0 decision
+## P1 decision
 
 ```text
+sourceGenerationContractReady=true
 sourceGenerationScopeFrozen=true
 runtimeBoundaryDefined=true
-threatModelAccepted=true
 sourceGenerationStarted=false
 sourceGenerated=false
 sourceExecuted=false
@@ -41,8 +50,8 @@ k6Invoked=false
 externalProcessExecuted=false
 targetNetworkAccessed=false
 secretAccessed=false
-nextRequiredSlice=M3-R2-P1
+nextRequiredSlice=M3-R2-P2
 repositoryBlockers=[]
 ```
 
-The Draft PR and R0 evidence do not authorize Ready, merge, P1 or M3-R3.
+The Draft PR and P1 evidence do not authorize Ready, merge, P2 or M3-R3. Any later Ready/merge action must bind the then-current exact 40-character PR Head and use a normal Merge Commit.
