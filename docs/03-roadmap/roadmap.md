@@ -33,7 +33,7 @@
 
 ## M3 — k6 Execution Adapters
 
-M3-R0 Contract Foundation 与 M3-R1 Deterministic Non-Executing k6 API Spec Compiler 已完成精确 main 验收。当前切片为 `M3-R2-R0 — Source Generation Boundary and Threat Model`。
+M3-R0 Contract Foundation 与 M3-R1 Deterministic Non-Executing k6 API Spec Compiler 已完成精确 main 验收。M3-R2-R0 已完成 Source Generation Boundary 与 Threat Model；当前完成切片为 `M3-R2-P1 — Versioned Source Generation Contracts and Schemas`。
 
 - Adapter、Request、Failure、Result 与 Evidence 合同；
 - API 自动化；
@@ -43,7 +43,16 @@ M3-R0 Contract Foundation 与 M3-R1 Deterministic Non-Executing k6 API Spec Comp
 - xk6 扩展绑定；
 - 统一报告和证据。
 
-M3-R2-R0 只完成重新基线化、M3-R1 合并后 Review 缺陷关闭、Source Generation 范围冻结和 Threat Model。R0 不生成 JavaScript，不调用 k6，不启动 Runtime，不访问目标环境，不创建 Worker/Queue/Scheduler。P1–P5 必须继续按独立安全切片推进，M3-R3 仍保持冻结。
+M3-R2-P1 只增加固定 Canonical Rendering Policy、`CONTRACT_ONLY` Generator Descriptor、digest-bound Source Generation Request、严格 Schema、测试、Validator 与永久 Workflow。P1 不包含 renderer，不生成 JavaScript，不调用 k6，不启动 Runtime，不访问目标环境，不创建 Worker/Queue/Scheduler。P2–P5 必须继续按独立安全切片推进，M3-R3 仍保持冻结。
+
+```text
+sourceGenerationContractReady=true
+sourceGenerationStarted=false
+sourceGenerated=false
+sourceExecuted=false
+executionRuntimeStarted=false
+nextRequiredSlice=M3-R2-P2
+```
 
 ## M4 — Multi-Project Operations
 
