@@ -2,174 +2,150 @@
 
 ## Security objective
 
-M3-R2 may eventually create JavaScript bytes, but it must never turn those bytes into an execution capability. The security objective is to prove that generated source is deterministic, derived only from governed IR, statically safe, free of sensitive material and packaged as an immutable artifact without execution.
+M3-R2 may eventually create JavaScript bytes, but it must never turn those bytes into an execution capability. P1 narrows the contract before any renderer exists: only an accepted M3-R1 Spec, Bundle and Compilation Evidence plus one fixed versioned Generator Descriptor may form a Source Generation Request.
 
 ## Assets
 
 - accepted M3-R0 execution contracts;
-- accepted M3-R1 Spec, Bundle and Compilation Evidence;
-- immutable project, environment, plan, snapshot, request and adapter bindings;
-- future source-generation request, source bytes, manifest, provenance and evidence;
-- canonical rendering and safety rule catalogs.
+- accepted and hardened M3-R1 Spec, Bundle and Compilation Evidence;
+- immutable project, environment, Test Plan, Knowledge Snapshot, request and adapter bindings;
+- P1 rendering policy, generator descriptor, request identity and Schema Catalog;
+- future source bytes, manifest, provenance and evidence, which are not yet implemented.
 
 ## Trust boundaries
 
 1. **Untrusted caller to M3-R1** — existing validation rejects mutable, sensitive and executable input.
-2. **Validated M3-R1 IR to M3-R2 Generator** — only versioned, digest-bound fields cross this boundary.
-3. **Generator to Static Validator** — source is treated as untrusted bytes even when produced internally.
-4. **Static Validator to Artifact Packager** — only a source/report pair with exact digest binding may be packaged.
-5. **M3-R2 Artifact to future Runtime** — M3-R2 stops at the immutable artifact. Consumption is not implemented or authorized.
+2. **Accepted M3-R1 IR to P1 Source Contract** — P1 independently verifies versions, digests, bindings, decision and safety claims.
+3. **P1 Source Contract to future P2 Generator** — only the normalized request and fixed descriptor may cross this boundary.
+4. **Future Generator to Static Validator** — source remains untrusted bytes even when produced internally.
+5. **M3-R2 Artifact to future Runtime** — Runtime remains M3-R3 and is neither implemented nor authorized.
 
-## Why source generation is not Runtime
+## Why P1 is not Source Generation
 
-Rendering a byte string is a data transformation. Runtime begins when any component parses for execution, imports, evaluates, invokes k6, resolves runtime credentials, reaches a target, creates execution infrastructure or collects runtime results. M3-R2 forbids every such transition.
+P1 constructs JSON contract records only. It does not render JavaScript, write source bytes, parse source, create a source Artifact, load a module or execute output. The descriptor is explicitly `CONTRACT_ONLY`.
 
-## Threats and controls
+## Threats and P1 controls
 
-### T1 — Code injection through IR values
+### T1 — M3-R1 binding substitution
 
-Attackers may place quotes, newlines, comments, template delimiters, Unicode separators, function declarations or expression fragments into fields that later enter source.
-
-Controls:
-
-- no caller-provided source or expression fields;
-- strict JSON-only input with plain-object/prototype checks;
-- per-field grammar and length limits;
-- deterministic JSON/string literal escaping;
-- no template interpolation with raw values;
-- independent AST/token-based static validation in P3;
-- adversarial tests for comments, templates, Unicode, constructor chains and dynamic properties.
-
-### T2 — Template escape
-
-A value may terminate a string, comment or object literal and introduce statements.
+An attacker may combine a valid-looking Spec, Bundle or Evidence from different compiler outputs.
 
 Controls:
 
-- structured renderer primitives only;
-- one canonical string encoder;
-- no concatenation of raw syntax fragments;
-- fixed grammar branches selected by enums;
-- byte-level golden tests and static forbidden-syntax checks.
+- independently recompute all three digests;
+- require Bundle to bind the exact Spec ID/digest;
+- require Evidence to bind the exact Spec and Bundle;
+- require compiler, input contract, Test Plan, Knowledge Snapshot, Environment and capability context to match.
 
-### T3 — Prototype pollution and getters
+### T2 — Accepted decision or safety claim tampering
 
-Objects with `__proto__`, constructors, getters or non-plain prototypes may alter traversal or rendering.
-
-Controls:
-
-- plain JSON cloning before use;
-- reject unsupported prototypes, accessors and forbidden keys;
-- never spread unvalidated caller objects into syntax models;
-- use null-prototype internal maps where mapping is required.
-
-### T4 — Non-determinism
-
-Object insertion order, unordered arrays, timestamps, locale, OS line endings, paths or process data may change output.
+A caller may change `decision` or `safetyBoundary` while retaining other identity data.
 
 Controls:
 
-- fixed UTF-8/LF/two-space policy;
-- explicit semantic sorting;
-- canonical key ordering;
-- no current time, randomness, locale-sensitive formatting or machine metadata in identity;
-- cross-process and order-perturbation tests;
-- independently recomputed source, manifest and catalog digests.
+- reuse the hardened M3-R1 Evidence integrity recomputation;
+- require the exact accepted compiler decision;
+- require every compiler safety-boundary field to be `false`;
+- fail closed before constructing a P1 Request.
 
-### T5 — Capability escalation
+### T3 — Module or capability escalation
 
-A Source Generation Request may add modules, operations, checks or thresholds not authorized by M3-R1.
+A caller may add `k6/ws`, remote modules, wildcard modules or another source format.
 
 Controls:
 
-- exact Spec/Bundle/Evidence digest binding;
-- explicit capability and module allow-lists;
-- no wildcards;
-- generated constructs must have a source IR identifier;
-- reject mismatched adapter/generator versions and configuration digest.
+- fixed allow-list exactly `k6` and `k6/http`;
+- fixed `k6-javascript-esm/v1` source format;
+- whole-descriptor canonical comparison;
+- configuration and descriptor digests;
+- no caller-provided module list or configuration override.
 
-### T6 — Hidden network target or credential
+### T4 — Canonical policy drift
 
-Source may embed a URL, host, Authorization, Cookie, token, private key, connection string or local path.
-
-Controls:
-
-- M3-R1 and P1 sensitive-material gates;
-- no absolute URL field in generation contract;
-- path templates remain relative governed values;
-- scan request, source, diagnostics, manifest, provenance, logs and ZIP;
-- diagnostics contain rule identifiers and digests, never full source or bodies.
-
-### T7 — Dynamic execution or module loading
-
-Generated source may contain `eval`, `Function`, dynamic import, `require`, WebAssembly, process, VM, filesystem, child process, Worker or unrestricted modules.
+Different encoding, line ending, indentation, quoting or ordering could produce different bytes for the same semantic input.
 
 Controls:
 
-- fixed import list;
-- module allow-list initially limited to exact `k6` and `k6/http`;
-- independent static parser validation without AST execution;
-- reject aliases and indirect/global access patterns;
-- no parser plugins or automatic repair.
+- one versioned rendering policy;
+- exact whole-object validation;
+- policy digest bound into generator configuration and Source identity;
+- request rejects any policy mutation;
+- P1 performs no rendering.
 
-### T8 — Generator executes its output
+### T5 — Identity pollution by volatile metadata
 
-A test or validation step may run source for syntax checking.
-
-Controls:
-
-- no k6 binary or installation;
-- no `child_process`, shell, Node VM, dynamic import or eval;
-- validation is parser/static-analysis only;
-- Workflow scans commands and records all non-execution fields as false;
-- no temporary execution directory.
-
-### T9 — Manifest or binding substitution
-
-An attacker may swap source while retaining a valid-looking manifest or bind source to another Spec.
+Time, PR, Run, Artifact or host metadata could make source identity non-reproducible.
 
 Controls:
 
-- manifest contains source byte length and SHA-256;
-- provenance binds accepted M3-R0/M3-R1 evidence and exact M3-R2 Head;
-- source, manifest, request and safety report digests are mutually checked;
-- all immutable IDs/digests are schema-constrained and independently recomputed.
+- explicit identity exclusion list;
+- `requestedAt` and `requestedBy` live only in request metadata;
+- future generation time and CI metadata are excluded;
+- tests prove metadata changes preserve request ID and Source identity while changing request digest.
 
-### T10 — Resource exhaustion
+### T6 — Executable or sensitive material injection
 
-Deep objects, very long strings or excessive operations may exhaust renderer or validator resources.
-
-Controls:
-
-- P1 defines maximum depth, string length, operation count, assertion count and artifact size;
-- fail before rendering;
-- deterministic bounded diagnostics;
-- no recursion over unbounded caller-controlled structures.
-
-### T11 — Artifact publication becomes deployment
-
-Uploading generated source to a Registry or deployment system could implicitly authorize execution.
+A caller may place source snippets, callbacks, templates, URLs, absolute paths, credentials, headers or Secret values into request metadata or bindings.
 
 Controls:
 
-- M3-R2 artifacts exist only as GitHub Actions evidence;
-- no npm, container or Registry publication;
-- no Deployment changes;
-- provenance states `sourcePublished=false` and `sourceExecuted=false`;
-- future Runtime requires separate M3-R3 authorization.
+- exact-field validation;
+- M3-R1 and P1 sensitive, placeholder and executable-material gates;
+- no arbitrary source field exists in any P1 schema;
+- unknown fields fail closed;
+- contract tests include named functions, URLs, paths and `javascriptSource`.
 
-## Allowed fields entering future source
+### T7 — Prototype or accessor abuse
 
-Only fixed imports and validated operation method/path, immutable Artifact references, declarative query metadata, discriminated assertions, thresholds and identifiers derived from accepted IR may render. Project/environment/plan/snapshot/request identity may appear only where the source contract explicitly permits non-sensitive provenance constants.
+Non-plain objects, getters or forbidden keys may affect normalization or hashing.
 
-## Fields always rejected
+Controls:
 
-Secret, token, password, Authorization, Cookie, connection string, private key, environment value, absolute path, `file://`, HTTP/HTTPS URL, JavaScript source, callback, expression, shell, command, runtime argument, template placeholder, dynamic module, unknown property and unauthorized capability are always rejected.
+- execution-contract JSON cloning and safety validation before use;
+- canonical serialization of normalized records;
+- no caller object is used as a template or syntax model;
+- exact allowed fields at each P1 envelope.
 
-## R0 security decision
+### T8 — Resource exhaustion
+
+Oversized IR, deep nesting or excessive groups/operations/assertions may exhaust a future renderer.
+
+Controls:
+
+- P1 descriptor freezes serialized-byte, group, operation, assertion, threshold, manifest, string and depth limits;
+- bounds are checked before a request is accepted;
+- limits cannot be relaxed by callers.
+
+### T9 — Contract status becomes implementation authority
+
+A caller may treat a descriptor as permission to generate or execute source.
+
+Controls:
+
+- `implementationStatus=CONTRACT_ONLY`;
+- no `packages/k6-api-source-generator` package;
+- no renderer export or source output field;
+- P1 evidence records `sourceGenerationStarted=false`;
+- P2 and M3-R3 require separate slices and authorization.
+
+### T10 — CI validation accidentally executes source
+
+A Workflow might install or invoke k6, use Node VM/eval, dynamic import or an external process.
+
+Controls:
+
+- read-only permissions;
+- no k6/xk6/Playwright installation or invocation;
+- no shell-based syntax execution of generated source;
+- static repository validator rejects runtime primitives;
+- P1 Artifact contains contracts, schemas, tests and evidence only.
+
+## P1 security decision
 
 ```text
-threatModelAccepted=true
+sourceGenerationContractReady=true
+sourceGenerationScopeFrozen=true
+runtimeBoundaryDefined=true
 sourceGenerationStarted=false
 sourceGenerated=false
 sourceExecuted=false
@@ -178,10 +154,14 @@ nodeVmUsed=false
 evalUsed=false
 dynamicImportUsed=false
 k6Invoked=false
+xk6Invoked=false
+playwrightInvoked=false
 externalProcessExecuted=false
 targetNetworkAccessed=false
 databaseAccessed=false
 secretAccessed=false
+filesystemCredentialAccessed=false
+temporaryExecutionDirectoryCreated=false
 containerStarted=false
 kubernetesResourceCreated=false
 workerAdded=false
@@ -189,4 +169,8 @@ queueAdded=false
 schedulerAdded=false
 runtimeResultCollected=false
 allureImplemented=false
+nextRequiredSlice=M3-R2-P2
+repositoryBlockers=[]
 ```
+
+`nextRequiredSlice=M3-R2-P2` is sequencing only. It does not authorize P2 or M3-R3.
