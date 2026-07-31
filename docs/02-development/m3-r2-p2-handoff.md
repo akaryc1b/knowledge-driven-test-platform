@@ -17,6 +17,24 @@ sourceGenerated=true
 sourceExecuted=false
 executionRuntimeStarted=false
 k6Invoked=false
+xk6Invoked=false
+playwrightInvoked=false
+externalProcessExecuted=false
+nodeVmUsed=false
+evalUsed=false
+dynamicImportUsed=false
+targetNetworkAccessed=false
+databaseAccessed=false
+secretAccessed=false
+filesystemCredentialAccessed=false
+temporaryExecutionDirectoryCreated=false
+containerStarted=false
+kubernetesResourceCreated=false
+workerAdded=false
+queueAdded=false
+schedulerAdded=false
+runtimeResultCollected=false
+allureImplemented=false
 nextRequiredSlice=M3-R2-P3
 ```
 
