@@ -1,0 +1,220 @@
+name: m3-r2-p4-source-bundle-publication
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r2-p4-source-bundle-publication.yml'
+      - 'packages/k6-api-adapter/**'
+      - 'schemas/execution/k6-api-source/**'
+      - 'evidence/m3-r2/**'
+      - 'examples/k6-api-source-*.js'
+      - 'scripts/m3-r2-p4-*.js'
+      - 'scripts/validate-m3-r2-source-generation-p*.js'
+      - 'docs/02-development/m3-r2-p4-*'
+      - 'docs/03-roadmap/m3-r2-p4-*'
+      - 'docs/04-governance/m3-r2-p4-*'
+      - 'docs/05-adr/ADR-0032-*'
+      - 'docs/06-security/m3-r2-p4-*'
+      - 'docs/releases/M3-R2-P4-*'
+      - 'package.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/m3-r2-p4-source-bundle-publication.yml'
+      - 'packages/k6-api-adapter/**'
+      - 'schemas/execution/k6-api-source/**'
+      - 'evidence/m3-r2/**'
+      - 'examples/k6-api-source-*.js'
+      - 'scripts/m3-r2-p4-*.js'
+      - 'scripts/validate-m3-r2-source-generation-p*.js'
+      - 'docs/**/m3-r2-p4-*'
+      - 'docs/05-adr/ADR-0032-*'
+      - 'docs/releases/M3-R2-P4-*'
+      - 'package.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-p4:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Run focused M3-R2 P4 tests
+        run: |
+          node --test \
+            packages/k6-api-adapter/test/source-publication-bundle.test.js \
+            packages/k6-api-adapter/test/source-bundle-publisher.test.js \
+            packages/k6-api-adapter/test/source-p4-schema.test.js
+      - name: Run all k6 API adapter tests
+        run: node --test packages/k6-api-adapter/test/*.test.js
+      - name: Run full Node test suite
+        run: npm test
+      - name: Run repository validation
+        run: npm run validate
+      - name: Run M3-R2 P3 anti-regression
+        run: npm run validate:m3-r2-source-generation-p3
+      - name: Run M3-R2 P4 validator
+        run: npm run validate:m3-r2-source-generation-p4
+      - name: Generate P4 Source Bundle publication evidence
+        env:
+          M3_R2_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          M3_R2_SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
+          M3_R2_P4_STORE_ROOT: /tmp/m3-r2-p4-product-store
+          M3_R2_P4_PUBLISHED_AT: '2026-08-01T09:00:00.000Z'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$M3_R2_P4_STORE_ROOT"
+          GITHUB_SHA="$M3_R2_SOURCE_SHA" \
+          GITHUB_REF_NAME="$M3_R2_SOURCE_BRANCH" \
+            npm run --silent validate:m3-r2-source-generation-p4 \
+            > /tmp/m3-r2-source-generation-p4-evidence.json
+          npm run --silent example:k6-api-source-bundle-publication \
+            > /tmp/m3-r2-p4-publication.json
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          const evidence = JSON.parse(await readFile(
+            '/tmp/m3-r2-source-generation-p4-evidence.json', 'utf8'));
+          const publication = JSON.parse(await readFile(
+            '/tmp/m3-r2-p4-publication.json', 'utf8'));
+          if (evidence.decision?.sourceBundleContractReady !== true
+              || evidence.decision?.sourceBundleCreated !== true
+              || evidence.decision?.sourceManifestCreated !== true
+              || evidence.decision?.sourceProvenanceBound !== true
+              || evidence.decision?.sourcePersisted !== true
+              || evidence.decision?.artifactPublished !== true
+              || evidence.decision?.remoteArtifactPublished !== false
+              || evidence.decision?.sourceExecuted !== false
+              || evidence.decision?.executionRuntimeStarted !== false
+              || evidence.decision?.nextRequiredSlice !== 'M3-R2-P5'
+              || evidence.decision?.repositoryBlockers?.length !== 0) {
+            throw new Error('M3-R2 P4 decision is invalid');
+          }
+          const safety = evidence.safetyBoundary ?? {};
+          for (const key of ['artifactStorageAccessed',
+            'artifactStorageDirectoryCreated', 'sourcePersisted', 'artifactPublished']) {
+            if (safety[key] !== true) throw new Error(`M3-R2 P4 safety claim ${key} changed`);
+          }
+          for (const [key, value] of Object.entries(safety)) {
+            if (!['artifactStorageAccessed', 'artifactStorageDirectoryCreated',
+              'sourcePersisted', 'artifactPublished'].includes(key) && value !== false) {
+              throw new Error(`M3-R2 P4 non-execution safety claim ${key} changed`);
+            }
+          }
+          if (publication.bundle?.bundleDigest !== evidence.publicationBundle?.bundleDigest
+              || publication.bundle?.manifest?.manifestDigest
+                !== evidence.publicationBundle?.manifestDigest
+              || publication.receipt?.receiptDigest
+                !== evidence.publicationReceipt?.receiptDigest
+              || publication.publicationEvidence?.evidenceDigest
+                !== evidence.publicationEvidence?.evidenceDigest) {
+            throw new Error('M3-R2 P4 Bundle publication binding is invalid');
+          }
+          await writeFile('/tmp/m3-r2-p4-bundle.json',
+            `${JSON.stringify(publication.bundle, null, 2)}\n`, 'utf8');
+          await writeFile('/tmp/m3-r2-p4-manifest.json',
+            `${JSON.stringify(publication.bundle.manifest, null, 2)}\n`, 'utf8');
+          await writeFile('/tmp/m3-r2-p4-provenance.json',
+            `${JSON.stringify(publication.bundle.provenance, null, 2)}\n`, 'utf8');
+          await writeFile('/tmp/m3-r2-p4-receipt.json',
+            `${JSON.stringify(publication.receipt, null, 2)}\n`, 'utf8');
+          await writeFile('/tmp/m3-r2-p4-publication-evidence.json',
+            `${JSON.stringify(publication.publicationEvidence, null, 2)}\n`, 'utf8');
+          NODE
+      - name: Upload M3-R2 P4 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r2-source-generation-p4-evidence
+          path: |
+            /tmp/m3-r2-source-generation-p4-evidence.json
+            /tmp/m3-r2-p4-publication.json
+            /tmp/m3-r2-p4-bundle.json
+            /tmp/m3-r2-p4-manifest.json
+            /tmp/m3-r2-p4-provenance.json
+            /tmp/m3-r2-p4-receipt.json
+            /tmp/m3-r2-p4-publication-evidence.json
+            /tmp/m3-r2-p4-product-store/**
+            evidence/m3-r2/m3-r2-source-generation-p3-accepted-evidence.json
+            evidence/m3-r2/m3-r2-source-generation-p3-accepted-artifact-receipt.json
+            packages/k6-api-adapter/src/constants.js
+            packages/k6-api-adapter/src/errors.js
+            packages/k6-api-adapter/src/source-publication-bundle.js
+            packages/k6-api-adapter/src/source-bundle-publisher.js
+            packages/k6-api-adapter/src/index.js
+            packages/k6-api-adapter/test/p4-test-helpers.js
+            packages/k6-api-adapter/test/source-publication-bundle.test.js
+            packages/k6-api-adapter/test/source-bundle-publisher.test.js
+            packages/k6-api-adapter/test/source-p4-schema.test.js
+            schemas/execution/k6-api-source/p4-schema-catalog.json
+            schemas/execution/k6-api-source/v1/k6-api-source-publication-bundle.schema.json
+            schemas/execution/k6-api-source/v1/k6-api-source-publication-receipt.schema.json
+            schemas/execution/k6-api-source/v1/k6-api-source-publication-evidence.schema.json
+            schemas/execution/k6-api-source/v1/m3-r2-source-generation-p4-evidence.schema.json
+            examples/k6-api-source-bundle-publication.js
+            scripts/m3-r2-p4-baseline.js
+            scripts/m3-r2-p4-repository.js
+            scripts/validate-m3-r2-source-generation-p4.js
+            docs/02-development/m3-r2-p4-handoff.md
+            docs/03-roadmap/m3-r2-p4-source-bundle-publication.md
+            docs/04-governance/m3-r2-p4-source-bundle-acceptance-matrix.md
+            docs/05-adr/ADR-0032-content-addressed-source-bundle-publication.md
+            docs/06-security/m3-r2-p4-source-bundle-threat-model.md
+            docs/releases/M3-R2-P4-source-bundle-publication.md
+          if-no-files-found: error
+          retention-days: 90
+
+  postgres-integration:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: kdtp_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kdtp_test"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+      KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/kdtp_test
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Install PostgreSQL client dependency without changing the lockfile
+        run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
+      - name: Run PostgreSQL 18 integration suite
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run test:postgres 2>&1 | tee /tmp/m3-r2-p4-postgres-test.log
+      - name: Upload PostgreSQL log
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r2-source-generation-p4-postgres-log
+          path: /tmp/m3-r2-p4-postgres-test.log
+          if-no-files-found: error
+          retention-days: 90
