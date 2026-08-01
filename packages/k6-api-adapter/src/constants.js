@@ -71,3 +71,17 @@ export const K6_API_SOURCE_VALIDATION_EVIDENCE_SCHEMA_VERSION =
   'k6-api-source-validation-evidence/v1';
 export const K6_API_SOURCE_ARTIFACT_KIND = 'k6-api-source';
 export const K6_API_SOURCE_ARTIFACT_MEDIA_TYPE = 'application/javascript';
+
+export const K6_API_SOURCE_PUBLICATION_BUNDLE_SCHEMA_VERSION =
+  'k6-api-source-publication-bundle/v1';
+export const K6_API_SOURCE_PUBLICATION_MANIFEST_SCHEMA_VERSION =
+  'k6-api-source-publication-manifest/v1';
+export const K6_API_SOURCE_PROVENANCE_SCHEMA_VERSION = 'k6-api-source-provenance/v1';
+export const K6_API_SOURCE_PUBLICATION_RECEIPT_SCHEMA_VERSION =
+  'k6-api-source-publication-receipt/v1';
+export const K6_API_SOURCE_PUBLICATION_EVIDENCE_SCHEMA_VERSION =
+  'k6-api-source-publication-evidence/v1';
+export const K6_API_SOURCE_PUBLICATION_BUNDLE_KIND = 'k6-api-source-publication-bundle';
+export const K6_API_SOURCE_PUBLICATION_FORMAT_VERSION = 'canonical-directory/v1';
+export const K6_API_SOURCE_PUBLICATION_STORAGE_KIND =
+  'CONTENT_ADDRESSED_FILESYSTEM';
