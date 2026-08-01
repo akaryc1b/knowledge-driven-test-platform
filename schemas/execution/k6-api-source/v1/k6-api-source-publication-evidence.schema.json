@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-source/v1/k6-api-source-publication-evidence.schema.json",
+  "title": "K6 API Source Publication Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "evidenceId",
+    "bundleId",
+    "bundleDigest",
+    "manifestDigest",
+    "receiptId",
+    "receiptDigest",
+    "sourceArtifactDigest",
+    "validationEvidenceDigest",
+    "p3EvidenceDigest",
+    "decision",
+    "safetyBoundary",
+    "evidenceDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "k6-api-source-publication-evidence/v1"
+    },
+    "evidenceId": {
+      "type": "string",
+      "pattern": "^k6source-publication-[a-f0-9]{20}$"
+    },
+    "bundleId": {
+      "type": "string",
+      "pattern": "^k6source-bundle-[a-f0-9]{20}$"
+    },
+    "bundleDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "manifestDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "receiptId": {
+      "type": "string",
+      "pattern": "^k6source-receipt-[a-f0-9]{20}$"
+    },
+    "receiptDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceArtifactDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "validationEvidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "p3EvidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceBundleContractReady",
+        "sourceBundleCreated",
+        "sourceManifestCreated",
+        "sourceProvenanceBound",
+        "sourcePersisted",
+        "artifactPublished",
+        "remoteArtifactPublished",
+        "sourceExecuted",
+        "executionRuntimeStarted",
+        "nextRequiredSlice",
+        "repositoryBlockers"
+      ],
+      "properties": {
+        "sourceBundleContractReady": {
+          "const": true
+        },
+        "sourceBundleCreated": {
+          "const": true
+        },
+        "sourceManifestCreated": {
+          "const": true
+        },
+        "sourceProvenanceBound": {
+          "const": true
+        },
+        "sourcePersisted": {
+          "const": true
+        },
+        "artifactPublished": {
+          "const": true
+        },
+        "remoteArtifactPublished": {
+          "const": false
+        },
+        "sourceExecuted": {
+          "const": false
+        },
+        "executionRuntimeStarted": {
+          "const": false
+        },
+        "nextRequiredSlice": {
+          "const": "M3-R2-P5"
+        },
+        "repositoryBlockers": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    },
+    "safetyBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactStorageAccessed",
+        "artifactStorageDirectoryCreated",
+        "sourcePersisted",
+        "artifactPublished",
+        "remoteArtifactPublished",
+        "sourceExecuted",
+        "executionRuntimeStarted",
+        "k6Invoked",
+        "xk6Invoked",
+        "playwrightInvoked",
+        "externalProcessExecuted",
+        "nodeVmUsed",
+        "evalUsed",
+        "dynamicImportUsed",
+        "targetNetworkAccessed",
+        "databaseAccessed",
+        "secretAccessed",
+        "filesystemCredentialAccessed",
+        "temporaryExecutionDirectoryCreated",
+        "containerStarted",
+        "kubernetesResourceCreated",
+        "workerAdded",
+        "queueAdded",
+        "schedulerAdded",
+        "runtimeResultCollected",
+        "allureImplemented"
+      ],
+      "properties": {
+        "artifactStorageAccessed": {
+          "const": true
+        },
+        "artifactStorageDirectoryCreated": {
+          "const": true
+        },
+        "sourcePersisted": {
+          "const": true
+        },
+        "artifactPublished": {
+          "const": true
+        },
+        "remoteArtifactPublished": {
+          "const": false
+        },
+        "sourceExecuted": {
+          "const": false
+        },
+        "executionRuntimeStarted": {
+          "const": false
+        },
+        "k6Invoked": {
+          "const": false
+        },
+        "xk6Invoked": {
+          "const": false
+        },
+        "playwrightInvoked": {
+          "const": false
+        },
+        "externalProcessExecuted": {
+          "const": false
+        },
+        "nodeVmUsed": {
+          "const": false
+        },
+        "evalUsed": {
+          "const": false
+        },
+        "dynamicImportUsed": {
+          "const": false
+        },
+        "targetNetworkAccessed": {
+          "const": false
+        },
+        "databaseAccessed": {
+          "const": false
+        },
+        "secretAccessed": {
+          "const": false
+        },
+        "filesystemCredentialAccessed": {
+          "const": false
+        },
+        "temporaryExecutionDirectoryCreated": {
+          "const": false
+        },
+        "containerStarted": {
+          "const": false
+        },
+        "kubernetesResourceCreated": {
+          "const": false
+        },
+        "workerAdded": {
+          "const": false
+        },
+        "queueAdded": {
+          "const": false
+        },
+        "schedulerAdded": {
+          "const": false
+        },
+        "runtimeResultCollected": {
+          "const": false
+        },
+        "allureImplemented": {
+          "const": false
+        }
+      }
+    },
+    "evidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
