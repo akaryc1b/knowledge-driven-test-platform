@@ -2,7 +2,7 @@
 
 P4 adds a deterministic content-addressed Source bundle, fixed manifest, complete provenance, local governed filesystem Publisher, immutable publication receipt and digest-bound publication Evidence.
 
-The Publisher persists exactly the accepted P3 Source chain, uses staging plus atomic rename, verifies idempotent existing content and rejects path, symlink, layout, payload, receipt and provenance drift. Public records contain no host path or credential material.
+The Publisher persists only a P3 Source chain matching the independent accepted-P3 trust anchor, uses staging plus atomic rename, verifies idempotent existing content and rejects path, symlink, layout, payload, receipt and provenance drift. Public records contain no host path or credential material.
 
 ```text
 sourceBundleContractReady=true
