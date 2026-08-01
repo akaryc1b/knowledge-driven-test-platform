@@ -202,6 +202,7 @@ function validateWiring({ packageJson, sources }) {
     "export * from './source-bundle-publisher.js'",
     'createK6ApiSourcePublicationBundle',
     'validateK6ApiSourcePublicationBundleIntegrity',
+    'M3_R2_P3_TRUST_ANCHOR_MISMATCH',
     'publishK6ApiSourceBundle',
     'verifyPublishedK6ApiSourceBundle',
     'createK6ApiSourcePublicationEvidence',
@@ -244,6 +245,10 @@ function validatePublicationBoundary(sources) {
     assertP4(!sources.publisher.includes(forbidden),
       `M3-R2 P4 Publisher contains ${forbidden}`);
   }
+  assertP4(sources.publicationBundle.includes('validationExactFields(acceptedP3')
+      && sources.publicationBundle.includes('M3_R2_P3_TRUST_ANCHOR_MISMATCH')
+      && sources.publisher.includes('validateK6ApiSourcePublicationBundleIntegrity(bundle, acceptedP3)'),
+  'M3-R2 P4 accepted P3 trust-anchor controls changed');
   assertP4(sources.publisher.includes("remote: false")
       && sources.publisher.includes('isAbsolute(rootDirectory)')
       && sources.publisher.includes('!stat.isSymbolicLink()')
