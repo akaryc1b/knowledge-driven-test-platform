@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "m3-r2-source-generation-p3-evidence/v1",
+  "generatedAt": "2026-08-01T08:25:12.249Z",
+  "source": {
+    "branch": "agent/m3-r2-governed-k6-api-source-generation",
+    "commitSha": "d8f900bd7f3555335c0b603ce6b61d9c44824889"
+  },
+  "acceptedP2": {
+    "headSha": "b4bb9ed7833869edf9762adc7e7ab13971cc87c9",
+    "runId": 30622919099,
+    "artifactId": 8790138196,
+    "artifactDigest": "sha256:c88e3db7caa07c2af0122413a8a2c4869231b3e4c0086d110d5ea508cecbf8f8",
+    "evidenceDigest": "62a00ec823e33880aa358aa16080b2aabe08b91e7d935a2bf351bb3c7d1a9a00",
+    "sourceDigest": "ffe417669eb4f242b9ab9d5df968fab80c90aacc52c45b7d11c3fe3e258c88d9",
+    "sourceResultDigest": "e2eb4e1b2761cbacdbe78a9f4eaed1613accda117ad195d1d623bbfc9c535287"
+  },
+  "sourceArtifact": {
+    "artifactId": "k6source-artifact-ffe417669eb4f242b9ab",
+    "artifactDigest": "56d121390b08aee343c3ad49fd63d5d36c9d067a56ccbebba66fa65115588d13",
+    "sourceIdentity": "d2d75729802aa6a21d3f2deec9ba85bf31e35358e94b643004326067a0450f73",
+    "sourceDigest": "ffe417669eb4f242b9ab9d5df968fab80c90aacc52c45b7d11c3fe3e258c88d9",
+    "sourceByteLength": 5895,
+    "sourceLineCount": 144,
+    "persistence": "IN_MEMORY_ONLY",
+    "published": false,
+    "validationReportDigest": "def7e6e4d85e0dfb0fe219b82805bf65b65fa2b98463989555c3703703492cf4"
+  },
+  "validationEvidence": {
+    "evidenceId": "k6source-validation-56d121390b08aee343c3",
+    "evidenceDigest": "a7324d928ca56c48428d67cb8329adc532c65f461f98dbbc61969341030f70bd",
+    "validatorId": "k6-api-independent-static-validator",
+    "validatorVersion": "1.0.0",
+    "checkCount": 12,
+    "artifactDigest": "56d121390b08aee343c3ad49fd63d5d36c9d067a56ccbebba66fa65115588d13"
+  },
+  "decision": {
+    "independentStaticValidatorReady": true,
+    "sourceArtifactContractReady": true,
+    "sourceGenerated": true,
+    "sourceStaticallyValidated": true,
+    "sourceArtifactCreated": true,
+    "sourcePersisted": false,
+    "artifactPublished": false,
+    "sourceExecuted": false,
+    "executionRuntimeStarted": false,
+    "nextRequiredSlice": "M3-R2-P4",
+    "repositoryBlockers": []
+  },
+  "safetyBoundary": {
+    "sourcePersisted": false,
+    "artifactPublished": false,
+    "sourceExecuted": false,
+    "executionRuntimeStarted": false,
+    "k6Invoked": false,
+    "xk6Invoked": false,
+    "playwrightInvoked": false,
+    "externalProcessExecuted": false,
+    "nodeVmUsed": false,
+    "evalUsed": false,
+    "dynamicImportUsed": false,
+    "targetNetworkAccessed": false,
+    "databaseAccessed": false,
+    "secretAccessed": false,
+    "filesystemCredentialAccessed": false,
+    "temporaryExecutionDirectoryCreated": false,
+    "containerStarted": false,
+    "kubernetesResourceCreated": false,
+    "workerAdded": false,
+    "queueAdded": false,
+    "schedulerAdded": false,
+    "runtimeResultCollected": false,
+    "allureImplemented": false
+  },
+  "evidenceDigest": "b013a5a14ad88a4b3fa97f1574dfe3006d0047776b95b7770a8c88a1aeb7e490"
+}
