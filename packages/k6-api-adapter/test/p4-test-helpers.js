@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
 const acceptedArtifactBundlePath = new URL(
-  '../../../evidence/m3-r2/m3-r2-source-generation-p3-accepted-artifact-bundle.json',
+  '../../../evidence/m3-r2/m3-r2-source-generation-p3-accepted-artifact-receipt.json',
   import.meta.url,
 );
 const acceptedEvidencePath = new URL(
