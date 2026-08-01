@@ -6,6 +6,7 @@ on:
       - '.github/workflows/m3-r2-p3-source-artifact-validation.yml'
       - 'packages/k6-api-adapter/**'
       - 'schemas/execution/k6-api-source/**'
+      - 'evidence/m3-r2/**'
       - 'examples/k6-api-source-*.js'
       - 'scripts/m3-r2-p3-*.js'
       - 'scripts/validate-m3-r2-source-generation-p*.js'
@@ -22,6 +23,7 @@ on:
       - '.github/workflows/m3-r2-p3-source-artifact-validation.yml'
       - 'packages/k6-api-adapter/**'
       - 'schemas/execution/k6-api-source/**'
+      - 'evidence/m3-r2/**'
       - 'examples/k6-api-source-*.js'
       - 'scripts/m3-r2-p3-*.js'
       - 'scripts/validate-m3-r2-source-generation-p*.js'
@@ -121,6 +123,7 @@ jobs:
             /tmp/m3-r2-p3-source-artifact.json
             /tmp/m3-r2-p3-validation-evidence.json
             /tmp/m3-r2-p3-generated-source.js
+            evidence/m3-r2/m3-r2-source-generation-p2-accepted-evidence.json
             packages/k6-api-adapter/src/constants.js
             packages/k6-api-adapter/src/errors.js
             packages/k6-api-adapter/src/source-validation-shared.js
