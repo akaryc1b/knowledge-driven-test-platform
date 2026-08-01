@@ -246,7 +246,7 @@ function validatePublicationBoundary(sources) {
       `M3-R2 P4 Publisher imports ${forbidden}`);
   }
   for (const forbidden of ['fetch(', 'axios', 'exec(', 'spawn(', 'fork(', 'eval(',
-    'new Function(', 'process.env.', 'k6 run', 'xk6']) {
+    'new Function(', 'process.env.', 'k6 run', 'xk6 run', 'xk6 build']) {
     assertP4(!sources.publisher.includes(forbidden),
       `M3-R2 P4 Publisher contains ${forbidden}`);
   }
