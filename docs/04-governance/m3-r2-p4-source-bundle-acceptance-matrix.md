@@ -2,7 +2,7 @@
 
 | Control | Required evidence |
 | --- | --- |
-| Accepted predecessor | Fixed P3 Evidence raw SHA-256, Artifact receipt Git blob SHA and canonical object digests |
+| Accepted predecessor | Fixed P3 Evidence raw SHA-256, Artifact receipt Git blob SHA, canonical object digests and an independently supplied accepted-P3 trust anchor |
 | Deterministic bundle | Same accepted P3 inputs produce identical bundle and manifest digests |
 | Fixed layout | Five payload files and exactly eight stored files |
 | Provenance | Source, Source Result, P2, P3, validation, compiler, generator and input bundle digests bound |
