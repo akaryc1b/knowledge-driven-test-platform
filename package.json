@@ -35,7 +35,7 @@
     "example:service": "node examples/read-only-service-operational.js",
     "example:deployment": "node examples/read-only-deployment-acceptance.js",
     "example:release": "node examples/read-only-release-candidate.js",
-    "example:m2-release": "node examples/read-only-release-candidate.js",
+    "example:m2-release": "node examples/m2-release-candidate.js",
     "example:m2-post-merge": "node examples/m2-post-merge-acceptance.js",
     "example:m2-production-promotion": "node examples/m2-production-promotion.js",
     "example:execution-contracts": "node examples/execution-contracts.js",
