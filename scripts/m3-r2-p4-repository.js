@@ -196,7 +196,12 @@ function validateWiring({ packageJson, sources }) {
       && validateScript.endsWith('validate-m2-final-release-closure.js'),
   'Repository validation order must preserve P1, P2, P3, P4 and M2 final closure');
 
-  const implementation = [sources.index, sources.publicationBundle, sources.publisher].join('\n');
+  const implementation = [
+    sources.constants,
+    sources.index,
+    sources.publicationBundle,
+    sources.publisher,
+  ].join('\n');
   for (const marker of [
     "export * from './source-publication-bundle.js'",
     "export * from './source-bundle-publisher.js'",
