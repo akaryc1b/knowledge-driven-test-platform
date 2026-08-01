@@ -50,3 +50,16 @@ export class K6ApiSourceValidationError extends Error {
 export function sourceValidationInvariant(condition, code, message, details = {}) {
   if (!condition) throw new K6ApiSourceValidationError(code, message, details);
 }
+
+export class K6ApiSourcePublicationError extends Error {
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = 'K6ApiSourcePublicationError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+export function sourcePublicationInvariant(condition, code, message, details = {}) {
+  if (!condition) throw new K6ApiSourcePublicationError(code, message, details);
+}
