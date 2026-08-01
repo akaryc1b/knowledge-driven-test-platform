@@ -8,7 +8,7 @@ Accepted for M3-R2-P4.
 
 Persist the accepted P3 Source chain as a canonical directory bundle addressed by its SHA-256 bundle digest. Use a fixed payload layout, a digest-bound manifest, complete provenance, a server-owned filesystem Publisher, exclusive staging writes and atomic rename. Emit a receipt containing only a logical URI.
 
-The Publisher revalidates the bundle from its embedded P3 Evidence, Source Artifact and validation Evidence before any write. A bundle that merely recomputes its own manifest and bundle digests after replacing trusted metadata is rejected.
+The Publisher revalidates the bundle from its embedded P3 Evidence, Source Artifact and validation Evidence against an independently supplied accepted-P3 digest anchor before any write. A bundle that merely recomputes its own manifest and bundle digests after replacing trusted metadata is rejected.
 
 Local publication is represented explicitly:
 
