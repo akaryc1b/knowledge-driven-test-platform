@@ -11,8 +11,12 @@ export const ACCEPTED_P2 = Object.freeze({
   sourceResultDigest: 'e2eb4e1b2761cbacdbe78a9f4eaed1613accda117ad195d1d623bbfc9c535287',
 });
 
-export const ACCEPTED_P2_GENERATED_AT = '2026-07-31T10:15:44.787Z';
+export const ACCEPTED_P2_GENERATED_AT = '2026-07-31T10:15:48.232Z';
 export const ACCEPTED_P2_BRANCH = 'agent/m3-r2-governed-k6-api-source-generation';
+export const ACCEPTED_P2_RECEIPT_PATH =
+  'evidence/m3-r2/m3-r2-source-generation-p2-accepted-evidence.json';
+export const ACCEPTED_P2_RECEIPT_FILE_DIGEST =
+  '652342a6fd4634b82458aa892ae3039939137c8a6493e7b41c1fa17b45d949f1';
 
 export const P3_SAFETY_BOUNDARY = Object.freeze({
   sourcePersisted: false,
@@ -60,6 +64,7 @@ export const P3_PATHS = Object.freeze({
     'schemas/execution/k6-api-source/v1/k6-api-source-validation-evidence.schema.json',
   p3EvidenceSchema:
     'schemas/execution/k6-api-source/v1/m3-r2-source-generation-p3-evidence.schema.json',
+  acceptedP2Receipt: ACCEPTED_P2_RECEIPT_PATH,
   example: 'examples/k6-api-source-artifact.js',
   baseline: 'scripts/m3-r2-p3-baseline.js',
   repository: 'scripts/m3-r2-p3-repository.js',
