@@ -16,7 +16,8 @@ export async function deterministicK6ApiSourceBundlePublication(options = {}) {
   const bundle = createK6ApiSourcePublicationBundle(bindings);
   const rootDirectory = options.rootDirectory ?? process.env.M3_R2_P4_STORE_ROOT
     ?? await mkdtemp(join(tmpdir(), 'kdtp-m3-r2-p4-example-'));
-  const publishedAt = options.publishedAt ?? '2026-08-01T09:00:00.000Z';
+  const publishedAt = options.publishedAt ?? process.env.M3_R2_P4_PUBLISHED_AT
+    ?? '2026-08-01T09:00:00.000Z';
   const receipt = await publishK6ApiSourceBundle(bundle, { rootDirectory, publishedAt });
   const publicationEvidence = createK6ApiSourcePublicationEvidence({ bundle, receipt });
   return { bundle, receipt, publicationEvidence };
