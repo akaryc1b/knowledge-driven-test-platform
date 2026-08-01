@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-source/v1/k6-api-source-publication-receipt.schema.json",
+  "title": "K6 API Source Publication Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "receiptId",
+    "bundleId",
+    "bundleDigest",
+    "manifestDigest",
+    "sourceArtifactDigest",
+    "validationEvidenceDigest",
+    "p3EvidenceDigest",
+    "storage",
+    "publishedAt",
+    "receiptDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "k6-api-source-publication-receipt/v1"
+    },
+    "receiptId": {
+      "type": "string",
+      "pattern": "^k6source-receipt-[a-f0-9]{20}$"
+    },
+    "bundleId": {
+      "type": "string",
+      "pattern": "^k6source-bundle-[a-f0-9]{20}$"
+    },
+    "bundleDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "manifestDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceArtifactDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "validationEvidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "p3EvidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "logicalUri",
+        "contentAddressed",
+        "immutable",
+        "remote",
+        "payloadFileCount",
+        "storedFileCount",
+        "totalPayloadByteLength"
+      ],
+      "properties": {
+        "kind": {
+          "const": "CONTENT_ADDRESSED_FILESYSTEM"
+        },
+        "logicalUri": {
+          "type": "string",
+          "pattern": "^kdtp-source-bundle://sha256/[a-f0-9]{64}$"
+        },
+        "contentAddressed": {
+          "const": true
+        },
+        "immutable": {
+          "const": true
+        },
+        "remote": {
+          "const": false
+        },
+        "payloadFileCount": {
+          "const": 5
+        },
+        "storedFileCount": {
+          "const": 8
+        },
+        "totalPayloadByteLength": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 100000000
+        }
+      }
+    },
+    "publishedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "receiptDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
