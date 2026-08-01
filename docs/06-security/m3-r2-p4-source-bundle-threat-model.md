@@ -14,7 +14,7 @@
 - **Symlink escape:** root, target and every stored entry reject symbolic links.
 - **Partial publication:** private staging directory, exclusive file creation, cleanup on failure and atomic rename.
 - **Existing content substitution:** every file, layout and receipt is reverified byte-for-byte.
-- **Self-rehashed forged bundle:** Publisher reconstructs and validates the embedded accepted P3 chain.
+- **Self-rehashed forged bundle:** Publisher reconstructs the embedded P3 chain and requires it to match an independent accepted-P3 digest anchor.
 - **Host path disclosure:** receipt carries only `kdtp-source-bundle://sha256/<digest>`.
 - **Remote exfiltration:** Publisher imports no network client and remote publication is fixed false.
 - **Execution escalation:** no VM/eval/import/external process/k6 path exists.
