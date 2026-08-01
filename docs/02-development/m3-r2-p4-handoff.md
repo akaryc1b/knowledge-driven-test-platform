@@ -6,7 +6,7 @@ P4 is based on the permanently accepted P3 Head `d8f900bd7f3555335c0b603ce6b61d9
 
 ## Delivered boundary
 
-P4 creates a deterministic five-payload Source publication bundle, fixed manifest and complete P3 provenance, then publishes exactly eight files into a server-owned content-addressed filesystem directory using staging plus atomic rename. The receipt exposes only `kdtp-source-bundle://sha256/<bundleDigest>` and never exposes the host path.
+P4 requires an independent accepted-P3 digest anchor, creates a deterministic five-payload Source publication bundle, fixed manifest and complete P3 provenance, then publishes exactly eight files into a server-owned content-addressed filesystem directory using staging plus atomic rename. The receipt exposes only `kdtp-source-bundle://sha256/<bundleDigest>` and never exposes the host path.
 
 ```text
 sourceBundleContractReady=true
