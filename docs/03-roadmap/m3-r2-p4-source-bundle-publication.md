@@ -18,7 +18,7 @@ The bundle payload is fixed to:
 
 ## Publisher contract
 
-The Publisher accepts only a self-validating bundle whose embedded P3 metadata reconstructs the exact trusted chain. It requires a server-owned absolute root, rejects symbolic links and traversal, writes into a private staging directory with exclusive file creation, then uses atomic rename. Existing content must verify byte-for-byte or publication fails closed.
+The Publisher accepts only a self-validating bundle whose embedded P3 metadata reconstructs the exact trusted chain and matches an independently supplied accepted-P3 digest anchor. It requires a server-owned absolute root, rejects symbolic links and traversal, writes into a private staging directory with exclusive file creation, then uses atomic rename. Existing content must verify byte-for-byte or publication fails closed.
 
 The public receipt contains a logical content-addressed URI only. Local filesystem persistence is the only product publication supported in P4; remote publication remains false.
 
