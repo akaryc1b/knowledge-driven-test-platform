@@ -16,6 +16,12 @@ export async function p4AcceptedBindings() {
     sourceArtifact: artifactBundle.sourceArtifact,
     validationEvidence: artifactBundle.validationEvidence,
     p3Evidence,
+    acceptedP3: {
+      evidenceDigest: p3Evidence.evidenceDigest,
+      sourceArtifactDigest: artifactBundle.sourceArtifact.artifactDigest,
+      validationEvidenceDigest: artifactBundle.validationEvidence.evidenceDigest,
+      sourceDigest: artifactBundle.sourceArtifact.sourceDigest,
+    },
   };
 }
 
