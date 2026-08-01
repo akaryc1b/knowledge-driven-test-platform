@@ -34,6 +34,9 @@ const PROVENANCE_FIELDS = Object.freeze([
   'renderingPolicyDigest', 'generatorDescriptorDigest', 'specDigest',
   'compilationEvidenceDigest', 'inputArtifactBundleDigest',
 ]);
+const ACCEPTED_P3_FIELDS = Object.freeze([
+  'evidenceDigest', 'sourceArtifactDigest', 'validationEvidenceDigest', 'sourceDigest',
+]);
 const P3_EVIDENCE_FIELDS = Object.freeze([
   'schemaVersion', 'generatedAt', 'source', 'acceptedP2', 'sourceArtifact',
   'validationEvidence', 'decision', 'safetyBoundary', 'evidenceDigest',
@@ -76,8 +79,9 @@ export function createK6ApiSourcePublicationBundle({
   sourceArtifact,
   validationEvidence,
   p3Evidence,
+  acceptedP3,
 }) {
-  validateAcceptedP3Bindings({ sourceArtifact, validationEvidence, p3Evidence });
+  validateAcceptedP3Bindings({ sourceArtifact, validationEvidence, p3Evidence, acceptedP3 });
   const provenance = createProvenance({ sourceArtifact, validationEvidence, p3Evidence });
   const contents = new Map([
     ['metadata/p3-evidence.json', canonicalJsonFile(p3Evidence)],
@@ -138,7 +142,7 @@ export function validateK6ApiSourcePublicationBundle(bundle, bindings) {
   return expected;
 }
 
-export function validateK6ApiSourcePublicationBundleIntegrity(bundle) {
+export function validateK6ApiSourcePublicationBundleIntegrity(bundle, acceptedP3) {
   validateBundleIntegrity(bundle);
   const files = new Map(bundle.files.map((file) => [file.path, file.content]));
   let bindings;
@@ -147,6 +151,7 @@ export function validateK6ApiSourcePublicationBundleIntegrity(bundle) {
       p3Evidence: JSON.parse(files.get('metadata/p3-evidence.json')),
       sourceArtifact: JSON.parse(files.get('metadata/source-artifact.json')),
       validationEvidence: JSON.parse(files.get('metadata/source-validation-evidence.json')),
+      acceptedP3,
     };
   } catch {
     sourcePublicationInvariant(false,
@@ -199,7 +204,11 @@ function createProvenance({ sourceArtifact, validationEvidence, p3Evidence }) {
   };
 }
 
-function validateAcceptedP3Bindings({ sourceArtifact, validationEvidence, p3Evidence }) {
+function validateAcceptedP3Bindings({ sourceArtifact, validationEvidence, p3Evidence, acceptedP3 }) {
+  validationExactFields(acceptedP3, ACCEPTED_P3_FIELDS,
+    'INVALID_M3_R2_P3_TRUST_ANCHOR', 'M3-R2 P3 trust anchor');
+  sourcePublicationInvariant(Object.values(acceptedP3).every((value) => DIGEST.test(value)),
+    'INVALID_M3_R2_P3_TRUST_ANCHOR', 'M3-R2 P3 trust anchor digests are invalid');
   validationExactFields(p3Evidence, P3_EVIDENCE_FIELDS,
     'INVALID_M3_R2_P3_EVIDENCE', 'M3-R2 P3 Evidence');
   validationExactFields(p3Evidence.decision, P3_DECISION_FIELDS,
@@ -258,6 +267,12 @@ function validateAcceptedP3Bindings({ sourceArtifact, validationEvidence, p3Evid
       && p3Evidence.validationEvidence?.artifactDigest === sourceArtifact.artifactDigest,
   'M3_R2_P3_ARTIFACT_BINDING_MISMATCH',
   'M3-R2 P3 Evidence does not bind the exact Artifact and validation Evidence');
+  sourcePublicationInvariant(acceptedP3.evidenceDigest === p3Evidence.evidenceDigest
+      && acceptedP3.sourceArtifactDigest === sourceArtifact.artifactDigest
+      && acceptedP3.validationEvidenceDigest === validationEvidence.evidenceDigest
+      && acceptedP3.sourceDigest === sourceArtifact.sourceDigest,
+  'M3_R2_P3_TRUST_ANCHOR_MISMATCH',
+  'M3-R2 P3 objects do not match the independent accepted trust anchor');
 }
 
 function validateBundleIntegrity(bundle) {
