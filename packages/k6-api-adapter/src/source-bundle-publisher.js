@@ -84,8 +84,12 @@ export const K6_API_SOURCE_PUBLICATION_SAFETY_BOUNDARY = Object.freeze({
   allureImplemented: false,
 });
 
-export async function publishK6ApiSourceBundle(bundle, { rootDirectory, publishedAt }) {
-  validateBundleForPublication(bundle);
+export async function publishK6ApiSourceBundle(bundle, {
+  rootDirectory,
+  publishedAt,
+  acceptedP3,
+}) {
+  validateBundleForPublication(bundle, acceptedP3);
   validatePublishedAt(publishedAt);
   const root = await prepareRoot(rootDirectory);
   const target = join(root, bundle.bundleDigest);
@@ -93,7 +97,7 @@ export async function publishK6ApiSourceBundle(bundle, { rootDirectory, publishe
   if (existing) {
     sourcePublicationInvariant(existing.isDirectory() && !existing.isSymbolicLink(),
       'K6_API_SOURCE_PUBLICATION_TARGET_UNSAFE', 'Existing publication target is unsafe');
-    return verifyPublishedK6ApiSourceBundle(bundle, { rootDirectory: root });
+    return verifyPublishedK6ApiSourceBundle(bundle, { rootDirectory: root, acceptedP3 });
   }
   const staging = join(root, `.staging-${bundle.bundleDigest}`);
   sourcePublicationInvariant(!(await statIfPresent(staging)),
@@ -113,11 +117,14 @@ export async function publishK6ApiSourceBundle(bundle, { rootDirectory, publishe
     await rm(staging, { recursive: true, force: true });
     throw error;
   }
-  return verifyPublishedK6ApiSourceBundle(bundle, { rootDirectory: root });
+  return verifyPublishedK6ApiSourceBundle(bundle, { rootDirectory: root, acceptedP3 });
 }
 
-export async function verifyPublishedK6ApiSourceBundle(bundle, { rootDirectory }) {
-  validateBundleForPublication(bundle);
+export async function verifyPublishedK6ApiSourceBundle(bundle, {
+  rootDirectory,
+  acceptedP3,
+}) {
+  validateBundleForPublication(bundle, acceptedP3);
   const root = await prepareRoot(rootDirectory);
   const target = safeChild(root, bundle.bundleDigest);
   const targetStat = await statIfPresent(target);
@@ -139,14 +146,14 @@ export async function verifyPublishedK6ApiSourceBundle(bundle, { rootDirectory }
     'Published Source bundle contains missing, extra or unsafe files',
     { expectedFiles, actualFiles });
   const receipt = JSON.parse(await readUtf8File(safeChild(target, 'receipt.json')));
-  validateK6ApiSourcePublicationReceipt(receipt, bundle);
+  validateK6ApiSourcePublicationReceipt(receipt, bundle, { acceptedP3 });
   return receipt;
 }
 
-export function validateK6ApiSourcePublicationReceipt(receipt, bundle) {
+export function validateK6ApiSourcePublicationReceipt(receipt, bundle, { acceptedP3 } = {}) {
   validationExactFields(receipt, RECEIPT_FIELDS,
     'INVALID_K6_API_SOURCE_PUBLICATION_RECEIPT', 'Source publication receipt');
-  validateBundleForPublication(bundle);
+  validateBundleForPublication(bundle, acceptedP3);
   validationExactFields(receipt.storage, STORAGE_FIELDS,
     'INVALID_K6_API_SOURCE_PUBLICATION_RECEIPT', 'Source publication storage receipt');
   const { receiptDigest, ...withoutDigest } = receipt;
@@ -173,8 +180,9 @@ export function validateK6ApiSourcePublicationReceipt(receipt, bundle) {
   return validationDeepFreeze(cloneExecutionJson(receipt));
 }
 
-export function createK6ApiSourcePublicationEvidence({ bundle, receipt }) {
-  const acceptedReceipt = validateK6ApiSourcePublicationReceipt(receipt, bundle);
+export function createK6ApiSourcePublicationEvidence({ bundle, receipt, acceptedP3 }) {
+  const acceptedReceipt = validateK6ApiSourcePublicationReceipt(
+    receipt, bundle, { acceptedP3 });
   const evidenceWithoutDigest = {
     schemaVersion: K6_API_SOURCE_PUBLICATION_EVIDENCE_SCHEMA_VERSION,
     evidenceId: `k6source-publication-${bundle.bundleDigest.slice(0, 20)}`,
@@ -195,10 +203,14 @@ export function createK6ApiSourcePublicationEvidence({ bundle, receipt }) {
   }));
 }
 
-export function validateK6ApiSourcePublicationEvidence(evidence, bindings) {
+export function validateK6ApiSourcePublicationEvidence(evidence, {
+  bundle,
+  receipt,
+  acceptedP3,
+}) {
   validationExactFields(evidence, EVIDENCE_FIELDS,
     'INVALID_K6_API_SOURCE_PUBLICATION_EVIDENCE', 'Source publication evidence');
-  const expected = createK6ApiSourcePublicationEvidence(bindings);
+  const expected = createK6ApiSourcePublicationEvidence({ bundle, receipt, acceptedP3 });
   sourcePublicationInvariant(canonicalStringify(evidence) === canonicalStringify(expected),
     'K6_API_SOURCE_PUBLICATION_EVIDENCE_MISMATCH',
     'Source publication evidence does not match the immutable publication receipt');
@@ -244,8 +256,8 @@ function createReceipt(bundle, publishedAt) {
   return validationDeepFreeze({ ...withoutDigest, receiptDigest: sha256(withoutDigest) });
 }
 
-function validateBundleForPublication(bundle) {
-  const accepted = validateK6ApiSourcePublicationBundleIntegrity(bundle);
+function validateBundleForPublication(bundle, acceptedP3) {
+  const accepted = validateK6ApiSourcePublicationBundleIntegrity(bundle, acceptedP3);
   sourcePublicationInvariant(DIGEST.test(accepted.bundleDigest)
       && computeK6ApiSourcePublicationBundleDigest(accepted) === accepted.bundleDigest
       && computeK6ApiSourcePublicationManifestDigest(accepted.manifest)
