@@ -71,7 +71,13 @@ export async function loadAcceptedP3Bindings() {
         === validationEvidence.evidenceDigest,
   'Accepted M3-R2 P3 validation Evidence changed');
 
-  const bindings = { sourceArtifact, validationEvidence, p3Evidence };
+  const acceptedP3 = {
+    evidenceDigest: ACCEPTED_P3.evidenceDigest,
+    sourceArtifactDigest: ACCEPTED_P3.sourceArtifactDigest,
+    validationEvidenceDigest: ACCEPTED_P3.validationEvidenceDigest,
+    sourceDigest: ACCEPTED_P3.sourceDigest,
+  };
+  const bindings = { sourceArtifact, validationEvidence, p3Evidence, acceptedP3 };
   validateK6ApiSourcePublicationBundle(
     createK6ApiSourcePublicationBundle(bindings), bindings);
   return bindings;
@@ -106,17 +112,31 @@ export async function validateM3R2SourceGenerationP4(options = {}) {
     const receipt = options.receipt ?? await publishK6ApiSourceBundle(bundle, {
       rootDirectory,
       publishedAt,
+      acceptedP3: bindings.acceptedP3,
     });
-    validateK6ApiSourcePublicationReceipt(receipt, bundle);
-    const verifiedReceipt = await verifyPublishedK6ApiSourceBundle(bundle, { rootDirectory });
+    validateK6ApiSourcePublicationReceipt(receipt, bundle, {
+      acceptedP3: bindings.acceptedP3,
+    });
+    const verifiedReceipt = await verifyPublishedK6ApiSourceBundle(bundle, {
+      rootDirectory,
+      acceptedP3: bindings.acceptedP3,
+    });
     assertP4(verifiedReceipt.receiptDigest === receipt.receiptDigest,
       'M3-R2 P4 persisted receipt changed after publication');
     assertP4(computeK6ApiSourcePublicationReceiptDigest(receipt) === receipt.receiptDigest,
       'M3-R2 P4 publication Receipt digest cannot be independently recomputed');
 
     const publicationEvidence = options.publicationEvidence
-      ?? createK6ApiSourcePublicationEvidence({ bundle, receipt });
-    validateK6ApiSourcePublicationEvidence(publicationEvidence, { bundle, receipt });
+      ?? createK6ApiSourcePublicationEvidence({
+        bundle,
+        receipt,
+        acceptedP3: bindings.acceptedP3,
+      });
+    validateK6ApiSourcePublicationEvidence(publicationEvidence, {
+      bundle,
+      receipt,
+      acceptedP3: bindings.acceptedP3,
+    });
     assertP4(computeK6ApiSourcePublicationEvidenceDigest(publicationEvidence)
         === publicationEvidence.evidenceDigest,
     'M3-R2 P4 publication Evidence digest cannot be independently recomputed');
