@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "k6-api-source-p5-schema-catalog/v1",
+  "schemas": [
+    {
+      "schemaVersion": "m3-r2-source-generation-p5-evidence/v1",
+      "path": "schemas/execution/k6-api-source/v1/m3-r2-source-generation-p5-evidence.schema.json"
+    }
+  ]
+}
