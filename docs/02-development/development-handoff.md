@@ -1,80 +1,78 @@
-# M3-R2 Governed k6 API Source Generation 开发交接
+# M3-R2 Governed k6 API Source Generation — G1 交接
 
-## 精确重新基线化
+## 已接受前任基线
 
 ```text
 main@ab93321738222c087e6f3c90fd39e092116cf3c8
-pr44Merged=true
-pr44MergeSha=ab93321738222c087e6f3c90fd39e092116cf3c8
-pr45ClosedDraftUnmerged=true
-openPullRequests=0
-existingM3R2Branches=0
+acceptedP5Head=33c90625b9c689387272eef58c14a0742ed7b17f
+acceptedP5Run=30801984826
+acceptedP5Artifact=8851181456
+acceptedP5ArtifactDigest=sha256:9cb02722b682952da573f1f6754692589107ee985da14ccbcf441c96fe28b1c2
+acceptedP5PostgresArtifact=8851168200
+acceptedP5PostgresArtifactDigest=sha256:624d8b2a8af36ae73ad7c958b6d47b03bf9baf40f2fdb639beb866073b6b3bf1
 ```
 
-M3-R1 exact-main Dedicated Run 为 `30600867230`，Artifact 为 `8781826637`，digest 为 `sha256:689773070e76bcd3cc29e815c9ed27249bd856b0f09a93a0e6a6d6ecee7a1bae`。Artifact 未过期且绑定 exact main。
+P5 已独立接受确定性、完整绑定、完整重哈希伪造拒绝、注入抵抗、敏感材料边界、非执行、兼容性、持久化故障与并发。固定 Source、Bundle、Manifest、Receipt 和 Publication Evidence 身份保持不变。
 
-## 历史验收兼容锚点
+## G1 最终范围审计
 
-M2-RC1 已正式关闭。M3-R0 已完成 Contract-only Foundation，并且其历史入口约束“不得启动执行器实现”继续作为永久 anti-regression 哨兵保留。该历史表述不表示当前回退到 M3-R0；当前正式下一切片仍为 M3-R2-P1。
+G1 不增加产品能力，只完成最终基线、范围完整性、永久门禁和 PR 证据一致性审计。审计确认：
 
-## 合并后 Review 重新评估
+- 变更仍限定在 `@kdtp/k6-api-adapter` 的 Source Contract、Renderer、独立静态 Validator、本地内容寻址 Bundle Publisher、Schema、测试、Evidence、只读 Workflow 与治理文档；
+- 未增加 Runtime Consumer、远程 Publisher、执行 API、Worker、Queue、Scheduler、Kubernetes 执行资源、Runtime Result 或 Allure；
+- `main` 仍为接受的 M3-R1 Merge SHA，PR 分支 behind 为 0；
+- 根级 `npm run validate` 必须永久包含 P5 Validator，避免常规 Repository Validator 在 P4 后停止；
+- PR 和永久评论中的 P5 Artifact 摘要必须使用 GitHub API、上传日志和下载 ZIP 一致的 `sha256:9cb02722...b1c2`，不得使用错误的 `b04261ad...ff9b`；
+- P5 ZIP 中两个仅大小写不同的文档条目均真实存在。权威复核必须直接读取 ZIP entry 并校验摘要，不得把大小写不敏感文件系统上的普通解压结果当作唯一证据。
 
-PR #44 在合并后收到三个有效 P2 Review。R0 已将其作为前置 blocker 关闭：
-
-- named JavaScript function declaration 不再绕过 executable-material gate；
-- Compilation Evidence digest 绑定 `decision` 与 `safetyBoundary`；
-- `K6ApiAssertion` 使用 closed discriminated union。
-
-这些修改只加固 M3-R1 合同，不生成 Source，不启动 Runtime。
-
-## R0 已接受边界
-
-R0 已完成：
+## 当前安全边界
 
 ```text
-sourceGenerationScopeFrozen=true
-runtimeBoundaryDefined=true
-threatModelAccepted=true
-sourceGenerationStarted=false
-sourceGenerated=false
-sourceExecuted=false
-executionRuntimeStarted=false
-nextRequiredSlice=M3-R2-P1
-```
-
-上述 `nextRequiredSlice=M3-R2-P1` 是 R0 永久证据，不应被改写。
-
-## M3-R2-P1 当前完成状态
-
-P1 只增加 versioned Source Generation Contract 与 Schema：
-
-- `K6ApiSourceRenderingPolicy`：固定 UTF-8、LF、双空格缩进、引号、尾换行、排序和 identity exclusion；
-- `K6ApiSourceGeneratorDescriptor`：固定 `CONTRACT_ONLY` 状态、`k6`/`k6/http` allow-list、资源上限和 configuration digest；
-- `K6ApiSourceGenerationRequest`：只绑定已验证的 M3-R1 Spec、Bundle 与 Compilation Evidence；
-- P1 Validator、示例、测试、Schema Catalog 与只读永久 Workflow。
-
-P1 不包含 renderer，不包含 source bytes，不包含 source artifact，也不实现任何 Runtime。请求元数据不会进入未来 Source identity；Spec、Bundle、Compilation Evidence、Generator Configuration、Source Format 与 Rendering Policy digest 必须进入 identity。
-
-```text
+sourceGenerationAcceptanceComplete=true
 sourceGenerationContractReady=true
-sourceGenerationScopeFrozen=true
-runtimeBoundaryDefined=true
-sourceGenerationStarted=false
-sourceGenerated=false
+deterministicSourceRendererReady=true
+independentStaticValidatorReady=true
+sourceArtifactContractReady=true
+sourceBundleContractReady=true
+sourceGenerated=true
+sourceStaticallyValidated=true
+sourceArtifactCreated=true
+sourcePersisted=true
+artifactPublished=true
+remoteArtifactPublished=false
 sourceExecuted=false
 executionRuntimeStarted=false
 k6Invoked=false
+xk6Invoked=false
+playwrightInvoked=false
 externalProcessExecuted=false
+nodeVmUsed=false
+evalUsed=false
+dynamicImportUsed=false
 targetNetworkAccessed=false
+databaseAccessed=false
 secretAccessed=false
-nextRequiredSlice=M3-R2-P2
+filesystemCredentialAccessed=false
+temporaryExecutionDirectoryCreated=false
+containerStarted=false
+kubernetesResourceCreated=false
+workerAdded=false
+queueAdded=false
+schedulerAdded=false
+runtimeResultCollected=false
+allureImplemented=false
 repositoryBlockers=[]
 ```
 
-`nextRequiredSlice=M3-R2-P2` 只表示顺序，不授权本交接启动 P2。
+## 下一阶段控制
 
-## 冻结边界
+G1 只有在最终 correction Head 的完整 exact-Head CI、Artifact 与永久 PR 评论完成后才正式接受。接受后：
 
-不得调用 k6、xk6、Playwright、外部进程、Shell、Node VM、`eval`、`Function` 或 dynamic import；不得访问目标网络、数据库、Secret、凭据文件或生产环境；不得创建执行目录、容器、Kubernetes 资源、Worker、Queue、Scheduler、Runtime Result 或 Allure。
+```text
+nextRequiredSlice=M3-R2-G2
+readyMarked=false
+merged=false
+m3R3Started=false
+```
 
-P1 Draft PR 不构成 Ready 或 merge 授权。后续合并必须获得绑定 PR 编号和精确 40 位 Head SHA 的独立明确授权，并且只能使用普通 Merge Commit。
+G2 不得自动启动。任何 Ready 或 merge 动作仍需新的独立用户消息，同时绑定 PR #46 与当时精确 40 字符 Head SHA。最终仅允许普通 Merge Commit；禁止 squash、rebase、auto-merge、force-push 与历史重写。
