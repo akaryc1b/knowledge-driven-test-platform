@@ -17,7 +17,8 @@
 - [Monorepo 结构](02-development/repository-structure.md)
 - [开发规范](02-development/development-standards.md)
 - [测试策略](02-development/testing-strategy.md)
-- [当前开发交接](02-development/development-handoff.md)
+- [历史 M3-R0 入口交接（永久兼容锚点）](02-development/development-handoff.md)
+- [当前 M3-R2-G1 交接](02-development/m3-r2-g1-handoff.md)
 
 ## 路线图
 
