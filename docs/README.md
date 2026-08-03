@@ -19,6 +19,7 @@
 - [测试策略](02-development/testing-strategy.md)
 - [历史 M3-R0 入口交接（永久兼容锚点）](02-development/development-handoff.md)
 - [当前 M3-R2-G1 交接](02-development/m3-r2-g1-handoff.md)
+- [M3-R2-G4 P5 exact-main push correction](02-development/m3-r2-g4-p5-main-push-correction.md)
 
 ## 路线图
 
@@ -41,12 +42,12 @@
 - [M2-C Deterministic Planner and Coverage](03-roadmap/m2-c-deterministic-planner.md)
 - [M2-D Durable Test Plan Registry](03-roadmap/m2-d-durable-test-plan-registry.md)
 - [M2-E Plan Governance and Review](03-roadmap/m2-e-plan-governance.md)
-- [M2-F Durable Planning Orchestration](03-roadmap/m2-f-planning-orchestration.md)
-- [M2-G Read-Only Plan Query API](03-roadmap/m2-g-read-only-plan-query-api.md)
-- [M2-H Planning Service Composition and Operations](03-roadmap/m2-h-planning-service-composition.md)
-- [M2-I M2 Release Acceptance](03-roadmap/m2-i-release-acceptance.md)
-- [M2-RC1 Post-Merge Acceptance Closure](03-roadmap/m2-rc1-post-merge-acceptance.md)
-- [M2-RC1 Release Readiness](03-roadmap/m2-rc1-production-promotion.md)
+- [M2-F Durable Planning Orchestration](03-roadmap/m2-f-durable-planning-orchestration.md)
+- [M2-G Read-Only Plan Query API](03-roadmap/m2-g-read-only-test-plan-queries.md)
+- [M2-H Unified Read-Only Planning Service](03-roadmap/m2-h-unified-read-only-planning-service.md)
+- [M2-I Release Acceptance and Stack Consolidation](03-roadmap/m2-i-release-acceptance.md)
+- [M2-RC1 Post-Merge Acceptance](03-roadmap/m2-rc1-post-merge-acceptance.md)
+- [M2-RC1 Production Promotion](03-roadmap/m2-rc1-production-promotion.md)
 - [M3-R0 Execution Adapter Foundation](03-roadmap/m3-r0-execution-adapter-foundation.md)
 - [M3-R1 Deterministic Non-Executing k6 API Spec Compiler](03-roadmap/m3-r1-k6-api-spec-compiler.md)
 - [M3-R2 Governed Deterministic k6 API Source Generation](03-roadmap/m3-r2-governed-k6-api-source-generation.md)
