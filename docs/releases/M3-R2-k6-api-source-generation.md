@@ -4,6 +4,17 @@
 
 R0 and P1–P5 are implemented and independently accepted. G1 performs the final pre-merge baseline, full-scope, permanent validation and Evidence consistency audit. The PR remains Draft, open and unmerged.
 
+## Historical R0 scope-freeze record
+
+The following block is immutable historical R0 evidence. It records the state before P1–P5 and remains present for anti-regression; it is not a claim that the accepted P2–P5 implementation never generated Source.
+
+```text
+sourceGenerationStarted=false
+sourceExecuted=false
+executionRuntimeStarted=false
+k6Invoked=false
+```
+
 ## Delivered capability
 
 - exact M3-R1 baseline and predecessor Review closure;
