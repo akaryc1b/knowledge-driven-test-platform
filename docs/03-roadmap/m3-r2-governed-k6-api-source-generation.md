@@ -64,11 +64,11 @@ p5EvidenceDigest=2f78fdb321174e93959880d4a8cfcea4e8c215558f3103163d31260ad1dff4e
 G1 adds no product capability. It verifies and closes:
 
 1. exact main, merge base, ahead/behind, PR state, Reviews and competing-work status;
-2. the complete 133-file P1–P5 diff inventory and absence of Runtime, Worker, Queue, Scheduler or remote publication implementation;
+2. the complete P1–P5 diff inventory and absence of Runtime, Worker, Queue, Scheduler or remote publication implementation;
 3. permanent CI and Artifact binding to the exact accepted P5 Head;
 4. the authoritative P5 Artifact digest. GitHub API, upload logs and the downloaded ZIP all identify `sha256:9cb02722b682952da573f1f6754692589107ee985da14ccbcf441c96fe28b1c2`; the previously written `b04261ad...ff9b` value is invalid and must not be reused;
 5. default Repository Validator continuity. Root `npm run validate` must execute P5 after P4 and before M2 final closure;
-6. top-level handoff, roadmap and release documents must describe the accepted R0/P1–P5 state instead of the obsolete P1-only state;
+6. the top-level `development-handoff.md` remains the immutable M2 Final Closure/M3-R0 entry-gate anchor, while the current G1 status is appended in `docs/02-development/m3-r2-g1-handoff.md`, this roadmap, the Release document and PR evidence;
 7. Artifact portability. The P5 ZIP contains both case-distinct documentation entries. Verification must operate on ZIP entries and their digests; an extraction on a case-insensitive filesystem is not an authoritative representation.
 
 ## Permanent safety boundary
