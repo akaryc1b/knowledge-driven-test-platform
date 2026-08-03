@@ -33,17 +33,55 @@
 
 ## M3 — k6 Execution Adapters
 
-M3-R0 Contract Foundation 已完成精确 main 验收。当前切片为 `M3-R1 — Deterministic Non-Executing k6 API Spec Compiler`。
+M3-R0 Contract Foundation 与 M3-R1 Deterministic Non-Executing k6 API Spec Compiler 已完成精确 main 验收。M3-R2 的历史切片记录为：
 
-- Adapter、Request、Failure、Result 与 Evidence 合同；
-- API 自动化；
-- 接口性能；
-- Browser；
-- WebSocket；
-- xk6 扩展绑定；
-- 统一报告和证据。
+- R0：Source Generation Boundary、Threat Model 与前任 Review 闭环；
+- P1：Versioned Source Generation Contracts and Schemas；
+- P2：确定性、纯内存、未执行的 k6 JavaScript Source Renderer；
+- P3：独立静态 Source Validator 与不可变 Source Artifact；
+- P4：本地内容寻址 Source Bundle、Manifest、Provenance、Receipt 与 Publication Evidence；
+- P5：确定性、绑定、注入、敏感材料、非执行、兼容性、故障与并发最终验收。
 
-M3-R1 只生成中立、不可执行的结构化 IR，不调用 k6，不生成可运行 JavaScript，不导入外部进程，不访问目标环境，不创建 Worker/Queue/Scheduler。受控 source generation 或 runtime boundary 只能在 M3-R2 独立评审。
+以下 P1/P2 决策块作为阶段历史记录保留：
+
+```text
+sourceGenerationContractReady=true
+sourceGenerationStarted=false
+sourceGenerated=false
+sourceExecuted=false
+executionRuntimeStarted=false
+nextRequiredSlice=M3-R2-P2
+```
+
+```text
+deterministicSourceRendererReady=true
+sourceGenerationStarted=true
+sourceGenerated=true
+sourceExecuted=false
+executionRuntimeStarted=false
+k6Invoked=false
+nextRequiredSlice=M3-R2-P3
+```
+
+当前 G1 只执行最终基线、完整范围、默认 Repository Validator、永久 Artifact 与 PR 元数据一致性审计，不增加产品能力。历史顶层 `development-handoff.md` 继续作为 M2 Final Closure/M3-R0 入口锚点，当前交接追加在 `docs/02-development/m3-r2-g1-handoff.md`。
+
+M3-R2 允许生成、静态验证并发布到受治理的本地内容寻址文件系统 Store，但仍明确禁止 k6/xk6/Playwright 执行、Runtime Consumer、远程 Publisher、目标网络、Secret、Worker、Queue、Scheduler、Kubernetes 执行资源、Runtime Result 与 Allure。
+
+```text
+sourceGenerationAcceptanceComplete=true
+sourcePersisted=true
+artifactPublished=true
+remoteArtifactPublished=false
+sourceExecuted=false
+executionRuntimeStarted=false
+repositoryBlockers=[]
+nextRequiredSlice=M3-R2-G2
+readyMarked=false
+merged=false
+m3R3Started=false
+```
+
+G2 不得自动启动。Ready、普通 Merge Commit 与后续 exact-main 验证必须继续按独立授权和独立安全阶段推进。M3-R3 Runtime 保持冻结。
 
 ## M4 — Multi-Project Operations
 

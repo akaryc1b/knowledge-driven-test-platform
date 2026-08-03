@@ -19,6 +19,32 @@ import { assertK6ApiCompilationSafe } from './safety.js';
 import { validateCompilerBindings, compareCapability, exactFields } from './validation.js';
 import { normalizeIntent, createRequestGroups } from './mapping.js';
 
+const ACCEPTED_COMPILER_DECISION = Object.freeze({
+  apiAdapterCompilerReady: true,
+  executionRuntimeStarted: false,
+  k6Invoked: false,
+  externalProcessExecuted: false,
+  nextRequiredSlice: 'M3-R2',
+  repositoryBlockers: Object.freeze([]),
+});
+const ACCEPTED_COMPILER_SAFETY_BOUNDARY = Object.freeze({
+  k6Invoked: false,
+  xk6Invoked: false,
+  playwrightInvoked: false,
+  externalProcessExecuted: false,
+  networkEndpointAccessed: false,
+  secretAccessed: false,
+  filesystemCredentialAccessed: false,
+  runnableJavaScriptGenerated: false,
+  temporaryExecutionDirectoryCreated: false,
+  containerStarted: false,
+  kubernetesResourceCreated: false,
+  workerAdded: false,
+  queueAdded: false,
+  schedulerAdded: false,
+  runtimeResultCollected: false,
+});
+
 export function compileK6ApiExecutionSpec(input) {
   compilerInvariant(input && typeof input === 'object' && !Array.isArray(input),
     'INVALID_K6_API_COMPILER_INPUT', 'Compiler input must be an object');
@@ -136,39 +162,43 @@ export function compileK6ApiExecutionSpec(input) {
     sourceIntentIds: operations.map(({ sourceIntentId }) => sourceIntentId).sort(),
   };
   const evidenceId = `k6evidence-${sha256(evidenceIdentity).slice(0, 20)}`;
-  const evidence = {
+  const evidenceWithoutDigest = {
     ...evidenceIdentity,
     evidenceId,
     metadata: { compiledAt, compiledBy },
     decision: {
-      apiAdapterCompilerReady: true,
-      executionRuntimeStarted: false,
-      k6Invoked: false,
-      externalProcessExecuted: false,
-      nextRequiredSlice: 'M3-R2',
+      ...ACCEPTED_COMPILER_DECISION,
       repositoryBlockers: [],
     },
-    safetyBoundary: {
-      k6Invoked: false,
-      xk6Invoked: false,
-      playwrightInvoked: false,
-      externalProcessExecuted: false,
-      networkEndpointAccessed: false,
-      secretAccessed: false,
-      filesystemCredentialAccessed: false,
-      runnableJavaScriptGenerated: false,
-      temporaryExecutionDirectoryCreated: false,
-      containerStarted: false,
-      kubernetesResourceCreated: false,
-      workerAdded: false,
-      queueAdded: false,
-      schedulerAdded: false,
-      runtimeResultCollected: false,
-    },
-    evidenceDigest: sha256({ evidenceId, ...evidenceIdentity }),
+    safetyBoundary: { ...ACCEPTED_COMPILER_SAFETY_BOUNDARY },
+  };
+  const evidence = {
+    ...evidenceWithoutDigest,
+    evidenceDigest: computeK6ApiCompilationEvidenceDigest(evidenceWithoutDigest),
   };
   assertK6ApiCompilationSafe({ spec, bundle, evidence }, '$.compilerOutput');
   return cloneExecutionJson({ spec, bundle, evidence });
+}
+
+export function computeK6ApiCompilationEvidenceDigest(evidence) {
+  compilerInvariant(evidence && typeof evidence === 'object' && !Array.isArray(evidence),
+    'INVALID_K6_API_COMPILATION_EVIDENCE', 'Compilation evidence must be an object');
+  const {
+    metadata: _metadata,
+    evidenceDigest: _evidenceDigest,
+    decision,
+    safetyBoundary,
+    ...acceptedIdentity
+  } = evidence;
+  const claimsAreAccepted = canonicalStringify({ decision, safetyBoundary })
+    === canonicalStringify({
+      decision: ACCEPTED_COMPILER_DECISION,
+      safetyBoundary: ACCEPTED_COMPILER_SAFETY_BOUNDARY,
+    });
+  if (claimsAreAccepted) {
+    return sha256(acceptedIdentity);
+  }
+  return sha256({ ...acceptedIdentity, decision, safetyBoundary });
 }
 
 export function canonicalStringifyK6ApiCompilation(value) {

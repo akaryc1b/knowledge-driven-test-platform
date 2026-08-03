@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-source/v1/k6-api-source-publication-bundle.schema.json",
+  "title": "K6 API Source Publication Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "bundleId",
+    "bundleKind",
+    "formatVersion",
+    "immutable",
+    "contentAddressed",
+    "sourceArtifactDigest",
+    "validationEvidenceDigest",
+    "p3EvidenceDigest",
+    "provenance",
+    "manifest",
+    "files",
+    "bundleDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "k6-api-source-publication-bundle/v1"
+    },
+    "bundleId": {
+      "type": "string",
+      "pattern": "^k6source-bundle-[a-f0-9]{20}$"
+    },
+    "bundleKind": {
+      "const": "k6-api-source-publication-bundle"
+    },
+    "formatVersion": {
+      "const": "canonical-directory/v1"
+    },
+    "immutable": {
+      "const": true
+    },
+    "contentAddressed": {
+      "const": true
+    },
+    "sourceArtifactDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "validationEvidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "p3EvidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceIdentity",
+        "sourceDigest",
+        "sourceResultDigest",
+        "sourceArtifactDigest",
+        "validationReportDigest",
+        "validationEvidenceDigest",
+        "p2EvidenceDigest",
+        "p3EvidenceDigest",
+        "generationRequestDigest",
+        "renderingPolicyDigest",
+        "generatorDescriptorDigest",
+        "specDigest",
+        "compilationEvidenceDigest",
+        "inputArtifactBundleDigest",
+        "schemaVersion"
+      ],
+      "properties": {
+        "sourceIdentity": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sourceDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sourceResultDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sourceArtifactDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "validationReportDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "validationEvidenceDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "p2EvidenceDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "p3EvidenceDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "generationRequestDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "renderingPolicyDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "generatorDescriptorDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "specDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "compilationEvidenceDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "inputArtifactBundleDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "schemaVersion": {
+          "const": "k6-api-source-provenance/v1"
+        }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "formatVersion",
+        "entries",
+        "fileCount",
+        "totalByteLength",
+        "manifestDigest"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "k6-api-source-publication-manifest/v1"
+        },
+        "formatVersion": {
+          "const": "canonical-directory/v1"
+        },
+        "entries": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "mediaType", "encoding", "digest", "byteLength"],
+              "properties": {
+                "path": { "const": "metadata/p3-evidence.json" },
+                "mediaType": { "const": "application/json" },
+                "encoding": { "const": "UTF-8" },
+                "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "byteLength": { "type": "integer", "minimum": 1, "maximum": 20000000 }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "mediaType", "encoding", "digest", "byteLength"],
+              "properties": {
+                "path": { "const": "metadata/provenance.json" },
+                "mediaType": { "const": "application/json" },
+                "encoding": { "const": "UTF-8" },
+                "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "byteLength": { "type": "integer", "minimum": 1, "maximum": 20000000 }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "mediaType", "encoding", "digest", "byteLength"],
+              "properties": {
+                "path": { "const": "metadata/source-artifact.json" },
+                "mediaType": { "const": "application/json" },
+                "encoding": { "const": "UTF-8" },
+                "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "byteLength": { "type": "integer", "minimum": 1, "maximum": 20000000 }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "mediaType", "encoding", "digest", "byteLength"],
+              "properties": {
+                "path": { "const": "metadata/source-validation-evidence.json" },
+                "mediaType": { "const": "application/json" },
+                "encoding": { "const": "UTF-8" },
+                "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "byteLength": { "type": "integer", "minimum": 1, "maximum": 20000000 }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "mediaType", "encoding", "digest", "byteLength"],
+              "properties": {
+                "path": { "const": "source/main.js" },
+                "mediaType": { "const": "application/javascript" },
+                "encoding": { "const": "UTF-8" },
+                "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+                "byteLength": { "type": "integer", "minimum": 1, "maximum": 20000000 }
+              }
+            }
+          ],
+          "items": false,
+          "minItems": 5,
+          "maxItems": 5
+        },
+        "fileCount": { "const": 5 },
+        "totalByteLength": { "type": "integer", "minimum": 5, "maximum": 100000000 },
+        "manifestDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "files": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "content"],
+          "properties": {
+            "path": { "const": "metadata/p3-evidence.json" },
+            "content": { "type": "string", "minLength": 1, "maxLength": 20000000 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "content"],
+          "properties": {
+            "path": { "const": "metadata/provenance.json" },
+            "content": { "type": "string", "minLength": 1, "maxLength": 20000000 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "content"],
+          "properties": {
+            "path": { "const": "metadata/source-artifact.json" },
+            "content": { "type": "string", "minLength": 1, "maxLength": 20000000 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "content"],
+          "properties": {
+            "path": { "const": "metadata/source-validation-evidence.json" },
+            "content": { "type": "string", "minLength": 1, "maxLength": 20000000 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "content"],
+          "properties": {
+            "path": { "const": "source/main.js" },
+            "content": { "type": "string", "minLength": 1, "maxLength": 20000000 }
+          }
+        }
+      ],
+      "items": false,
+      "minItems": 5,
+      "maxItems": 5
+    },
+    "bundleDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

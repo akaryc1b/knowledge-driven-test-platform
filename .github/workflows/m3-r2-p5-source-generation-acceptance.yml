@@ -1,0 +1,270 @@
+name: m3-r2-p5-source-generation-acceptance
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r2-p5-source-generation-acceptance.yml'
+      - 'evidence/m3-r2/m3-r2-source-generation-p4-accepted-*'
+      - 'packages/k6-api-adapter/**'
+      - 'schemas/execution/k6-api-source/**'
+      - 'scripts/m3-r2-p5-*.js'
+      - 'scripts/validate-m3-r2-source-generation-p5.js'
+      - 'docs/02-development/m3-r2-p5-handoff.md'
+      - 'docs/03-roadmap/m3-r2-p5-source-generation-acceptance.md'
+      - 'docs/04-governance/m3-r2-p5-source-generation-acceptance-matrix.md'
+      - 'docs/06-security/m3-r2-p5-source-generation-threat-model.md'
+      - 'docs/releases/M3-R2-P5-source-generation-acceptance.md'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# nextRequiredSlice=M3-R2-G1; this workflow does not start G1.
+
+env:
+  P5_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  postgresql-18:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: knowledge_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d knowledge_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    outputs:
+      total: ${{ steps.counts.outputs.total }}
+      passed: ${{ steps.counts.outputs.passed }}
+      failed: ${{ steps.counts.outputs.failed }}
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Install PostgreSQL client dependency without changing the lockfile
+        run: npm install --no-save --package-lock=false --ignore-scripts pg@8.22.0
+      - name: Run PostgreSQL 18 compatibility tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/knowledge_test
+          KDTP_POSTGRES_TEST_URL: postgresql://postgres:postgres@127.0.0.1:5432/knowledge_test
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run test:postgres 2>&1 | tee /tmp/m3-r2-p5-postgresql.tap
+      - name: Record PostgreSQL test counts
+        id: counts
+        shell: bash
+        run: |
+          set -euo pipefail
+          total="$(awk '/^# tests /{value=$3} END{print value+0}' /tmp/m3-r2-p5-postgresql.tap)"
+          passed="$(awk '/^# pass /{value=$3} END{print value+0}' /tmp/m3-r2-p5-postgresql.tap)"
+          failed="$(awk '/^# fail /{value=$3} END{print value+0}' /tmp/m3-r2-p5-postgresql.tap)"
+          test "$total" -gt 0
+          test "$passed" -eq "$total"
+          test "$failed" -eq 0
+          printf 'total=%s\npassed=%s\nfailed=%s\n' "$total" "$passed" "$failed" >> "$GITHUB_OUTPUT"
+      - name: Scan PostgreSQL upload candidate for credential-shaped material
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import { scanSensitiveValues } from './packages/k6-api-adapter/test/p5-test-helpers.js';
+          scanSensitiveValues(await readFile('/tmp/m3-r2-p5-postgresql.tap', 'utf8'),
+            'PostgreSQL acceptance log');
+          console.log('credential-shaped scan: zero matches across PostgreSQL Artifact');
+          NODE
+      - name: Upload PostgreSQL 18 acceptance Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r2-source-generation-p5-postgres-log
+          path: /tmp/m3-r2-p5-postgresql.tap
+          if-no-files-found: error
+          retention-days: 90
+
+  validate-acceptance:
+    needs: postgresql-18
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Run focused P5 acceptance tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test packages/k6-api-adapter/test/source-generation-p5-*.test.js 2>&1 \
+            | tee /tmp/m3-r2-p5-focused.tap
+      - name: Run all k6 API Adapter tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test packages/k6-api-adapter/test/*.test.js 2>&1 \
+            | tee /tmp/m3-r2-p5-adapter.tap
+      - name: Run complete Node.js test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm test 2>&1 | tee /tmp/m3-r2-p5-full-node.tap
+      - name: Export exact test counts
+        env:
+          P5_POSTGRES_TOTAL: ${{ needs.postgresql-18.outputs.total }}
+          P5_POSTGRES_PASSED: ${{ needs.postgresql-18.outputs.passed }}
+          P5_POSTGRES_FAILED: ${{ needs.postgresql-18.outputs.failed }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          parse_tap() {
+            local prefix="$1" file="$2"
+            local total passed failed skipped
+            total="$(awk '/^# tests /{value=$3} END{print value+0}' "$file")"
+            passed="$(awk '/^# pass /{value=$3} END{print value+0}' "$file")"
+            failed="$(awk '/^# fail /{value=$3} END{print value+0}' "$file")"
+            skipped="$(awk '/^# skipped /{value=$3} END{print value+0}' "$file")"
+            test "$total" -gt 0
+            test "$failed" -eq 0
+            printf '%s_TOTAL=%s\n%s_PASSED=%s\n%s_FAILED=%s\n%s_SKIPPED=%s\n' \
+              "$prefix" "$total" "$prefix" "$passed" "$prefix" "$failed" \
+              "$prefix" "$skipped" >> "$GITHUB_ENV"
+          }
+          parse_tap P5_FOCUSED /tmp/m3-r2-p5-focused.tap
+          parse_tap P5_ADAPTER /tmp/m3-r2-p5-adapter.tap
+          parse_tap P5_FULL /tmp/m3-r2-p5-full-node.tap
+          printf 'P5_POSTGRES_TOTAL=%s\nP5_POSTGRES_PASSED=%s\nP5_POSTGRES_FAILED=%s\n' \
+            "$P5_POSTGRES_TOTAL" "$P5_POSTGRES_PASSED" "$P5_POSTGRES_FAILED" >> "$GITHUB_ENV"
+          printf 'P5_REPOSITORY_VALIDATOR=success\n' >> "$GITHUB_ENV"
+      - name: Run complete Repository Validator
+        run: npm run validate
+      - name: Re-run P1 through P5 repository validators explicitly
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run validate:m3-r2-source-generation-p1
+          npm run validate:m3-r2-source-generation-p2
+          npm run validate:m3-r2-source-generation-p3
+          npm run validate:m3-r2-source-generation-p4
+          node scripts/validate-m3-r2-source-generation-p5.js
+      - name: Run M3-R1, M3-R0 and M2 anti-regression validators
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run validate:m3-r1-k6-api-spec-compiler
+          npm run validate:m3-r0-execution-contracts
+          npm run validate:m2-final-release-closure
+          npm run validate:m2-portable-release-readiness
+          npm run validate:m2-r2a-external-evidence-intake
+      - name: Generate exact-Head P5 Evidence and Artifact payload
+        env:
+          P5_BRANCH: ${{ github.head_ref || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$P5_EXACT_HEAD" = "${{ github.event.pull_request.head.sha || github.sha }}"
+          mkdir -p /tmp/m3-r2-p5-artifact/logs /tmp/m3-r2-p5-artifact/evidence \
+            /tmp/m3-r2-p5-artifact/schemas /tmp/m3-r2-p5-artifact/docs
+          GITHUB_HEAD_REF="$P5_BRANCH" node scripts/validate-m3-r2-source-generation-p5.js \
+            > /tmp/m3-r2-p5-artifact/evidence/m3-r2-source-generation-p5-evidence.json
+          cp evidence/m3-r2/m3-r2-source-generation-p4-accepted-evidence.json \
+            evidence/m3-r2/m3-r2-source-generation-p4-accepted-artifact-receipt.json \
+            evidence/m3-r2/m3-r2-source-generation-p4-accepted-publication.json.gz.b64.* \
+            /tmp/m3-r2-p5-artifact/evidence/
+          cp schemas/execution/k6-api-source/p5-schema-catalog.json \
+            schemas/execution/k6-api-source/v1/m3-r2-source-generation-p5-evidence.schema.json \
+            /tmp/m3-r2-p5-artifact/schemas/
+          cp docs/02-development/m3-r2-p5-handoff.md \
+            docs/03-roadmap/m3-r2-p5-source-generation-acceptance.md \
+            docs/04-governance/m3-r2-p5-source-generation-acceptance-matrix.md \
+            docs/06-security/m3-r2-p5-source-generation-threat-model.md \
+            docs/releases/M3-R2-P5-source-generation-acceptance.md \
+            /tmp/m3-r2-p5-artifact/docs/
+          cp /tmp/m3-r2-p5-focused.tap /tmp/m3-r2-p5-adapter.tap \
+            /tmp/m3-r2-p5-full-node.tap /tmp/m3-r2-p5-artifact/logs/
+      - name: Scan every upload candidate for credential-shaped material
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readdir, readFile } from 'node:fs/promises';
+          import { join } from 'node:path';
+          import { scanSensitiveValues } from './packages/k6-api-adapter/test/p5-test-helpers.js';
+          async function walk(root) {
+            const files = [];
+            for (const entry of await readdir(root, { withFileTypes: true })) {
+              const path = join(root, entry.name);
+              if (entry.isDirectory()) files.push(...await walk(path));
+              else if (entry.isFile()) files.push(path);
+              else throw new Error(`unsafe Artifact entry: ${path}`);
+            }
+            return files;
+          }
+          const files = await walk('/tmp/m3-r2-p5-artifact');
+          for (const path of files) scanSensitiveValues(await readFile(path, 'utf8'), path);
+          const { loadAcceptedP5Fixture } = await import('./packages/k6-api-adapter/test/p5-test-helpers.js');
+          const fixture = await loadAcceptedP5Fixture();
+          scanSensitiveValues({ publication: fixture.receipt.publication, store: fixture.receipt.store },
+            'expanded accepted P4 publication archive');
+          console.log(`credential-shaped scan: zero matches across ${files.length} files`);
+          NODE
+      - name: Print independently auditable acceptance summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const evidence = JSON.parse(await readFile(
+            '/tmp/m3-r2-p5-artifact/evidence/m3-r2-source-generation-p5-evidence.json', 'utf8'));
+          console.log(`exactHead=${evidence.source.commitSha}`);
+          console.log(`baseMain=${{ github.event.pull_request.base.sha || 'not-pull-request' }}`);
+          console.log(`focused=${evidence.testResults.focused.passed}/${evidence.testResults.focused.total}`);
+          console.log(`allK6ApiAdapter=${evidence.testResults.k6ApiAdapter.passed}/${evidence.testResults.k6ApiAdapter.total}`);
+          console.log(`fullNode=${evidence.testResults.fullNode.total} total, ${evidence.testResults.fullNode.passed} passed, ${evidence.testResults.fullNode.skipped} skipped, ${evidence.testResults.fullNode.failed} failed`);
+          console.log(`postgresql18=${evidence.testResults.postgresql.passed}/${evidence.testResults.postgresql.total}`);
+          console.log(`repositoryValidatorStatus=${evidence.testResults.repositoryValidator.status}`);
+          console.log(`acceptedP4Binding=${evidence.acceptedP4.evidenceDigest}`);
+          console.log(`acceptedP3Binding=${evidence.acceptedP3.evidenceDigest}`);
+          console.log(`bundleDigest=${evidence.acceptedP4.bundleDigest}`);
+          console.log(`manifestDigest=${evidence.acceptedP4.manifestDigest}`);
+          console.log(`sourceDigest=${evidence.sourceResult.sourceDigest}`);
+          console.log(`remoteArtifactPublished=${evidence.safetyBoundary.remoteArtifactPublished}`);
+          console.log(`sourceExecuted=${evidence.safetyBoundary.sourceExecuted}`);
+          console.log(`k6Invoked=${evidence.safetyBoundary.k6Invoked}`);
+          console.log(`xk6Invoked=${evidence.safetyBoundary.xk6Invoked}`);
+          console.log(`externalProcessExecuted=${evidence.safetyBoundary.externalProcessExecuted}`);
+          console.log(`nextRequiredSlice=${evidence.decision.nextRequiredSlice}`);
+          NODE
+      - name: Upload P5 permanent acceptance Artifact
+        id: upload-evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r2-source-generation-p5-evidence
+          path: /tmp/m3-r2-p5-artifact
+          if-no-files-found: error
+          retention-days: 90
+      - name: Print upload-layer digest
+        run: |
+          echo "artifactId=${{ steps.upload-evidence.outputs.artifact-id }}"
+          echo "uploadedZipDigest=${{ steps.upload-evidence.outputs.artifact-digest }}"

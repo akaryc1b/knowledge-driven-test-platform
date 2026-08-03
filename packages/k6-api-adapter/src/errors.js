@@ -10,3 +10,56 @@ export class K6ApiCompilerError extends Error {
 export function compilerInvariant(condition, code, message, details = {}) {
   if (!condition) throw new K6ApiCompilerError(code, message, details);
 }
+
+export class K6ApiSourceContractError extends Error {
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = 'K6ApiSourceContractError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+export function sourceContractInvariant(condition, code, message, details = {}) {
+  if (!condition) throw new K6ApiSourceContractError(code, message, details);
+}
+
+export class K6ApiSourceRendererError extends Error {
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = 'K6ApiSourceRendererError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+export function sourceRendererInvariant(condition, code, message, details = {}) {
+  if (!condition) throw new K6ApiSourceRendererError(code, message, details);
+}
+
+
+export class K6ApiSourceValidationError extends Error {
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = 'K6ApiSourceValidationError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+export function sourceValidationInvariant(condition, code, message, details = {}) {
+  if (!condition) throw new K6ApiSourceValidationError(code, message, details);
+}
+
+export class K6ApiSourcePublicationError extends Error {
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = 'K6ApiSourcePublicationError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+export function sourcePublicationInvariant(condition, code, message, details = {}) {
+  if (!condition) throw new K6ApiSourcePublicationError(code, message, details);
+}

@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "m3-r2-source-generation-p2-evidence/v1",
+  "generatedAt": "2026-07-31T10:15:48.232Z",
+  "source": {
+    "branch": "agent/m3-r2-governed-k6-api-source-generation",
+    "commitSha": "b4bb9ed7833869edf9762adc7e7ab13971cc87c9"
+  },
+  "acceptedFoundation": {
+    "baselineMain": "ab93321738222c087e6f3c90fd39e092116cf3c8",
+    "p1AcceptedHead": "4604cbc7bf85565f7152525379d30c0024336ee9",
+    "r0AcceptedHead": "1a30d103ade7bd9eb954ddb097126c88f60dce9c",
+    "p1RunId": 30610514627,
+    "p1ArtifactId": 8785261888,
+    "r0RunId": 30605067352,
+    "r0ArtifactId": 8783292187
+  },
+  "fixedDigests": {
+    "inputContract": "4b2a767d273ca0e888278eea599f044b5a00ddd4c619ac6bce0a566b9bdad718",
+    "spec": "4601fc2d37a343b94516e451bbd8616baaf569a5a4c685ca679cc4a8266c9079",
+    "bundle": "1b4a5c2dc4d6ce12d63805abc53b2bcd6be1100d12cd7d8a7195797eb5fd41b1",
+    "compilationEvidence": "7c5972c8901198dbe236d27c51fb10510bf7439a486efafcb5a46ca8860ca65e",
+    "schemaCatalog": "80d0f740bc063add8f715355717494520fefee2fb9c14c737d8c1c6edbfed66d"
+  },
+  "sourceResult": {
+    "sourceIdentity": "d2d75729802aa6a21d3f2deec9ba85bf31e35358e94b643004326067a0450f73",
+    "sourceDigest": "ffe417669eb4f242b9ab9d5df968fab80c90aacc52c45b7d11c3fe3e258c88d9",
+    "sourceByteLength": 5895,
+    "sourceLineCount": 144,
+    "operationCount": 3,
+    "assertionCount": 7,
+    "thresholdCount": 3,
+    "renderingPolicyDigest": "4e5a423ac56c80c65bea05fad297dd03a0238b5b0bd6136f150177195b58aa22",
+    "generatorDescriptorDigest": "97a6e5022797323120c0feaf2d317443167a4f545413c6927448becf55c51ad9",
+    "generationRequestDigest": "069306de79dbc697d94ffc9730e8ef3ac128786fcfcb648580239672c3644294",
+    "sourceResultSchemaCatalogDigest": "b674fae637aaa0fb16289e0324e8192b98705e8234ac75fa597f674986b6e591",
+    "resultDigest": "e2eb4e1b2761cbacdbe78a9f4eaed1613accda117ad195d1d623bbfc9c535287"
+  },
+  "decision": {
+    "sourceGenerationContractReady": true,
+    "deterministicSourceRendererReady": true,
+    "sourceGenerationStarted": true,
+    "sourceGenerated": true,
+    "sourceExecuted": false,
+    "executionRuntimeStarted": false,
+    "nextRequiredSlice": "M3-R2-P3",
+    "repositoryBlockers": []
+  },
+  "safetyBoundary": {
+    "k6Invoked": false,
+    "xk6Invoked": false,
+    "playwrightInvoked": false,
+    "externalProcessExecuted": false,
+    "nodeVmUsed": false,
+    "evalUsed": false,
+    "dynamicImportUsed": false,
+    "targetNetworkAccessed": false,
+    "databaseAccessed": false,
+    "secretAccessed": false,
+    "filesystemCredentialAccessed": false,
+    "temporaryExecutionDirectoryCreated": false,
+    "containerStarted": false,
+    "kubernetesResourceCreated": false,
+    "workerAdded": false,
+    "queueAdded": false,
+    "schedulerAdded": false,
+    "runtimeResultCollected": false,
+    "allureImplemented": false
+  },
+  "evidenceDigest": "62a00ec823e33880aa358aa16080b2aabe08b91e7d935a2bf351bb3c7d1a9a00"
+}

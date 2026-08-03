@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "k6-api-source-p4-schema-catalog/v1",
+  "schemas": [
+    {
+      "schemaVersion": "k6-api-source-publication-bundle/v1",
+      "path": "schemas/execution/k6-api-source/v1/k6-api-source-publication-bundle.schema.json"
+    },
+    {
+      "schemaVersion": "k6-api-source-publication-receipt/v1",
+      "path": "schemas/execution/k6-api-source/v1/k6-api-source-publication-receipt.schema.json"
+    },
+    {
+      "schemaVersion": "k6-api-source-publication-evidence/v1",
+      "path": "schemas/execution/k6-api-source/v1/k6-api-source-publication-evidence.schema.json"
+    },
+    {
+      "schemaVersion": "m3-r2-source-generation-p4-evidence/v1",
+      "path": "schemas/execution/k6-api-source/v1/m3-r2-source-generation-p4-evidence.schema.json"
+    }
+  ]
+}

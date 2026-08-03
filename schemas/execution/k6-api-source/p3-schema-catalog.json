@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "k6-api-source-p3-schema-catalog/v1",
+  "schemas": {
+    "sourceArtifact": "v1/k6-api-source-artifact.schema.json",
+    "sourceValidationEvidence": "v1/k6-api-source-validation-evidence.schema.json",
+    "p3Evidence": "v1/m3-r2-source-generation-p3-evidence.schema.json"
+  }
+}

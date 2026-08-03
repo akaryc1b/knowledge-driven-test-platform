@@ -1,0 +1,339 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.kdtp.local/execution/k6-api-source/v1/m3-r2-source-generation-p3-evidence.schema.json",
+  "title": "M3-R2 P3 Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "source",
+    "acceptedP2",
+    "sourceArtifact",
+    "validationEvidence",
+    "decision",
+    "safetyBoundary",
+    "evidenceDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "m3-r2-source-generation-p3-evidence/v1"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "branch",
+        "commitSha"
+      ],
+      "properties": {
+        "branch": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "commitSha": {
+          "anyOf": [
+            {
+              "const": "local"
+            },
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            }
+          ]
+        }
+      }
+    },
+    "acceptedP2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "headSha",
+        "runId",
+        "artifactId",
+        "artifactDigest",
+        "evidenceDigest",
+        "sourceDigest",
+        "sourceResultDigest"
+      ],
+      "properties": {
+        "headSha": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "runId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "artifactId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "artifactDigest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "evidenceDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sourceDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sourceResultDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "sourceArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifactId",
+        "artifactDigest",
+        "sourceIdentity",
+        "sourceDigest",
+        "sourceByteLength",
+        "sourceLineCount",
+        "persistence",
+        "published",
+        "validationReportDigest"
+      ],
+      "properties": {
+        "artifactId": {
+          "type": "string",
+          "pattern": "^k6source-artifact-[a-f0-9]{20}$"
+        },
+        "artifactDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sourceIdentity": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sourceDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "sourceByteLength": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sourceLineCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "persistence": {
+          "const": "IN_MEMORY_ONLY"
+        },
+        "published": {
+          "const": false
+        },
+        "validationReportDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "validationEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidenceId",
+        "evidenceDigest",
+        "validatorId",
+        "validatorVersion",
+        "checkCount",
+        "artifactDigest"
+      ],
+      "properties": {
+        "evidenceId": {
+          "type": "string",
+          "pattern": "^k6source-validation-[a-f0-9]{20}$"
+        },
+        "evidenceDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "validatorId": {
+          "const": "k6-api-independent-static-validator"
+        },
+        "validatorVersion": {
+          "const": "1.0.0"
+        },
+        "checkCount": {
+          "const": 12
+        },
+        "artifactDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "independentStaticValidatorReady",
+        "sourceArtifactContractReady",
+        "sourceGenerated",
+        "sourceStaticallyValidated",
+        "sourceArtifactCreated",
+        "sourcePersisted",
+        "artifactPublished",
+        "sourceExecuted",
+        "executionRuntimeStarted",
+        "nextRequiredSlice",
+        "repositoryBlockers"
+      ],
+      "properties": {
+        "independentStaticValidatorReady": {
+          "const": true
+        },
+        "sourceArtifactContractReady": {
+          "const": true
+        },
+        "sourceGenerated": {
+          "const": true
+        },
+        "sourceStaticallyValidated": {
+          "const": true
+        },
+        "sourceArtifactCreated": {
+          "const": true
+        },
+        "sourcePersisted": {
+          "const": false
+        },
+        "artifactPublished": {
+          "const": false
+        },
+        "sourceExecuted": {
+          "const": false
+        },
+        "executionRuntimeStarted": {
+          "const": false
+        },
+        "nextRequiredSlice": {
+          "const": "M3-R2-P4"
+        },
+        "repositoryBlockers": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    },
+    "safetyBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourcePersisted",
+        "artifactPublished",
+        "sourceExecuted",
+        "executionRuntimeStarted",
+        "k6Invoked",
+        "xk6Invoked",
+        "playwrightInvoked",
+        "externalProcessExecuted",
+        "nodeVmUsed",
+        "evalUsed",
+        "dynamicImportUsed",
+        "targetNetworkAccessed",
+        "databaseAccessed",
+        "secretAccessed",
+        "filesystemCredentialAccessed",
+        "temporaryExecutionDirectoryCreated",
+        "containerStarted",
+        "kubernetesResourceCreated",
+        "workerAdded",
+        "queueAdded",
+        "schedulerAdded",
+        "runtimeResultCollected",
+        "allureImplemented"
+      ],
+      "properties": {
+        "sourcePersisted": {
+          "const": false
+        },
+        "artifactPublished": {
+          "const": false
+        },
+        "sourceExecuted": {
+          "const": false
+        },
+        "executionRuntimeStarted": {
+          "const": false
+        },
+        "k6Invoked": {
+          "const": false
+        },
+        "xk6Invoked": {
+          "const": false
+        },
+        "playwrightInvoked": {
+          "const": false
+        },
+        "externalProcessExecuted": {
+          "const": false
+        },
+        "nodeVmUsed": {
+          "const": false
+        },
+        "evalUsed": {
+          "const": false
+        },
+        "dynamicImportUsed": {
+          "const": false
+        },
+        "targetNetworkAccessed": {
+          "const": false
+        },
+        "databaseAccessed": {
+          "const": false
+        },
+        "secretAccessed": {
+          "const": false
+        },
+        "filesystemCredentialAccessed": {
+          "const": false
+        },
+        "temporaryExecutionDirectoryCreated": {
+          "const": false
+        },
+        "containerStarted": {
+          "const": false
+        },
+        "kubernetesResourceCreated": {
+          "const": false
+        },
+        "workerAdded": {
+          "const": false
+        },
+        "queueAdded": {
+          "const": false
+        },
+        "schedulerAdded": {
+          "const": false
+        },
+        "runtimeResultCollected": {
+          "const": false
+        },
+        "allureImplemented": {
+          "const": false
+        }
+      }
+    },
+    "evidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
