@@ -107,6 +107,7 @@ function validatePackageWiring(files) {
 function validateWorkflow(source) {
   for (const marker of [
     'name: m3-r2-p5-source-generation-acceptance',
+    '\n  push:\n    branches: [main]\n',
     'persist-credentials: false', 'node-version: 22', 'npm ci --ignore-scripts',
     'source-generation-p5-*.test.js', 'packages/k6-api-adapter/test/*.test.js',
     'npm test', 'npm run validate', 'postgres:18',
