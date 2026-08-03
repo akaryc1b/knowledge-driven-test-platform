@@ -43,7 +43,7 @@
 - [M2-D Durable Test Plan Registry](03-roadmap/m2-d-durable-test-plan-registry.md)
 - [M2-E Plan Governance and Review](03-roadmap/m2-e-plan-governance.md)
 - [M2-F Durable Planning Orchestration](03-roadmap/m2-f-planning-orchestration.md)
-- [M2-G Read-Only Plan Query API](03-roadmap/m2-g-read-only-test-plan-query-api.md)
+- [M2-G Read-Only Plan Query API](03-roadmap/m2-g-read-only-plan-query-api.md)
 - [M2-H Planning Service Composition and Operations](03-roadmap/m2-h-planning-service-composition.md)
 - [M2-I M2 Release Acceptance](03-roadmap/m2-i-release-acceptance.md)
 - [M2-RC1 Post-Merge Acceptance Closure](03-roadmap/m2-rc1-post-merge-acceptance.md)
