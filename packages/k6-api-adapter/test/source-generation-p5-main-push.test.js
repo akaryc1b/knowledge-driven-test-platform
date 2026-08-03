@@ -22,6 +22,6 @@ test('P5 permanent acceptance workflow binds natural exact-main push validation'
   };
   assert.throws(
     () => validateP5Repository(tampered),
-    /P5 workflow is missing.*push/u,
+    /P5 workflow is missing[\s\S]*push/u,
   );
 });
