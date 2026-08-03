@@ -4,12 +4,13 @@
 
 R0 and P1–P5 are implemented and independently accepted. G1 performs the final pre-merge baseline, full-scope, permanent validation and Evidence consistency audit. The PR remains Draft, open and unmerged.
 
-## Historical R0 scope-freeze record
+## Historical R0/P1 scope-freeze record
 
-The following block is immutable historical R0 evidence. It records the state before P1–P5 and remains present for anti-regression; it is not a claim that the accepted P2–P5 implementation never generated Source.
+The following block is immutable historical R0/P1 evidence. It records the state before the P2 renderer existed and remains present for anti-regression; it is not a claim that the accepted P2–P5 implementation never generated Source.
 
 ```text
 sourceGenerationStarted=false
+sourceGenerated=false
 sourceExecuted=false
 executionRuntimeStarted=false
 k6Invoked=false
@@ -57,7 +58,7 @@ manifestDigest=fce734d0244118919e1927b17041200228b0010aa667b4d041c9bc4979860c36
 - no Runtime Result collection or Allure;
 - no M3-R3 Runtime.
 
-## Decision
+## Current G1 decision
 
 ```text
 sourceGenerationAcceptanceComplete=true
@@ -66,6 +67,7 @@ artifactPublished=true
 remoteArtifactPublished=false
 sourceExecuted=false
 executionRuntimeStarted=false
+k6Invoked=false
 repositoryBlockers=[]
 nextRequiredSlice=M3-R2-G2
 readyMarked=false
