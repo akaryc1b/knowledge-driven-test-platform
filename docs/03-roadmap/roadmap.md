@@ -33,40 +33,35 @@
 
 ## M3 — k6 Execution Adapters
 
-M3-R0 Contract Foundation 与 M3-R1 Deterministic Non-Executing k6 API Spec Compiler 已完成精确 main 验收。M3-R2-R0 已完成 Source Generation Boundary 与 Threat Model；M3-R2-P1 已完成 Versioned Source Generation Contracts and Schemas。
+M3-R0 Contract Foundation 与 M3-R1 Deterministic Non-Executing k6 API Spec Compiler 已完成精确 main 验收。M3-R2 已按独立安全切片完成：
 
-- Adapter、Request、Failure、Result 与 Evidence 合同；
-- API 自动化；
-- 接口性能；
-- Browser；
-- WebSocket；
-- xk6 扩展绑定；
-- 统一报告和证据。
+- R0：Source Generation 范围冻结、Threat Model 与前任 Review 闭环；
+- P1：Versioned Source Generation Contracts and Schemas；
+- P2：确定性纯内存 k6 JavaScript Source Renderer；
+- P3：独立静态 Source Validator 与不可变 Source Artifact；
+- P4：本地内容寻址 Source Bundle、Manifest、Provenance、Receipt 与 Publication Evidence；
+- P5：确定性、绑定、注入、敏感材料、非执行、兼容性、故障与并发最终验收；
+- G1：最终范围、默认 Repository Validator、永久 Evidence 与 PR 元数据一致性审计。
 
-M3-R2-P1 只增加固定 Canonical Rendering Policy、`CONTRACT_ONLY` Generator Descriptor、digest-bound Source Generation Request、严格 Schema、测试、Validator 与永久 Workflow。P1 不包含 renderer，不生成 JavaScript，不调用 k6，不启动 Runtime，不访问目标环境，不创建 Worker/Queue/Scheduler。
+M3-R2 允许生成、静态验证并发布到受治理的本地内容寻址文件系统 Store，但仍明确禁止：
 
-```text
-sourceGenerationContractReady=true
-sourceGenerationStarted=false
-sourceGenerated=false
-sourceExecuted=false
-executionRuntimeStarted=false
-nextRequiredSlice=M3-R2-P2
-```
-
-M3-R2-P2 增加确定性、纯内存、未执行的 k6 JavaScript Source Renderer、严格 Source Result、静态安全验证和永久证据。P2 只生成规范化 Source 文本，不调用 k6/xk6/Playwright，不启动外部进程，不访问目标网络或 Secret，不收集 Runtime Result。
+- k6、xk6、Playwright 或任意 Source 执行；
+- Runtime Consumer、远程 Registry/Object Storage Publisher 或执行 API；
+- 目标网络、数据库、Secret、凭据文件与生产环境访问；
+- Worker、Queue、Scheduler、容器、Kubernetes 执行资源、Runtime Result 与 Allure。
 
 ```text
-deterministicSourceRendererReady=true
-sourceGenerationStarted=true
-sourceGenerated=true
+sourceGenerationAcceptanceComplete=true
+sourcePersisted=true
+artifactPublished=true
+remoteArtifactPublished=false
 sourceExecuted=false
 executionRuntimeStarted=false
-k6Invoked=false
-nextRequiredSlice=M3-R2-P3
+repositoryBlockers=[]
+nextRequiredSlice=M3-R2-G2
 ```
 
-P3–P5 必须继续按独立安全切片推进，M3-R3 仍保持冻结。
+G2 不得自动启动。Ready、普通 Merge Commit 与后续 exact-main 验证必须继续按独立授权和独立安全阶段推进。M3-R3 Runtime 保持冻结。
 
 ## M4 — Multi-Project Operations
 
