@@ -19,7 +19,7 @@ R0 and P1–P5 are implemented and independently accepted. G1 performs the final
 ## G1 corrections and audit findings
 
 - root `npm run validate` now includes `validate-m3-r2-source-generation-p5.js` after P4 and before M2 final closure;
-- top-level handoff, roadmap and release state no longer stop at P1;
+- `docs/02-development/development-handoff.md` remains the immutable historical M2 Final Closure/M3-R0 entry-gate anchor; current G1 state is appended in `docs/02-development/m3-r2-g1-handoff.md`, the roadmap, this Release document and PR evidence;
 - the authoritative accepted P5 Evidence Artifact digest is `sha256:9cb02722b682952da573f1f6754692589107ee985da14ccbcf441c96fe28b1c2`;
 - the previously recorded `sha256:b04261adc722b35b78aa31b29c352480650eef2feb7f1e1b108c5d601454ff9b` value is rejected as metadata drift;
 - the P5 ZIP contains both case-distinct documentation entries. Direct ZIP-entry digest verification is authoritative; extraction onto a case-insensitive filesystem is not.
