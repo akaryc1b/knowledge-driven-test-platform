@@ -9,6 +9,7 @@ on:
       - 'schemas/execution/k6-api-runtime/**'
       - 'scripts/m3-r3-p1-*.js'
       - 'scripts/validate-m3-r3-p1-local-process-boundary.js'
+      - 'scripts/validate-m3-r3-p1-workflow-evidence.js'
       - 'docs/02-development/m3-r3-p1-local-process-boundary-handoff.md'
       - 'docs/03-roadmap/m3-r3-p1-local-process-boundary.md'
       - 'docs/04-governance/m3-r3-p1-local-process-boundary-acceptance-matrix.md'
@@ -27,6 +28,7 @@ on:
       - 'schemas/execution/k6-api-runtime/**'
       - 'scripts/m3-r3-p1-*.js'
       - 'scripts/validate-m3-r3-p1-local-process-boundary.js'
+      - 'scripts/validate-m3-r3-p1-workflow-evidence.js'
       - 'docs/02-development/m3-r3-p1-local-process-boundary-handoff.md'
       - 'docs/03-roadmap/m3-r3-p1-local-process-boundary.md'
       - 'docs/04-governance/m3-r3-p1-local-process-boundary-acceptance-matrix.md'
@@ -51,7 +53,17 @@ jobs:
       - name: Check out exact repository state
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
           persist-credentials: false
+      - name: Verify exact Head checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_head="$(git rev-parse HEAD)"
+          test "$actual_head" = "$M3_R3_P1_EXACT_HEAD"
+          test -z "$(git status --porcelain)"
+          echo "checkedOutExactHead=$actual_head"
       - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -117,46 +129,79 @@ jobs:
         run: |
           set -euo pipefail
           test "$M3_R3_P1_EXACT_HEAD" = "${{ github.event.pull_request.head.sha || github.sha }}"
+          test "$(git rev-parse HEAD)" = "$M3_R3_P1_EXACT_HEAD"
           mkdir -p /tmp/m3-r3-p1-artifact/evidence \
-            /tmp/m3-r3-p1-artifact/schemas \
-            /tmp/m3-r3-p1-artifact/docs \
             /tmp/m3-r3-p1-artifact/logs
           GITHUB_HEAD_REF="$M3_R3_P1_BRANCH" \
             node scripts/validate-m3-r3-p1-local-process-boundary.js \
             > /tmp/m3-r3-p1-artifact/evidence/m3-r3-p1-local-process-boundary-evidence.json
-          cp schemas/execution/k6-api-runtime/schema-catalog.json \
+          cp --parents schemas/execution/k6-api-runtime/schema-catalog.json \
             schemas/execution/k6-api-runtime/p1-schema-catalog.json \
             schemas/execution/k6-api-runtime/v1/*.schema.json \
-            /tmp/m3-r3-p1-artifact/schemas/
-          cp docs/02-development/m3-r3-p1-local-process-boundary-handoff.md \
+            /tmp/m3-r3-p1-artifact/
+          cp --parents docs/02-development/m3-r3-p1-local-process-boundary-handoff.md \
             docs/03-roadmap/m3-r3-p1-local-process-boundary.md \
             docs/04-governance/m3-r3-p1-local-process-boundary-acceptance-matrix.md \
             docs/05-adr/ADR-0031-injected-local-process-boundary.md \
             docs/06-security/m3-r3-p1-local-process-boundary-threat-model.md \
             docs/releases/M3-R3-P1-local-process-boundary.md \
-            /tmp/m3-r3-p1-artifact/docs/
+            /tmp/m3-r3-p1-artifact/
           cp /tmp/m3-r3-p1-focused.tap /tmp/m3-r3-p1-adapter.tap \
             /tmp/m3-r3-p1-full-node.tap /tmp/m3-r3-p1-artifact/logs/
-      - name: Scan every upload candidate for credential-shaped material
+      - name: Verify Artifact layout and scan credential-shaped material
         shell: bash
         run: |
           set -euo pipefail
           node --input-type=module <<'NODE'
           import { readdir, readFile } from 'node:fs/promises';
-          import { join } from 'node:path';
+          import { join, relative, sep } from 'node:path';
           import { scanSensitiveValues } from './packages/k6-api-adapter/test/p5-test-helpers.js';
-          async function walk(root) {
+          const root = '/tmp/m3-r3-p1-artifact';
+          const expectedPaths = [
+            'evidence/m3-r3-p1-local-process-boundary-evidence.json',
+            'schemas/execution/k6-api-runtime/schema-catalog.json',
+            'schemas/execution/k6-api-runtime/p1-schema-catalog.json',
+            'schemas/execution/k6-api-runtime/v1/k6-local-process-port.schema.json',
+            'schemas/execution/k6-api-runtime/v1/k6-process-launch-specification.schema.json',
+            'schemas/execution/k6-api-runtime/v1/k6-process-launch-decision.schema.json',
+            'schemas/execution/k6-api-runtime/v1/k6-process-boundary-evidence.schema.json',
+            'schemas/execution/k6-api-runtime/v1/m3-r3-local-process-boundary-p1-evidence.schema.json',
+            'docs/02-development/m3-r3-p1-local-process-boundary-handoff.md',
+            'docs/03-roadmap/m3-r3-p1-local-process-boundary.md',
+            'docs/04-governance/m3-r3-p1-local-process-boundary-acceptance-matrix.md',
+            'docs/05-adr/ADR-0031-injected-local-process-boundary.md',
+            'docs/06-security/m3-r3-p1-local-process-boundary-threat-model.md',
+            'docs/releases/M3-R3-P1-local-process-boundary.md',
+            'logs/m3-r3-p1-focused.tap',
+            'logs/m3-r3-p1-adapter.tap',
+            'logs/m3-r3-p1-full-node.tap',
+          ];
+          async function walk(directory) {
             const files = [];
-            for (const entry of await readdir(root, { withFileTypes: true })) {
-              const path = join(root, entry.name);
+            for (const entry of await readdir(directory, { withFileTypes: true })) {
+              const path = join(directory, entry.name);
               if (entry.isDirectory()) files.push(...await walk(path));
               else if (entry.isFile()) files.push(path);
               else throw new Error(`unsafe Artifact entry: ${path}`);
             }
             return files;
           }
-          const files = await walk('/tmp/m3-r3-p1-artifact');
+          const files = await walk(root);
+          const relativePaths = files.map((path) => relative(root, path).split(sep).join('/'));
+          const pathSet = new Set(relativePaths);
+          for (const expectedPath of expectedPaths) {
+            if (!pathSet.has(expectedPath)) throw new Error(`missing Artifact path: ${expectedPath}`);
+          }
+          const lowerPaths = new Map();
+          for (const relativePath of relativePaths) {
+            const key = relativePath.toLowerCase();
+            if (lowerPaths.has(key)) {
+              throw new Error(`duplicate Artifact path under case-insensitive storage: ${relativePath}`);
+            }
+            lowerPaths.set(key, relativePath);
+          }
           for (const path of files) scanSensitiveValues(await readFile(path, 'utf8'), path);
+          console.log(`artifact layout: ${files.length} safe, case-insensitively unique files`);
           console.log(`credential-shaped scan: zero matches across ${files.length} files`);
           NODE
       - name: Print independently auditable P1 summary
@@ -169,6 +214,7 @@ jobs:
             '/tmp/m3-r3-p1-artifact/evidence/m3-r3-p1-local-process-boundary-evidence.json',
             'utf8'));
           console.log(`exactHead=${evidence.source.commitSha}`);
+          console.log(`checkedOutHead=${process.env.M3_R3_P1_EXACT_HEAD}`);
           console.log(`baseMain=${{ github.event.pull_request.base.sha || 'not-pull-request' }}`);
           console.log(`focused=${evidence.testResults.focused.passed}/${evidence.testResults.focused.total}`);
           console.log(`allK6ApiAdapter=${evidence.testResults.k6ApiAdapter.passed}/${evidence.testResults.k6ApiAdapter.total}`);
