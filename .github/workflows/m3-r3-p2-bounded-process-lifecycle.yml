@@ -1,0 +1,304 @@
+name: m3-r3-p2-bounded-process-lifecycle
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r3-p2-bounded-process-lifecycle.yml'
+      - 'packages/k6-api-adapter/src/**'
+      - 'packages/k6-api-adapter/test/process-execution-lifecycle*.js'
+      - 'schemas/execution/k6-api-runtime/**'
+      - 'scripts/m3-r3-p2-*.js'
+      - 'scripts/validate-m3-r3-p2-*.js'
+      - 'docs/02-development/m3-r3-p2-bounded-process-lifecycle-handoff.md'
+      - 'docs/03-roadmap/m3-r3-p2-bounded-process-lifecycle.md'
+      - 'docs/04-governance/m3-r3-p2-bounded-process-lifecycle-acceptance-matrix.md'
+      - 'docs/05-adr/ADR-0032-bounded-local-process-lifecycle.md'
+      - 'docs/06-security/m3-r3-p2-bounded-process-lifecycle-threat-model.md'
+      - 'docs/releases/M3-R3-P2-bounded-process-lifecycle.md'
+      - 'docs/README.md'
+      - 'package.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/m3-r3-p2-bounded-process-lifecycle.yml'
+      - 'packages/k6-api-adapter/src/**'
+      - 'packages/k6-api-adapter/test/process-execution-lifecycle*.js'
+      - 'schemas/execution/k6-api-runtime/**'
+      - 'scripts/m3-r3-p2-*.js'
+      - 'scripts/validate-m3-r3-p2-*.js'
+      - 'docs/02-development/m3-r3-p2-bounded-process-lifecycle-handoff.md'
+      - 'docs/03-roadmap/m3-r3-p2-bounded-process-lifecycle.md'
+      - 'docs/04-governance/m3-r3-p2-bounded-process-lifecycle-acceptance-matrix.md'
+      - 'docs/05-adr/ADR-0032-bounded-local-process-lifecycle.md'
+      - 'docs/06-security/m3-r3-p2-bounded-process-lifecycle-threat-model.md'
+      - 'docs/releases/M3-R3-P2-bounded-process-lifecycle.md'
+      - 'docs/README.md'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+env:
+  M3_R3_P2_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  validate-bounded-process-lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify exact Head checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_head="$(git rev-parse HEAD)"
+          test "$actual_head" = "$M3_R3_P2_EXACT_HEAD"
+          test -z "$(git status --porcelain)"
+          echo "checkedOutExactHead=$actual_head"
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Run focused P2 lifecycle tests with injected fakes only
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test packages/k6-api-adapter/test/process-execution-lifecycle*.test.js 2>&1 \
+            | tee /tmp/m3-r3-p2-focused.tap
+      - name: Run all k6 API Adapter tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test packages/k6-api-adapter/test/*.test.js 2>&1 \
+            | tee /tmp/m3-r3-p2-adapter.tap
+      - name: Run complete Node.js test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm test 2>&1 | tee /tmp/m3-r3-p2-full-node.tap
+      - name: Export exact test counts
+        shell: bash
+        run: |
+          set -euo pipefail
+          parse_tap() {
+            local prefix="$1" file="$2"
+            local total passed failed skipped
+            total="$(awk '/^# tests /{value=$3} END{print value+0}' "$file")"
+            passed="$(awk '/^# pass /{value=$3} END{print value+0}' "$file")"
+            failed="$(awk '/^# fail /{value=$3} END{print value+0}' "$file")"
+            skipped="$(awk '/^# skipped /{value=$3} END{print value+0}' "$file")"
+            test "$total" -gt 0
+            test "$failed" -eq 0
+            printf '%s_TOTAL=%s\n%s_PASSED=%s\n%s_FAILED=%s\n%s_SKIPPED=%s\n' \
+              "$prefix" "$total" "$prefix" "$passed" "$prefix" "$failed" \
+              "$prefix" "$skipped" >> "$GITHUB_ENV"
+          }
+          parse_tap M3_R3_P2_FOCUSED /tmp/m3-r3-p2-focused.tap
+          parse_tap M3_R3_P2_ADAPTER /tmp/m3-r3-p2-adapter.tap
+          parse_tap M3_R3_P2_FULL /tmp/m3-r3-p2-full-node.tap
+          printf 'M3_R3_P2_REPOSITORY_VALIDATOR=success\n' >> "$GITHUB_ENV"
+      - name: Run complete Repository Validator
+        run: npm run validate
+      - name: Re-run P2 validator explicitly
+        run: npm run validate:m3-r3-p2-bounded-process-lifecycle
+      - name: Run accepted predecessor anti-regression validators
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run validate:m3-r3-p1-local-process-boundary
+          npm run validate:m3-r3-runtime-admission
+          npm run validate:m3-r2-source-generation-p5
+          npm run validate:m3-r1-k6-api-spec-compiler
+          npm run validate:m3-r0-execution-contracts
+          npm run validate:m2-final-release-closure
+          npm run validate:m2-portable-release-readiness
+      - name: Generate static exact-Head P2 Evidence and Artifact payload
+        env:
+          M3_R3_P2_BRANCH: ${{ github.head_ref || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$M3_R3_P2_EXACT_HEAD" = "${{ github.event.pull_request.head.sha || github.sha }}"
+          test "$(git rev-parse HEAD)" = "$M3_R3_P2_EXACT_HEAD"
+          mkdir -p /tmp/m3-r3-p2-artifact/evidence \
+            /tmp/m3-r3-p2-artifact/logs
+          GITHUB_HEAD_REF="$M3_R3_P2_BRANCH" \
+            node scripts/validate-m3-r3-p2-bounded-process-lifecycle.js \
+            > /tmp/m3-r3-p2-artifact/evidence/m3-r3-p2-bounded-process-lifecycle-evidence.json
+          cp --parents schemas/execution/k6-api-runtime/p2-schema-catalog.json \
+            schemas/execution/k6-api-runtime/v1/k6-node-process-adapter.schema.json \
+            schemas/execution/k6-api-runtime/v1/k6-process-execution-command.schema.json \
+            schemas/execution/k6-api-runtime/v1/k6-process-lifecycle-evidence.schema.json \
+            schemas/execution/k6-api-runtime/v1/m3-r3-bounded-process-lifecycle-p2-evidence.schema.json \
+            /tmp/m3-r3-p2-artifact/
+          cp --parents docs/02-development/m3-r3-p2-bounded-process-lifecycle-handoff.md \
+            docs/03-roadmap/m3-r3-p2-bounded-process-lifecycle.md \
+            docs/04-governance/m3-r3-p2-bounded-process-lifecycle-acceptance-matrix.md \
+            docs/05-adr/ADR-0032-bounded-local-process-lifecycle.md \
+            docs/06-security/m3-r3-p2-bounded-process-lifecycle-threat-model.md \
+            docs/releases/M3-R3-P2-bounded-process-lifecycle.md \
+            /tmp/m3-r3-p2-artifact/
+          cp /tmp/m3-r3-p2-focused.tap /tmp/m3-r3-p2-adapter.tap \
+            /tmp/m3-r3-p2-full-node.tap /tmp/m3-r3-p2-artifact/logs/
+      - name: Validate generated Evidence against its closed Schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          import { canonicalStringify, sha256 } from '@kdtp/knowledge-core';
+          const evidencePath = '/tmp/m3-r3-p2-artifact/evidence/m3-r3-p2-bounded-process-lifecycle-evidence.json';
+          const schemaPath = '/tmp/m3-r3-p2-artifact/schemas/execution/k6-api-runtime/v1/m3-r3-bounded-process-lifecycle-p2-evidence.schema.json';
+          const evidence = JSON.parse(await readFile(evidencePath, 'utf8'));
+          const schema = JSON.parse(await readFile(schemaPath, 'utf8'));
+          function validate(value, rule, path = '$') {
+            if (Object.hasOwn(rule, 'const') && canonicalStringify(value) !== canonicalStringify(rule.const)) {
+              throw new Error(`${path} const mismatch`);
+            }
+            if (rule.enum && !rule.enum.includes(value)) throw new Error(`${path} enum mismatch`);
+            if (rule.anyOf) {
+              const accepted = rule.anyOf.some((candidate) => {
+                try { validate(value, candidate, path); return true; } catch { return false; }
+              });
+              if (!accepted) throw new Error(`${path} anyOf mismatch`);
+              return;
+            }
+            if (rule.type === 'object') {
+              if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${path} type`);
+              const keys = Object.keys(value).sort();
+              const expected = Object.keys(rule.properties ?? {}).sort();
+              if (rule.additionalProperties === false
+                  && canonicalStringify(keys) !== canonicalStringify(expected)) {
+                throw new Error(`${path} closed fields mismatch`);
+              }
+              for (const key of rule.required ?? []) {
+                if (!Object.hasOwn(value, key)) throw new Error(`${path}.${key} required`);
+              }
+              for (const [key, child] of Object.entries(rule.properties ?? {})) {
+                validate(value[key], child, `${path}.${key}`);
+              }
+            } else if (rule.type === 'array') {
+              if (!Array.isArray(value)) throw new Error(`${path} type`);
+              if (rule.minItems !== undefined && value.length < rule.minItems) throw new Error(`${path} minItems`);
+              if (rule.maxItems !== undefined && value.length > rule.maxItems) throw new Error(`${path} maxItems`);
+              if (rule.uniqueItems && new Set(value.map(canonicalStringify)).size !== value.length) throw new Error(`${path} uniqueItems`);
+              value.forEach((item, index) => validate(item, rule.items ?? {}, `${path}[${index}]`));
+            } else if (rule.type === 'string') {
+              if (typeof value !== 'string') throw new Error(`${path} type`);
+              if (rule.minLength !== undefined && value.length < rule.minLength) throw new Error(`${path} minLength`);
+              if (rule.maxLength !== undefined && value.length > rule.maxLength) throw new Error(`${path} maxLength`);
+              if (rule.pattern && !(new RegExp(rule.pattern, 'u')).test(value)) throw new Error(`${path} pattern`);
+            } else if (rule.type === 'integer') {
+              if (!Number.isInteger(value)) throw new Error(`${path} type`);
+              if (rule.minimum !== undefined && value < rule.minimum) throw new Error(`${path} minimum`);
+              if (rule.maximum !== undefined && value > rule.maximum) throw new Error(`${path} maximum`);
+            } else if (rule.type === 'boolean' && typeof value !== 'boolean') {
+              throw new Error(`${path} type`);
+            }
+          }
+          validate(evidence, schema);
+          const claims = structuredClone(evidence);
+          delete claims.evidenceDigest;
+          if (sha256(claims) !== evidence.evidenceDigest) throw new Error('Evidence digest mismatch');
+          console.log('evidence schema errors: 0');
+          console.log(`canonicalEvidenceDigest=${evidence.evidenceDigest}`);
+          NODE
+      - name: Verify Artifact layout and scan credential-shaped material
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readdir, readFile } from 'node:fs/promises';
+          import { join, relative, sep } from 'node:path';
+          import { scanSensitiveValues } from './packages/k6-api-adapter/test/p5-test-helpers.js';
+          const root = '/tmp/m3-r3-p2-artifact';
+          const expectedPaths = [
+            'evidence/m3-r3-p2-bounded-process-lifecycle-evidence.json',
+            'schemas/execution/k6-api-runtime/p2-schema-catalog.json',
+            'schemas/execution/k6-api-runtime/v1/k6-node-process-adapter.schema.json',
+            'schemas/execution/k6-api-runtime/v1/k6-process-execution-command.schema.json',
+            'schemas/execution/k6-api-runtime/v1/k6-process-lifecycle-evidence.schema.json',
+            'schemas/execution/k6-api-runtime/v1/m3-r3-bounded-process-lifecycle-p2-evidence.schema.json',
+            'docs/02-development/m3-r3-p2-bounded-process-lifecycle-handoff.md',
+            'docs/03-roadmap/m3-r3-p2-bounded-process-lifecycle.md',
+            'docs/04-governance/m3-r3-p2-bounded-process-lifecycle-acceptance-matrix.md',
+            'docs/05-adr/ADR-0032-bounded-local-process-lifecycle.md',
+            'docs/06-security/m3-r3-p2-bounded-process-lifecycle-threat-model.md',
+            'docs/releases/M3-R3-P2-bounded-process-lifecycle.md',
+            'logs/m3-r3-p2-focused.tap',
+            'logs/m3-r3-p2-adapter.tap',
+            'logs/m3-r3-p2-full-node.tap',
+          ];
+          async function walk(directory) {
+            const files = [];
+            for (const entry of await readdir(directory, { withFileTypes: true })) {
+              const path = join(directory, entry.name);
+              if (entry.isDirectory()) files.push(...await walk(path));
+              else if (entry.isFile()) files.push(path);
+              else throw new Error(`unsafe Artifact entry: ${path}`);
+            }
+            return files;
+          }
+          const files = await walk(root);
+          const relativePaths = files.map((path) => relative(root, path).split(sep).join('/'));
+          const pathSet = new Set(relativePaths);
+          for (const expectedPath of expectedPaths) {
+            if (!pathSet.has(expectedPath)) throw new Error(`missing Artifact path: ${expectedPath}`);
+          }
+          for (const relativePath of relativePaths) {
+            if (!expectedPaths.includes(relativePath)) throw new Error(`unexpected Artifact path: ${relativePath}`);
+          }
+          const lowerPaths = new Map();
+          for (const relativePath of relativePaths) {
+            const key = relativePath.toLowerCase();
+            if (lowerPaths.has(key)) {
+              throw new Error(`duplicate Artifact path under case-insensitive storage: ${relativePath}`);
+            }
+            lowerPaths.set(key, relativePath);
+          }
+          for (const path of files) scanSensitiveValues(await readFile(path, 'utf8'), path);
+          console.log(`artifact layout: ${files.length} safe, exact, case-insensitively unique files`);
+          console.log(`credential-shaped scan: zero matches across ${files.length} files`);
+          NODE
+      - name: Print independently auditable P2 summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const evidence = JSON.parse(await readFile(
+            '/tmp/m3-r3-p2-artifact/evidence/m3-r3-p2-bounded-process-lifecycle-evidence.json',
+            'utf8'));
+          console.log(`exactHead=${evidence.source.commitSha}`);
+          console.log(`checkedOutHead=${process.env.M3_R3_P2_EXACT_HEAD}`);
+          console.log(`focused=${evidence.testResults.focused.passed}/${evidence.testResults.focused.total}`);
+          console.log(`allK6ApiAdapter=${evidence.testResults.k6ApiAdapter.passed}/${evidence.testResults.k6ApiAdapter.total}`);
+          console.log(`fullNode=${evidence.testResults.fullNode.total} total, ${evidence.testResults.fullNode.passed} passed, ${evidence.testResults.fullNode.skipped} skipped, ${evidence.testResults.fullNode.failed} failed`);
+          console.log(`adapterDigest=${evidence.contracts.adapterDigest}`);
+          console.log(`commandDigest=${evidence.contracts.commandDigest}`);
+          console.log(`nodeProcessAdapterImplemented=${evidence.decision.nodeProcessAdapterImplemented}`);
+          console.log(`boundedLifecycleImplemented=${evidence.decision.boundedLifecycleImplemented}`);
+          console.log(`realProcessStartedInCi=${evidence.decision.realProcessStartedInCi}`);
+          console.log(`k6InvokedInCi=${evidence.decision.k6InvokedInCi}`);
+          console.log(`runtimeResultCollected=${evidence.decision.runtimeResultCollected}`);
+          console.log(`nextRequiredSlice=${evidence.decision.nextRequiredSlice}`);
+          NODE
+      - name: Upload P2 permanent acceptance Artifact
+        id: upload-evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r3-p2-bounded-process-lifecycle-evidence
+          path: /tmp/m3-r3-p2-artifact
+          if-no-files-found: error
+          retention-days: 90
+      - name: Print upload-layer digest
+        run: |
+          echo "artifactId=${{ steps.upload-evidence.outputs.artifact-id }}"
+          echo "uploadedZipDigest=${{ steps.upload-evidence.outputs.artifact-digest }}"
