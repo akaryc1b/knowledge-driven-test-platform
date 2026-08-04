@@ -114,3 +114,15 @@ export const K6_API_RUNTIME_LIMITS = Object.freeze({
   maxDurationMs: 900_000,
   maxGracefulStopMs: 30_000,
 });
+
+export const K6_LOCAL_PROCESS_PORT_SCHEMA_VERSION = 'k6-local-process-port/v1';
+export const K6_PROCESS_LAUNCH_SPECIFICATION_SCHEMA_VERSION =
+  'k6-process-launch-specification/v1';
+export const K6_PROCESS_LAUNCH_DECISION_SCHEMA_VERSION =
+  'k6-process-launch-decision/v1';
+export const K6_PROCESS_BOUNDARY_EVIDENCE_SCHEMA_VERSION =
+  'k6-process-boundary-evidence/v1';
+export const K6_LOCAL_PROCESS_PORT_ID = 'k6-local-process-port';
+export const K6_LOCAL_PROCESS_PORT_VERSION = '1.0.0';
+export const K6_PROCESS_LOGICAL_WORKING_DIRECTORY = 'accepted-source-bundle-root';
+export const K6_PROCESS_CAPTURE_MAX_BYTES = 65_536;
