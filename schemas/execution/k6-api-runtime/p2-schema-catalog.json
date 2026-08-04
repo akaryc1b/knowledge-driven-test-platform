@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "k6-bounded-process-lifecycle-schema-catalog/v1",
+  "schemas": [
+    {
+      "schemaVersion": "k6-node-process-adapter/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-node-process-adapter.schema.json"
+    },
+    {
+      "schemaVersion": "k6-process-execution-command/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-process-execution-command.schema.json"
+    },
+    {
+      "schemaVersion": "k6-process-lifecycle-evidence/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-process-lifecycle-evidence.schema.json"
+    },
+    {
+      "schemaVersion": "m3-r3-bounded-process-lifecycle-p2-evidence/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/m3-r3-bounded-process-lifecycle-p2-evidence.schema.json"
+    }
+  ]
+}

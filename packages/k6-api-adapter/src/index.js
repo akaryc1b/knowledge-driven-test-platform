@@ -11,3 +11,4 @@ export * from './source-publication-bundle.js';
 export * from './source-bundle-publisher.js';
 export * from './runtime-admission.js';
 export * from './local-process-boundary.js';
+export * from './process-execution-lifecycle.js';
