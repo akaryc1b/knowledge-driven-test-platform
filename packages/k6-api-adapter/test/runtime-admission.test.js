@@ -28,7 +28,8 @@ test('R0 runtime policy is fixed, deterministic and admission-only', () => {
   assert.equal(first.executionMode, 'LOCAL_PROCESS');
   assert.equal(first.executable, 'k6');
   assert.equal(first.shellAllowed, false);
-  assert.equal(first.policyDigest, sha256({ ...first, policyDigest: undefined }));
+  const { policyDigest, ...withoutDigest } = first;
+  assert.equal(policyDigest, sha256(withoutDigest));
 });
 
 test('R0 creates deterministic admission, argv plan and Evidence from accepted P4', async () => {
