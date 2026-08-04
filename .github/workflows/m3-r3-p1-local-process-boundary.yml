@@ -125,6 +125,7 @@ jobs:
             node scripts/validate-m3-r3-p1-local-process-boundary.js \
             > /tmp/m3-r3-p1-artifact/evidence/m3-r3-p1-local-process-boundary-evidence.json
           cp schemas/execution/k6-api-runtime/schema-catalog.json \
+            schemas/execution/k6-api-runtime/p1-schema-catalog.json \
             schemas/execution/k6-api-runtime/v1/*.schema.json \
             /tmp/m3-r3-p1-artifact/schemas/
           cp docs/02-development/m3-r3-p1-local-process-boundary-handoff.md \
