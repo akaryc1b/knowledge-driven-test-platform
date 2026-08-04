@@ -20,26 +20,6 @@
     {
       "schemaVersion": "m3-r3-runtime-admission-r0-evidence/v1",
       "path": "schemas/execution/k6-api-runtime/v1/m3-r3-runtime-admission-r0-evidence.schema.json"
-    },
-    {
-      "schemaVersion": "k6-local-process-port/v1",
-      "path": "schemas/execution/k6-api-runtime/v1/k6-local-process-port.schema.json"
-    },
-    {
-      "schemaVersion": "k6-process-launch-specification/v1",
-      "path": "schemas/execution/k6-api-runtime/v1/k6-process-launch-specification.schema.json"
-    },
-    {
-      "schemaVersion": "k6-process-launch-decision/v1",
-      "path": "schemas/execution/k6-api-runtime/v1/k6-process-launch-decision.schema.json"
-    },
-    {
-      "schemaVersion": "k6-process-boundary-evidence/v1",
-      "path": "schemas/execution/k6-api-runtime/v1/k6-process-boundary-evidence.schema.json"
-    },
-    {
-      "schemaVersion": "m3-r3-local-process-boundary-p1-evidence/v1",
-      "path": "schemas/execution/k6-api-runtime/v1/m3-r3-local-process-boundary-p1-evidence.schema.json"
     }
   ]
 }
