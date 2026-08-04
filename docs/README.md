@@ -19,6 +19,7 @@
 - [测试策略](02-development/testing-strategy.md)
 - [历史 M3-R0 入口交接（永久兼容锚点）](02-development/development-handoff.md)
 - [当前 M3-R2-G1 交接](02-development/m3-r2-g1-handoff.md)
+- [M3-R2-G4 P5 exact-main push correction](02-development/m3-r2-g4-p5-main-push-correction.md)
 
 ## 路线图
 
