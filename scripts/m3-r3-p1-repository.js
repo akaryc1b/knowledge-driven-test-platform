@@ -126,26 +126,26 @@ function validateContracts(fixture) {
 }
 
 function validateSchemas(files) {
-  const catalog = parseJson(files[M3_R3_P1_PATHS.schemaCatalog], 'runtime Schema Catalog');
-  assertM3R3P1(catalog.schemaVersion === 'k6-api-runtime-schema-catalog/v1'
+  const catalog = parseJson(files[M3_R3_P1_PATHS.schemaCatalog], 'P1 Schema Catalog');
+  assertM3R3P1(catalog.schemaVersion === 'k6-local-process-boundary-schema-catalog/v1'
       && Array.isArray(catalog.schemas)
       && canonicalStringify(catalog.schemas.map((item) => item.path))
         === canonicalStringify(M3_R3_P1_SCHEMA_PATHS),
-  'M3-R3-P1 runtime Schema Catalog changed or is not additive');
+  'M3-R3-P1 Schema Catalog changed');
   for (const path of M3_R3_P1_SCHEMA_PATHS) {
     const schema = parseJson(files[path], path);
     assertM3R3P1(schema.$schema === 'https://json-schema.org/draft/2020-12/schema',
       `${path} must use Draft 2020-12`);
     assertClosedSchema(schema, path);
   }
-  const port = parseJson(files[M3_R3_P1_SCHEMA_PATHS[5]], 'local process port schema');
+  const port = parseJson(files[M3_R3_P1_SCHEMA_PATHS[0]], 'local process port schema');
   assertM3R3P1(port.properties?.implementationStatus?.const === 'INJECTED_NON_EXECUTING'
       && port.properties?.capabilities?.properties?.startProcess?.const === false
       && port.properties?.capabilities?.properties?.createProcessId?.const === false
       && port.properties?.capabilities?.properties?.shell?.const === false,
   'Local process port Schema authorizes process execution');
   const specification = parseJson(
-    files[M3_R3_P1_SCHEMA_PATHS[6]], 'launch specification schema');
+    files[M3_R3_P1_SCHEMA_PATHS[1]], 'launch specification schema');
   assertM3R3P1(specification.properties?.executable?.const === 'k6'
       && specification.properties?.shell?.const === false
       && specification.properties?.processStartAuthorized?.const === false
@@ -156,8 +156,8 @@ function validateSchemas(files) {
         ?.inheritHostEnvironment?.const === false
       && specification.properties?.stdin?.properties?.contentIncluded?.const === false,
   'Launch Specification Schema widens the P1 process boundary');
-  for (const path of [M3_R3_P1_SCHEMA_PATHS[7], M3_R3_P1_SCHEMA_PATHS[8],
-    M3_R3_P1_SCHEMA_PATHS[9]]) {
+  for (const path of [M3_R3_P1_SCHEMA_PATHS[2], M3_R3_P1_SCHEMA_PATHS[3],
+    M3_R3_P1_SCHEMA_PATHS[4]]) {
     const schema = parseJson(files[path], path);
     assertM3R3P1(schema.properties?.decision?.properties
       ?.nodeProcessAdapterImplemented?.const === false
@@ -311,5 +311,5 @@ function parseJson(raw, label) {
 
 export function computeM3R3P1SchemaCatalogDigest(repository) {
   return sha256(parseJson(repository.files[M3_R3_P1_PATHS.schemaCatalog],
-    'runtime Schema Catalog'));
+    'P1 Schema Catalog'));
 }
