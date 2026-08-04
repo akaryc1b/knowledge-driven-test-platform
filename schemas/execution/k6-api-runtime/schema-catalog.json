@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "k6-api-runtime-schema-catalog/v1",
+  "schemas": [
+    {
+      "schemaVersion": "k6-api-runtime-policy/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-api-runtime-policy.schema.json"
+    },
+    {
+      "schemaVersion": "k6-api-runtime-admission-request/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-api-runtime-admission-request.schema.json"
+    },
+    {
+      "schemaVersion": "k6-api-invocation-plan/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-api-invocation-plan.schema.json"
+    },
+    {
+      "schemaVersion": "k6-api-runtime-admission-evidence/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-api-runtime-admission-evidence.schema.json"
+    }
+  ]
+}
