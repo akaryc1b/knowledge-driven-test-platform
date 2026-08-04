@@ -52,11 +52,6 @@ export const M3_R3_P1_FALSE_SAFETY_FIELDS = Object.freeze([
 ]);
 
 export const M3_R3_P1_SCHEMA_PATHS = Object.freeze([
-  'schemas/execution/k6-api-runtime/v1/k6-api-runtime-policy.schema.json',
-  'schemas/execution/k6-api-runtime/v1/k6-api-runtime-admission-request.schema.json',
-  'schemas/execution/k6-api-runtime/v1/k6-api-invocation-plan.schema.json',
-  'schemas/execution/k6-api-runtime/v1/k6-api-runtime-admission-evidence.schema.json',
-  'schemas/execution/k6-api-runtime/v1/m3-r3-runtime-admission-r0-evidence.schema.json',
   'schemas/execution/k6-api-runtime/v1/k6-local-process-port.schema.json',
   'schemas/execution/k6-api-runtime/v1/k6-process-launch-specification.schema.json',
   'schemas/execution/k6-api-runtime/v1/k6-process-launch-decision.schema.json',
@@ -77,7 +72,7 @@ export const M3_R3_P1_PATHS = Object.freeze({
     'packages/k6-api-adapter/test/local-process-boundary-schema.test.js',
     'packages/k6-api-adapter/test/local-process-boundary-repository.test.js',
   ]),
-  schemaCatalog: 'schemas/execution/k6-api-runtime/schema-catalog.json',
+  schemaCatalog: 'schemas/execution/k6-api-runtime/p1-schema-catalog.json',
   schemas: M3_R3_P1_SCHEMA_PATHS,
   baseline: 'scripts/m3-r3-p1-baseline.js',
   repository: 'scripts/m3-r3-p1-repository.js',
