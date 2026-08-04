@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-runtime/v1/k6-api-runtime-policy.schema.json",
+  "title": "K6 API Runtime Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runtimeId",
+    "runtimeVersion",
+    "implementationStatus",
+    "executionMode",
+    "executable",
+    "subcommand",
+    "shellAllowed",
+    "sourceRelativePath",
+    "workingDirectoryMode",
+    "allowedEnvironmentVariableNames",
+    "allowedOutputArtifactKinds",
+    "cancellationMode",
+    "limits",
+    "policyDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "k6-api-runtime-policy/v1" },
+    "runtimeId": { "const": "k6-api-runtime" },
+    "runtimeVersion": { "const": "1.0.0" },
+    "implementationStatus": { "const": "ADMISSION_ONLY" },
+    "executionMode": { "const": "LOCAL_PROCESS" },
+    "executable": { "const": "k6" },
+    "subcommand": { "const": "run" },
+    "shellAllowed": { "const": false },
+    "sourceRelativePath": { "const": "source/main.js" },
+    "workingDirectoryMode": { "const": "MATERIALIZED_IMMUTABLE_BUNDLE_ROOT" },
+    "allowedEnvironmentVariableNames": {
+      "type": "array",
+      "prefixItems": [
+        { "const": "K6_LOG_FORMAT" },
+        { "const": "K6_NO_COLOR" }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "allowedOutputArtifactKinds": {
+      "type": "array",
+      "prefixItems": [
+        { "const": "k6-run-summary-json" }
+      ],
+      "items": false,
+      "minItems": 1,
+      "maxItems": 1
+    },
+    "cancellationMode": { "const": "COOPERATIVE" },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxVus",
+        "maxIterations",
+        "maxDurationMs",
+        "maxGracefulStopMs"
+      ],
+      "properties": {
+        "maxVus": { "const": 50 },
+        "maxIterations": { "const": 10000 },
+        "maxDurationMs": { "const": 900000 },
+        "maxGracefulStopMs": { "const": 30000 }
+      }
+    },
+    "policyDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

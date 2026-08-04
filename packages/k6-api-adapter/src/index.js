@@ -9,3 +9,4 @@ export * from './source-static-validator.js';
 export * from './source-artifact.js';
 export * from './source-publication-bundle.js';
 export * from './source-bundle-publisher.js';
+export * from './runtime-admission.js';
