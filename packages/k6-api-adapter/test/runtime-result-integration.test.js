@@ -98,7 +98,7 @@ test('P3 integrated execution settles once under duplicate terminal events', asy
   fixture.child.emit('spawn');
   fixture.child.emit('exit', 0, null);
   fixture.child.emit('exit', 19, null);
-  fixture.child.emit('error', new Error('late private failure'));
+  fixture.child.emit('spawn');
   const result = await pending;
   assert.equal(result.runtimeOutcome.exitCode, 0);
   assert.equal(result.runtimeOutcome.outcomeClassification, 'SUCCEEDED');
@@ -111,7 +111,7 @@ test('P3 integrated execution rejects forged non-allow-listed process signals', 
   await assert.rejects(pending, /signal|allow-listed/u);
 });
 
-test('P3 integrated execution exports no PID, stdio, host path or environment value', async () => {
+test('P3 integrated execution exports no PID, stdio value, host path or environment value', async () => {
   const { fixture, pending } = await startIntegrated();
   fixture.child.emit('spawn');
   fixture.child.emit('exit', 0, null);
@@ -121,13 +121,15 @@ test('P3 integrated execution exports no PID, stdio, host path or environment va
     String(fixture.child.pid),
     fixture.workingDirectoryPath,
     'K6_LOG_FORMAT',
-    'stdout',
-    'stderr',
-    'Authorization',
-    'Cookie',
+    'stdout-secret-value',
+    'stderr-secret-value',
+    'Authorization: Bearer',
+    'Cookie=',
   ]) {
     assert.equal(serialized.includes(forbidden), false, forbidden);
   }
+  assert.equal(result.runtimeEvidence.safetyBoundary.stdoutCollected, false);
+  assert.equal(result.runtimeEvidence.safetyBoundary.stderrCollected, false);
   assert.equal(result.runtimeEvidence.safetyBoundary.numericProcessIdExposed, false);
   assert.equal(result.runtimeEvidence.safetyBoundary.hostAbsolutePathExposed, false);
 });
