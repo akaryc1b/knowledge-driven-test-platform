@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-runtime/v1/k6-api-runtime-admission-request.schema.json",
+  "title": "K6 API Runtime Admission Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "admissionId",
+    "runtimePolicyDigest",
+    "executionRequest",
+    "source",
+    "resources",
+    "metadata",
+    "admissionDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "k6-api-runtime-admission-request/v1" },
+    "admissionId": {
+      "type": "string",
+      "pattern": "^k6runtime-admission-[a-f0-9]{20}$"
+    },
+    "runtimePolicyDigest": { "$ref": "#/$defs/digest" },
+    "executionRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requestId",
+        "requestDigest",
+        "projectId",
+        "environmentDigest",
+        "frozenTestPlanDigest",
+        "knowledgeSnapshotDigest",
+        "adapter"
+      ],
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "pattern": "^exec-[a-z0-9-]+-[a-f0-9]{16}$"
+        },
+        "requestDigest": { "$ref": "#/$defs/digest" },
+        "projectId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{1,127}$"
+        },
+        "environmentDigest": { "$ref": "#/$defs/digest" },
+        "frozenTestPlanDigest": { "$ref": "#/$defs/digest" },
+        "knowledgeSnapshotDigest": { "$ref": "#/$defs/digest" },
+        "adapter": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "adapterId",
+            "adapterType",
+            "version",
+            "descriptorDigest"
+          ],
+          "properties": {
+            "adapterId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "adapterType": { "const": "k6-api" },
+            "version": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+            },
+            "descriptorDigest": { "$ref": "#/$defs/digest" }
+          }
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundleId",
+        "bundleDigest",
+        "manifestDigest",
+        "sourceArtifactDigest",
+        "sourceIdentity",
+        "sourceDigest",
+        "receiptId",
+        "receiptDigest",
+        "publicationEvidenceDigest",
+        "logicalUri",
+        "specDigest",
+        "compilationEvidenceDigest"
+      ],
+      "properties": {
+        "bundleId": {
+          "type": "string",
+          "pattern": "^k6source-bundle-[a-f0-9]{20}$"
+        },
+        "bundleDigest": { "$ref": "#/$defs/digest" },
+        "manifestDigest": { "$ref": "#/$defs/digest" },
+        "sourceArtifactDigest": { "$ref": "#/$defs/digest" },
+        "sourceIdentity": { "$ref": "#/$defs/digest" },
+        "sourceDigest": { "$ref": "#/$defs/digest" },
+        "receiptId": {
+          "type": "string",
+          "pattern": "^k6source-receipt-[a-f0-9]{20}$"
+        },
+        "receiptDigest": { "$ref": "#/$defs/digest" },
+        "publicationEvidenceDigest": { "$ref": "#/$defs/digest" },
+        "logicalUri": {
+          "type": "string",
+          "pattern": "^kdtp-source-bundle://sha256/[a-f0-9]{64}$"
+        },
+        "specDigest": { "$ref": "#/$defs/digest" },
+        "compilationEvidenceDigest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "resources": { "$ref": "#/$defs/resources" },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestedAt", "requestedBy"],
+      "properties": {
+        "requestedAt": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+        },
+        "requestedBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
+    },
+    "admissionDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vus",
+        "iterations",
+        "durationMs",
+        "gracefulStopMs",
+        "environmentVariableNames",
+        "outputArtifactKinds"
+      ],
+      "properties": {
+        "vus": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "iterations": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 900000,
+          "multipleOf": 1000
+        },
+        "gracefulStopMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30000,
+          "multipleOf": 1000
+        },
+        "environmentVariableNames": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": ["K6_LOG_FORMAT", "K6_NO_COLOR"]
+          }
+        },
+        "outputArtifactKinds": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": ["k6-run-summary-json"]
+          }
+        }
+      }
+    }
+  }
+}
