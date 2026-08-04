@@ -16,6 +16,10 @@
     {
       "schemaVersion": "k6-api-runtime-admission-evidence/v1",
       "path": "schemas/execution/k6-api-runtime/v1/k6-api-runtime-admission-evidence.schema.json"
+    },
+    {
+      "schemaVersion": "m3-r3-runtime-admission-r0-evidence/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/m3-r3-runtime-admission-r0-evidence.schema.json"
     }
   ]
 }
