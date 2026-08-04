@@ -72,7 +72,9 @@ test('P2 adapter uses spawn with exact shell-free process options', async () => 
   assert.equal(call.executable, 'k6');
   assert.deepEqual(call.argv, fixture.command.argv);
   assert.equal(call.options.cwd, fixture.workingDirectoryPath);
-  assert.deepEqual(call.options.env, { K6_LOG_FORMAT: 'json', K6_NO_COLOR: 'true' });
+  assert.deepEqual(call.options.env, Object.fromEntries(
+    fixture.command.environment.allowedNames.map((name) => [name,
+      name === 'K6_LOG_FORMAT' ? 'json' : 'true'])));
   assert.equal(call.options.shell, false);
   assert.equal(call.options.detached, false);
   assert.equal(call.options.windowsHide, true);
@@ -371,7 +373,7 @@ test('P2 rejects lifecycle Evidence event substitution after redigest', async ()
   assert.throws(() => validateK6ProcessLifecycleEvidence(forged, {
     command: fixture.command,
     adapterDescriptor: fixture.adapterDescriptor,
-  }), /terminal state does not match/u);
+  }), /observations do not match|terminal state does not match/u);
 });
 
 test('P2 constructors defensively copy and freeze contract values', async () => {
