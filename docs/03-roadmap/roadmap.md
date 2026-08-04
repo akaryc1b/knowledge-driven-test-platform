@@ -33,14 +33,17 @@
 
 ## M3 — k6 Execution Adapters
 
-M3-R0 Contract Foundation 与 M3-R1 Deterministic Non-Executing k6 API Spec Compiler 已完成精确 main 验收。M3-R2 的历史切片记录为：
+M3-R0 Contract Foundation、M3-R1 Deterministic Non-Executing k6 API Spec Compiler 与 M3-R2 Governed Deterministic k6 API Source Generation 已完成正式合并和精确 main 验收。
+
+M3-R2 的历史切片记录为：
 
 - R0：Source Generation Boundary、Threat Model 与前任 Review 闭环；
 - P1：Versioned Source Generation Contracts and Schemas；
 - P2：确定性、纯内存、未执行的 k6 JavaScript Source Renderer；
 - P3：独立静态 Source Validator 与不可变 Source Artifact；
 - P4：本地内容寻址 Source Bundle、Manifest、Provenance、Receipt 与 Publication Evidence；
-- P5：确定性、绑定、注入、敏感材料、非执行、兼容性、故障与并发最终验收。
+- P5：确定性、绑定、注入、敏感材料、非执行、兼容性、故障与并发最终验收；
+- G1–G4：完整范围审计、正式验收、普通 Merge Commit 与 exact-main 永久验证。
 
 以下 P1/P2 决策块作为阶段历史记录保留：
 
@@ -63,11 +66,11 @@ k6Invoked=false
 nextRequiredSlice=M3-R2-P3
 ```
 
-当前 G1 只执行最终基线、完整范围、默认 Repository Validator、永久 Artifact 与 PR 元数据一致性审计，不增加产品能力。历史顶层 `development-handoff.md` 继续作为 M2 Final Closure/M3-R0 入口锚点，当前交接追加在 `docs/02-development/m3-r2-g1-handoff.md`。
-
-M3-R2 允许生成、静态验证并发布到受治理的本地内容寻址文件系统 Store，但仍明确禁止 k6/xk6/Playwright 执行、Runtime Consumer、远程 Publisher、目标网络、Secret、Worker、Queue、Scheduler、Kubernetes 执行资源、Runtime Result 与 Allure。
+M3-R2 最终精确 main 基线：
 
 ```text
+m3R2Accepted=true
+mainSha=62e1deb6b6f9c8e82188c0fe8e66d83350d6f9cf
 sourceGenerationAcceptanceComplete=true
 sourcePersisted=true
 artifactPublished=true
@@ -75,13 +78,42 @@ remoteArtifactPublished=false
 sourceExecuted=false
 executionRuntimeStarted=false
 repositoryBlockers=[]
-nextRequiredSlice=M3-R2-G2
-readyMarked=false
-merged=false
-m3R3Started=false
 ```
 
-G2 不得自动启动。Ready、普通 Merge Commit 与后续 exact-main 验证必须继续按独立授权和独立安全阶段推进。M3-R3 Runtime 保持冻结。
+### 当前阶段：M3-R3-R0 Runtime Admission
+
+M3-R3-R0 在已验收 Source Bundle 与任何未来进程 Adapter 之间建立 admission-only 边界。当前切片允许：
+
+- 固定且版本化的 Runtime Policy；
+- Execution Request、M3-R1 Spec/Compilation Evidence 与 M3-R2 Source Publication 的精确绑定；
+- 有界 VUs、iterations、duration 与 graceful stop；
+- 仅包含 argv 数组的确定性 Invocation Plan；
+- 允许的环境变量名称与输出 Artifact 类型白名单；
+- Admission Request、Invocation Plan 与 Admission Evidence 的 canonical SHA-256 身份；
+- 闭合 Draft 2020-12 Schema、Repository Validator、永久 Workflow 与 Artifact Evidence。
+
+R0 中的 `k6` 只是关闭合同里的 executable label。R0 不安装、发现或调用该二进制，也不创建执行目录或访问 Target/Secret。
+
+```text
+runtimeAdmissionContractReady=true
+invocationPlanReady=true
+executionImplementationStarted=false
+sourceExecuted=false
+executionRuntimeStarted=false
+k6Invoked=false
+xk6Invoked=false
+playwrightInvoked=false
+externalProcessExecuted=false
+shellUsed=false
+targetNetworkAccessed=false
+databaseAccessed=false
+secretAccessed=false
+runtimeResultCollected=false
+repositoryBlockers=[]
+nextRequiredSlice=M3-R3-P1
+```
+
+M3-R3-P1 及后续本地进程 Adapter、生命周期、取消、结果收集、Fault/Security Acceptance 与 G1–G4 均保持冻结，必须在 R0 正式验收后通过新的独立指令启动。
 
 ## M4 — Multi-Project Operations
 
