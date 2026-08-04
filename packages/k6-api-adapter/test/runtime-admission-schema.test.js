@@ -11,6 +11,7 @@ const paths = {
   admission: 'schemas/execution/k6-api-runtime/v1/k6-api-runtime-admission-request.schema.json',
   plan: 'schemas/execution/k6-api-runtime/v1/k6-api-invocation-plan.schema.json',
   evidence: 'schemas/execution/k6-api-runtime/v1/k6-api-runtime-admission-evidence.schema.json',
+  acceptance: 'schemas/execution/k6-api-runtime/v1/m3-r3-runtime-admission-r0-evidence.schema.json',
 };
 
 async function json(path) {
@@ -32,6 +33,7 @@ test('R0 runtime schema catalog pins every versioned contract', async () => {
     { schemaVersion: 'k6-api-runtime-admission-request/v1', path: paths.admission },
     { schemaVersion: 'k6-api-invocation-plan/v1', path: paths.plan },
     { schemaVersion: 'k6-api-runtime-admission-evidence/v1', path: paths.evidence },
+    { schemaVersion: 'm3-r3-runtime-admission-r0-evidence/v1', path: paths.acceptance },
   ]);
 });
 
@@ -51,9 +53,11 @@ test('R0 runtime schemas are closed Draft 2020-12 contracts', async () => {
   assertClosed(plan.properties.runtime, 'plan.runtime');
   assertClosed(plan.properties.source, 'plan.source');
   assertClosed(plan.properties.resources, 'plan.resources');
-  const evidence = await json(paths.evidence);
-  assertClosed(evidence.properties.decision, 'evidence.decision');
-  assertClosed(evidence.properties.safetyBoundary, 'evidence.safetyBoundary');
+  for (const path of [paths.evidence, paths.acceptance]) {
+    const evidence = await json(path);
+    assertClosed(evidence.properties.decision, `${path}.decision`);
+    assertClosed(evidence.properties.safetyBoundary, `${path}.safetyBoundary`);
+  }
 });
 
 test('R0 schemas fix admission-only and non-execution claims', async () => {
@@ -64,11 +68,13 @@ test('R0 schemas fix admission-only and non-execution claims', async () => {
   const plan = await json(paths.plan);
   assert.equal(plan.properties.executionAuthorized.const, false);
   assert.equal(plan.properties.runtime.properties.shellAllowed.const, false);
-  const evidence = await json(paths.evidence);
-  assert.equal(evidence.properties.decision.properties.executionImplementationStarted.const, false);
-  assert.equal(evidence.properties.decision.properties.nextRequiredSlice.const, 'M3-R3-P1');
-  assert.ok(Object.values(evidence.properties.safetyBoundary.properties)
-    .every((property) => property.const === false));
+  for (const path of [paths.evidence, paths.acceptance]) {
+    const evidence = await json(path);
+    assert.equal(evidence.properties.decision.properties.executionImplementationStarted.const, false);
+    assert.equal(evidence.properties.decision.properties.nextRequiredSlice.const, 'M3-R3-P1');
+    assert.ok(Object.values(evidence.properties.safetyBoundary.properties)
+      .every((property) => property.const === false));
+  }
 });
 
 test('R0 produced objects match the schema field sets and fixed constants', async () => {
