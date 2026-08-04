@@ -1,0 +1,260 @@
+name: m3-r2-final-exact-main-observer
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/workflows/m3-r2-final-exact-main-observer.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  observe-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Observe exact main push workflows
+        id: observe
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TARGET_SHA: 62e1deb6b6f9c8e82188c0fe8e66d83350d6f9cf
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { appendFile, writeFile } from 'node:fs/promises';
+
+          const repository = process.env.GITHUB_REPOSITORY;
+          const targetSha = process.env.TARGET_SHA;
+          const apiBase = process.env.GITHUB_API_URL;
+          const headers = {
+            Accept: 'application/vnd.github+json',
+            Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+            'X-GitHub-Api-Version': '2022-11-28',
+          };
+          const required = [
+            'validation',
+            'm3-r2-p5-source-generation-acceptance',
+            'm3-r2-p4-source-bundle-publication',
+            'm3-r1-k6-api-spec-compiler',
+            'm2-r2-rebaseline-portable-release-readiness',
+            'm2-r3-final-release-closure',
+            'm3-r0-execution-contract-foundation',
+            'm3-r2-p3-source-artifact-validation',
+            'm3-r2-k6-api-source-generation',
+            'm2-r2a-external-evidence-intake',
+          ];
+
+          async function api(path) {
+            const response = await fetch(`${apiBase}${path}`, { headers });
+            if (!response.ok) {
+              throw new Error(`GitHub API ${response.status} for ${path}: ${await response.text()}`);
+            }
+            return response.json();
+          }
+
+          const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+          let exact = [];
+          let selected = new Map();
+          for (let attempt = 1; attempt <= 72; attempt += 1) {
+            const data = await api(`/repos/${repository}/actions/runs?head_sha=${targetSha}&event=push&per_page=100`);
+            exact = data.workflow_runs.filter((run) =>
+              run.head_sha === targetSha
+              && run.head_branch === 'main'
+              && run.event === 'push');
+            selected = new Map();
+            for (const name of required) {
+              const run = exact.filter((candidate) => candidate.name === name)
+                .sort((left, right) => right.id - left.id)[0];
+              if (run) selected.set(name, run);
+            }
+            const failed = [...selected.entries()].find(([, run]) =>
+              run.status === 'completed' && run.conclusion !== 'success');
+            if (failed) break;
+            const complete = selected.size === required.length
+              && [...selected.values()].every((run) => run.status === 'completed');
+            if (complete) break;
+            if (attempt < 72) await sleep(10_000);
+          }
+
+          const blockers = [];
+          const missing = required.filter((name) => !selected.has(name));
+          const incomplete = [...selected.entries()]
+            .filter(([, run]) => run.status !== 'completed')
+            .map(([name, run]) => ({ name, id: run.id, status: run.status, conclusion: run.conclusion }));
+          const failed = [...selected.entries()]
+            .filter(([, run]) => run.status === 'completed' && run.conclusion !== 'success')
+            .map(([name, run]) => ({ name, id: run.id, status: run.status, conclusion: run.conclusion }));
+          for (const name of missing) blockers.push(`missing-push-workflow:${name}`);
+          for (const run of incomplete) blockers.push(`incomplete-push-workflow:${run.name}:${run.status}`);
+          for (const run of failed) blockers.push(`failed-push-workflow:${run.name}:${run.conclusion}`);
+
+          const evidence = {
+            schemaVersion: 'm3-r2-final-exact-main-observer/v1',
+            observedAt: new Date().toISOString(),
+            repository,
+            target: {
+              branch: 'main',
+              mergeSha: targetSha,
+              sourcePr: 48,
+              sourceHeadSha: 'fc81b9184a3f1024eb1ff0d64b5145ede7569aa0',
+              mergeMethod: 'merge',
+            },
+            permissions: { contents: 'read', actions: 'read' },
+            requiredWorkflows: required,
+            observedExactRuns: exact
+              .sort((left, right) => left.name.localeCompare(right.name) || right.id - left.id)
+              .map((run) => ({
+                id: run.id,
+                name: run.name,
+                runNumber: run.run_number,
+                workflowId: run.workflow_id,
+                event: run.event,
+                headBranch: run.head_branch,
+                headSha: run.head_sha,
+                status: run.status,
+                conclusion: run.conclusion,
+                createdAt: run.created_at,
+                updatedAt: run.updated_at,
+              })),
+            diagnostics: {
+              missingRequiredWorkflows: missing,
+              incompleteRequiredWorkflows: incomplete,
+              failedRequiredWorkflows: failed,
+            },
+            runs: {},
+            decision: {
+              m3R2Accepted: false,
+              postMergeExactMainVerified: false,
+              p5MainPushContractVerified: false,
+              sourceGenerationAcceptanceComplete: true,
+              sourcePersisted: true,
+              artifactPublished: true,
+              remoteArtifactPublished: false,
+              sourceExecuted: false,
+              executionRuntimeStarted: false,
+              k6Invoked: false,
+              externalProcessExecuted: false,
+              nextRequiredSlice: 'M3-R2-G4-final-verification',
+              repositoryBlockers: blockers,
+              m3R3Started: false,
+            },
+            safetyBoundary: {
+              remoteArtifactPublished: false,
+              sourceExecuted: false,
+              executionRuntimeStarted: false,
+              k6Invoked: false,
+              xk6Invoked: false,
+              playwrightInvoked: false,
+              externalProcessExecuted: false,
+              nodeVmUsed: false,
+              evalUsed: false,
+              dynamicImportUsed: false,
+              targetNetworkAccessed: false,
+              databaseAccessed: false,
+              secretAccessed: false,
+              filesystemCredentialAccessed: false,
+              temporaryExecutionDirectoryCreated: false,
+              containerStarted: false,
+              kubernetesResourceCreated: false,
+              workerAdded: false,
+              queueAdded: false,
+              schedulerAdded: false,
+              runtimeResultCollected: false,
+              allureImplemented: false,
+            },
+          };
+
+          if (blockers.length === 0) {
+            for (const name of required) {
+              const run = selected.get(name);
+              const jobData = await api(`/repos/${repository}/actions/runs/${run.id}/jobs?per_page=100`);
+              const jobs = (jobData.jobs ?? []).map((job) => ({
+                id: job.id,
+                name: job.name,
+                status: job.status,
+                conclusion: job.conclusion,
+              }));
+              if (jobs.length === 0) blockers.push(`missing-jobs:${name}`);
+              for (const job of jobs) {
+                if (job.status !== 'completed' || job.conclusion !== 'success') {
+                  blockers.push(`unsuccessful-job:${name}:${job.name}:${job.status}:${job.conclusion}`);
+                }
+              }
+
+              const artifactData = await api(`/repos/${repository}/actions/runs/${run.id}/artifacts?per_page=100`);
+              const artifacts = (artifactData.artifacts ?? []).map((artifact) => ({
+                id: artifact.id,
+                name: artifact.name,
+                digest: artifact.digest,
+                sizeInBytes: artifact.size_in_bytes,
+                expired: artifact.expired,
+                createdAt: artifact.created_at,
+                expiresAt: artifact.expires_at,
+                boundHeadSha: artifact.workflow_run?.head_sha ?? null,
+              }));
+              if (artifacts.length === 0) blockers.push(`missing-artifacts:${name}`);
+              for (const artifact of artifacts) {
+                if (artifact.expired) blockers.push(`expired-artifact:${name}:${artifact.name}`);
+                if (artifact.boundHeadSha !== null && artifact.boundHeadSha !== targetSha) {
+                  blockers.push(`artifact-head-mismatch:${name}:${artifact.name}`);
+                }
+              }
+
+              evidence.runs[name] = {
+                id: run.id,
+                runNumber: run.run_number,
+                workflowId: run.workflow_id,
+                event: run.event,
+                headBranch: run.head_branch,
+                headSha: run.head_sha,
+                status: run.status,
+                conclusion: run.conclusion,
+                jobs,
+                artifacts,
+              };
+            }
+
+            const p5Artifacts = evidence.runs['m3-r2-p5-source-generation-acceptance']?.artifacts ?? [];
+            for (const requiredName of [
+              'm3-r2-source-generation-p5-evidence',
+              'm3-r2-source-generation-p5-postgres-log',
+            ]) {
+              const artifact = p5Artifacts.find((candidate) => candidate.name === requiredName);
+              if (!artifact
+                  || artifact.expired
+                  || artifact.boundHeadSha !== targetSha
+                  || !/^sha256:[a-f0-9]{64}$/.test(artifact.digest ?? '')) {
+                blockers.push(`invalid-p5-artifact:${requiredName}`);
+              }
+            }
+          }
+
+          const gatePassed = blockers.length === 0;
+          evidence.decision.m3R2Accepted = gatePassed;
+          evidence.decision.postMergeExactMainVerified = gatePassed;
+          evidence.decision.p5MainPushContractVerified = gatePassed;
+          evidence.decision.nextRequiredSlice = gatePassed ? 'M3-R3' : 'M3-R2-G4-final-verification';
+          evidence.decision.repositoryBlockers = blockers;
+
+          await writeFile('/tmp/m3-r2-final-exact-main-observer-evidence.json',
+            `${JSON.stringify(evidence, null, 2)}\n`, 'utf8');
+          await appendFile(process.env.GITHUB_OUTPUT, `gate_passed=${gatePassed}\n`, 'utf8');
+          console.log(JSON.stringify(evidence, null, 2));
+          NODE
+      - name: Upload final exact-main observer evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r2-final-exact-main-observer-evidence
+          path: /tmp/m3-r2-final-exact-main-observer-evidence.json
+          if-no-files-found: error
+          retention-days: 90
+      - name: Enforce final exact-main observer gate
+        if: steps.observe.outputs.gate_passed != 'true'
+        shell: bash
+        run: |
+          cat /tmp/m3-r2-final-exact-main-observer-evidence.json
+          exit 1
