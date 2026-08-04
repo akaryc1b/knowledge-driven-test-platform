@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "k6-sanitized-runtime-result-schema-catalog/v1",
+  "schemas": [
+    {
+      "schemaVersion": "k6-node-process-adapter/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-node-process-adapter.schema.json"
+    },
+    {
+      "schemaVersion": "k6-process-execution-command/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-process-execution-command.schema.json"
+    },
+    {
+      "schemaVersion": "k6-process-lifecycle-evidence/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-process-lifecycle-evidence.schema.json"
+    },
+    {
+      "schemaVersion": "k6-process-terminal-observation/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-process-terminal-observation.schema.json"
+    },
+    {
+      "schemaVersion": "k6-sanitized-runtime-outcome/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-sanitized-runtime-outcome.schema.json"
+    },
+    {
+      "schemaVersion": "k6-runtime-execution-evidence/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-runtime-execution-evidence.schema.json"
+    },
+    {
+      "schemaVersion": "m3-r3-sanitized-runtime-result-p3-evidence/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/m3-r3-sanitized-runtime-result-p3-evidence.schema.json"
+    }
+  ]
+}
