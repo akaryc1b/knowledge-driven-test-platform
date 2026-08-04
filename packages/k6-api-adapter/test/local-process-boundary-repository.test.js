@@ -52,9 +52,9 @@ test('P1 Repository Validator rejects Secret declaration', async () => {
 
 test('P1 Repository Validator rejects launch Schema execution escalation', async () => {
   const repository = clone(await loadM3R3P1Repository());
-  const path = M3_R3_P1_PATHS.schemas[6];
+  const path = M3_R3_P1_PATHS.schemas[1];
   repository.files[path] = repository.files[path]
-    .replace('"processStartAuthorized": {\n      "const": false',
-      '"processStartAuthorized": {\n      "const": true');
+    .replace('"processStartAuthorized":{"const":false}',
+      '"processStartAuthorized":{"const":true}');
   assert.throws(() => validateM3R3P1Repository(repository), /widens the P1 process boundary/u);
 });
