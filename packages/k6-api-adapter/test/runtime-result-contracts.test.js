@@ -221,7 +221,7 @@ test('P3 rejects an exit code outside the bounded range', async () => {
     lifecycleEvidence: record.lifecycleEvidence,
     exitCode: 256,
     signal: null,
-  }), /Exit code/u);
+  }), /bounded exit code|Exit code/u);
 });
 
 test('P3 rejects arbitrary signals', async () => {
