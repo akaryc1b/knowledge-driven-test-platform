@@ -63,7 +63,6 @@ export const K6_API_SOURCE_LIMITS = Object.freeze({
 
 export const K6_API_SOURCE_RESULT_SCHEMA_VERSION = 'k6-api-source-result/v1';
 
-
 export const K6_API_SOURCE_STATIC_VALIDATOR_ID = 'k6-api-independent-static-validator';
 export const K6_API_SOURCE_STATIC_VALIDATOR_VERSION = '1.0.0';
 export const K6_API_SOURCE_ARTIFACT_SCHEMA_VERSION = 'k6-api-source-artifact/v1';
@@ -85,3 +84,33 @@ export const K6_API_SOURCE_PUBLICATION_BUNDLE_KIND = 'k6-api-source-publication-
 export const K6_API_SOURCE_PUBLICATION_FORMAT_VERSION = 'canonical-directory/v1';
 export const K6_API_SOURCE_PUBLICATION_STORAGE_KIND =
   'CONTENT_ADDRESSED_FILESYSTEM';
+
+export const K6_API_RUNTIME_POLICY_SCHEMA_VERSION = 'k6-api-runtime-policy/v1';
+export const K6_API_RUNTIME_ADMISSION_REQUEST_SCHEMA_VERSION =
+  'k6-api-runtime-admission-request/v1';
+export const K6_API_INVOCATION_PLAN_SCHEMA_VERSION = 'k6-api-invocation-plan/v1';
+export const K6_API_RUNTIME_ADMISSION_EVIDENCE_SCHEMA_VERSION =
+  'k6-api-runtime-admission-evidence/v1';
+export const K6_API_RUNTIME_ID = 'k6-api-runtime';
+export const K6_API_RUNTIME_VERSION = '1.0.0';
+export const K6_API_RUNTIME_IMPLEMENTATION_STATUS = 'ADMISSION_ONLY';
+export const K6_API_RUNTIME_EXECUTION_MODE = 'LOCAL_PROCESS';
+export const K6_API_RUNTIME_EXECUTABLE = 'k6';
+export const K6_API_RUNTIME_SUBCOMMAND = 'run';
+export const K6_API_RUNTIME_CANCELLATION_MODE = 'COOPERATIVE';
+export const K6_API_RUNTIME_SOURCE_RELATIVE_PATH = 'source/main.js';
+export const K6_API_RUNTIME_WORKING_DIRECTORY_MODE =
+  'MATERIALIZED_IMMUTABLE_BUNDLE_ROOT';
+export const K6_API_RUNTIME_ALLOWED_ENVIRONMENT_VARIABLE_NAMES = Object.freeze([
+  'K6_LOG_FORMAT',
+  'K6_NO_COLOR',
+]);
+export const K6_API_RUNTIME_ALLOWED_OUTPUT_ARTIFACT_KINDS = Object.freeze([
+  'k6-run-summary-json',
+]);
+export const K6_API_RUNTIME_LIMITS = Object.freeze({
+  maxVus: 50,
+  maxIterations: 10_000,
+  maxDurationMs: 900_000,
+  maxGracefulStopMs: 30_000,
+});
