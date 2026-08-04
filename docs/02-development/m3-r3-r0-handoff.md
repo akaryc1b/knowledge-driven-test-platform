@@ -75,6 +75,7 @@ invocationPlanReady=true
 executionImplementationStarted=false
 repositoryBlockers=[]
 nextRequiredSlice=M3-R3-P1
+p1Authorized=false
+readyTransitionAuthorized=false
+mergeTransitionAuthorized=false
 ```
-
-M3-R3-P1 started is false. Ready=true is not asserted. merged=true is not asserted.
