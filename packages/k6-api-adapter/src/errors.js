@@ -37,7 +37,6 @@ export function sourceRendererInvariant(condition, code, message, details = {}) 
   if (!condition) throw new K6ApiSourceRendererError(code, message, details);
 }
 
-
 export class K6ApiSourceValidationError extends Error {
   constructor(code, message, details = {}) {
     super(message);
@@ -62,4 +61,17 @@ export class K6ApiSourcePublicationError extends Error {
 
 export function sourcePublicationInvariant(condition, code, message, details = {}) {
   if (!condition) throw new K6ApiSourcePublicationError(code, message, details);
+}
+
+export class K6ApiRuntimeAdmissionError extends Error {
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = 'K6ApiRuntimeAdmissionError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+export function runtimeAdmissionInvariant(condition, code, message, details = {}) {
+  if (!condition) throw new K6ApiRuntimeAdmissionError(code, message, details);
 }
