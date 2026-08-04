@@ -252,7 +252,7 @@ test('P1 rejects an unaccepted Source Bundle through invocation binding', async 
   redigest(plan, 'planDigest');
   assert.throws(() => createK6ProcessLaunchSpecification({
     ...runtimeBindings(runtime), invocationPlan: plan,
-  }), /does not match the admitted immutable Source bundle/u);
+  }), /Source URI does not bind the bundle digest/u);
 });
 
 test('P1 rejects an unbound fake-port receipt', async () => {
