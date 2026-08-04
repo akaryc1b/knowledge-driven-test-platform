@@ -15,10 +15,14 @@ import {
   loadM3R3P1Repository,
   validateM3R3P1Repository,
 } from './m3-r3-p1-repository.js';
+import {
+  loadAndValidateM3R3P1WorkflowEvidence,
+} from './validate-m3-r3-p1-workflow-evidence.js';
 
 export async function validateM3R3P1LocalProcessBoundary(options = {}) {
   const repository = options.repository ?? await loadM3R3P1Repository();
   validateM3R3P1Repository(repository);
+  await loadAndValidateM3R3P1WorkflowEvidence();
   const fixture = options.fixture ?? await localProcessBoundaryFixture();
   const generatedAt = options.generatedAt ?? new Date().toISOString();
   assertM3R3P1(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/u.test(generatedAt)
