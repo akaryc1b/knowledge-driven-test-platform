@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-runtime/v1/k6-api-invocation-plan.schema.json",
+  "title": "K6 API Invocation Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "planId",
+    "admissionId",
+    "admissionDigest",
+    "runtime",
+    "source",
+    "resources",
+    "environmentVariableNames",
+    "outputArtifactKinds",
+    "argv",
+    "workingDirectoryMode",
+    "executionAuthorized",
+    "planDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "k6-api-invocation-plan/v1" },
+    "planId": {
+      "type": "string",
+      "pattern": "^k6invocation-[a-f0-9]{20}$"
+    },
+    "admissionId": {
+      "type": "string",
+      "pattern": "^k6runtime-admission-[a-f0-9]{20}$"
+    },
+    "admissionDigest": { "$ref": "#/$defs/digest" },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtimeId",
+        "runtimeVersion",
+        "implementationStatus",
+        "executionMode",
+        "executable",
+        "shellAllowed"
+      ],
+      "properties": {
+        "runtimeId": { "const": "k6-api-runtime" },
+        "runtimeVersion": { "const": "1.0.0" },
+        "implementationStatus": { "const": "ADMISSION_ONLY" },
+        "executionMode": { "const": "LOCAL_PROCESS" },
+        "executable": { "const": "k6" },
+        "shellAllowed": { "const": false }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundleDigest",
+        "sourceDigest",
+        "logicalUri",
+        "relativePath"
+      ],
+      "properties": {
+        "bundleDigest": { "$ref": "#/$defs/digest" },
+        "sourceDigest": { "$ref": "#/$defs/digest" },
+        "logicalUri": {
+          "type": "string",
+          "pattern": "^kdtp-source-bundle://sha256/[a-f0-9]{64}$"
+        },
+        "relativePath": { "const": "source/main.js" }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vus", "iterations", "durationMs", "gracefulStopMs"],
+      "properties": {
+        "vus": { "type": "integer", "minimum": 1, "maximum": 50 },
+        "iterations": { "type": "integer", "minimum": 1, "maximum": 10000 },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 900000,
+          "multipleOf": 1000
+        },
+        "gracefulStopMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30000,
+          "multipleOf": 1000
+        }
+      }
+    },
+    "environmentVariableNames": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": ["K6_LOG_FORMAT", "K6_NO_COLOR"]
+      }
+    },
+    "outputArtifactKinds": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": ["k6-run-summary-json"]
+      }
+    },
+    "argv": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 12,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^;&|`$<>\\n\\r]+$"
+      },
+      "contains": { "const": "source/main.js" },
+      "minContains": 1,
+      "maxContains": 1
+    },
+    "workingDirectoryMode": {
+      "const": "MATERIALIZED_IMMUTABLE_BUNDLE_ROOT"
+    },
+    "executionAuthorized": { "const": false },
+    "planDigest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
