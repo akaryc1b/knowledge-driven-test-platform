@@ -5,7 +5,8 @@ import { localProcessBoundaryFixture } from './local-process-boundary-test-helpe
 
 const ROOT = new URL('../../../', import.meta.url);
 const paths = {
-  catalog: 'schemas/execution/k6-api-runtime/schema-catalog.json',
+  r0Catalog: 'schemas/execution/k6-api-runtime/schema-catalog.json',
+  catalog: 'schemas/execution/k6-api-runtime/p1-schema-catalog.json',
   port: 'schemas/execution/k6-api-runtime/v1/k6-local-process-port.schema.json',
   specification:
     'schemas/execution/k6-api-runtime/v1/k6-process-launch-specification.schema.json',
@@ -15,7 +16,7 @@ const paths = {
     'schemas/execution/k6-api-runtime/v1/m3-r3-local-process-boundary-p1-evidence.schema.json',
 };
 
-const existing = [
+const acceptedR0Schemas = [
   { schemaVersion: 'k6-api-runtime-policy/v1',
     path: 'schemas/execution/k6-api-runtime/v1/k6-api-runtime-policy.schema.json' },
   { schemaVersion: 'k6-api-runtime-admission-request/v1',
@@ -26,6 +27,15 @@ const existing = [
     path: 'schemas/execution/k6-api-runtime/v1/k6-api-runtime-admission-evidence.schema.json' },
   { schemaVersion: 'm3-r3-runtime-admission-r0-evidence/v1',
     path: 'schemas/execution/k6-api-runtime/v1/m3-r3-runtime-admission-r0-evidence.schema.json' },
+];
+
+const p1Schemas = [
+  { schemaVersion: 'k6-local-process-port/v1', path: paths.port },
+  { schemaVersion: 'k6-process-launch-specification/v1', path: paths.specification },
+  { schemaVersion: 'k6-process-launch-decision/v1', path: paths.decision },
+  { schemaVersion: 'k6-process-boundary-evidence/v1', path: paths.evidence },
+  { schemaVersion: 'm3-r3-local-process-boundary-p1-evidence/v1',
+    path: paths.acceptance },
 ];
 
 async function json(path) {
@@ -39,21 +49,26 @@ function assertClosed(schema, label) {
     `${label} every property required`);
 }
 
-test('P1 Schema Catalog adds five versioned contracts without rewriting R0', async () => {
+test('P1 preserves the accepted R0 Schema Catalog exactly', async () => {
+  const catalog = await json(paths.r0Catalog);
+  assert.equal(catalog.schemaVersion, 'k6-api-runtime-schema-catalog/v1');
+  assert.deepEqual(catalog.schemas, acceptedR0Schemas);
+});
+
+test('P1 has an isolated five-contract Schema Catalog', async () => {
   const catalog = await json(paths.catalog);
-  assert.deepEqual(catalog.schemas, [
-    ...existing,
-    { schemaVersion: 'k6-local-process-port/v1', path: paths.port },
-    { schemaVersion: 'k6-process-launch-specification/v1', path: paths.specification },
-    { schemaVersion: 'k6-process-launch-decision/v1', path: paths.decision },
-    { schemaVersion: 'k6-process-boundary-evidence/v1', path: paths.evidence },
-    { schemaVersion: 'm3-r3-local-process-boundary-p1-evidence/v1',
-      path: paths.acceptance },
-  ]);
+  assert.equal(catalog.schemaVersion, 'k6-local-process-boundary-schema-catalog/v1');
+  assert.deepEqual(catalog.schemas, p1Schemas);
 });
 
 test('P1 Schemas are closed Draft 2020-12 contracts', async () => {
-  for (const [label, path] of Object.entries(paths).filter(([key]) => key !== 'catalog')) {
+  for (const [label, path] of [
+    ['port', paths.port],
+    ['specification', paths.specification],
+    ['decision', paths.decision],
+    ['evidence', paths.evidence],
+    ['acceptance', paths.acceptance],
+  ]) {
     const schema = await json(path);
     assert.equal(schema.$schema, 'https://json-schema.org/draft/2020-12/schema');
     assertClosed(schema, label);
