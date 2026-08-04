@@ -34,7 +34,7 @@ export function validateM3R3P1WorkflowEvidence(source) {
   const checkoutPattern = new RegExp([
     'uses: actions/checkout@v4',
     '\\s+with:',
-    `\\s+ref: \\${\\{\\{ github\\.event\\.pull_request\\.head\\.sha \\|\\| github\\.sha \\}\\}`,
+    '\\s+ref: \\$\\{\\{ github\\.event\\.pull_request\\.head\\.sha \\|\\| github\\.sha \\}\\}',
     '\\s+fetch-depth: 1',
     '\\s+persist-credentials: false',
   ].join(''), 'u');
