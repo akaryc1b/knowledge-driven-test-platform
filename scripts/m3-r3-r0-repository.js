@@ -136,7 +136,10 @@ function validateSchemas(files) {
       ?.executionImplementationStarted?.const === false
       && schema.properties?.decision?.properties?.nextRequiredSlice?.const === 'M3-R3-P1'
       && Object.values(schema.properties?.safetyBoundary?.properties ?? {})
-        .every((property) => property.const === false),
+        .every((property) => property.const === false)
+      && canonicalStringify(
+        Object.keys(schema.properties?.safetyBoundary?.properties ?? {}).sort())
+        === canonicalStringify([...M3_R3_R0_FALSE_SAFETY_FIELDS].sort()),
     `${path} widened the non-execution decision`);
   }
 }
@@ -237,9 +240,10 @@ function validateDocumentation(files) {
       'k6Invoked=false',
       'externalProcessExecuted=false',
     ]) assertM3R3R0(source.includes(marker), `${path} is missing ${marker}`);
-    assertM3R3R0(!source.includes('M3-R3-P1 started')
-        && !source.includes('Ready=true')
-        && !source.includes('merged=true'),
+    const lines = source.split(/\r?\n/u).map((line) => line.trim());
+    assertM3R3R0(!lines.includes('M3-R3-P1 started')
+        && !lines.includes('Ready=true')
+        && !lines.includes('merged=true'),
     `${path} starts a forbidden next slice or merge transition`);
   }
 }
