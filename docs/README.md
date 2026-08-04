@@ -21,6 +21,7 @@
 - [当前 M3-R2-G1 交接](02-development/m3-r2-g1-handoff.md)
 - [M3-R2-G4 P5 exact-main push correction](02-development/m3-r2-g4-p5-main-push-correction.md)
 - [M3-R3-R0 Runtime Admission 交接](02-development/m3-r3-r0-handoff.md)
+- [M3-R3-P1 Local Process Boundary 交接](02-development/m3-r3-p1-local-process-boundary-handoff.md)
 
 ## 路线图
 
@@ -53,6 +54,7 @@
 - [M3-R1 Deterministic Non-Executing k6 API Spec Compiler](03-roadmap/m3-r1-k6-api-spec-compiler.md)
 - [M3-R2 Governed Deterministic k6 API Source Generation](03-roadmap/m3-r2-governed-k6-api-source-generation.md)
 - [M3-R3-R0 Governed Runtime Admission](03-roadmap/m3-r3-runtime-admission.md)
+- [M3-R3-P1 Injected Local Process Boundary](03-roadmap/m3-r3-p1-local-process-boundary.md)
 
 ## 发布与治理
 
@@ -70,12 +72,14 @@
 - [M3-R1 k6 API Spec Compiler](releases/M3-R1-k6-api-spec-compiler.md)
 - [M3-R2 k6 API Source Generation](releases/M3-R2-k6-api-source-generation.md)
 - [M3-R3-R0 Runtime Admission](releases/M3-R3-R0-runtime-admission.md)
+- [M3-R3-P1 Local Process Boundary](releases/M3-R3-P1-local-process-boundary.md)
 - [M1 发布验收矩阵](04-governance/m1-release-acceptance-matrix.md)
 - [M2 Release Readiness 与历史 Promotion 验收矩阵](04-governance/m2-production-promotion-acceptance-matrix.md)
 - [M3-R0 Execution Contract 验收矩阵](04-governance/m3-r0-execution-contract-acceptance-matrix.md)
 - [M3-R1 k6 API Spec Compiler 验收矩阵](04-governance/m3-r1-k6-api-spec-compiler-acceptance-matrix.md)
 - [M3-R2 Source Generation 验收矩阵](04-governance/m3-r2-source-generation-acceptance-matrix.md)
 - [M3-R3-R0 Runtime Admission 验收矩阵](04-governance/m3-r3-runtime-admission-acceptance-matrix.md)
+- [M3-R3-P1 Local Process Boundary 验收矩阵](04-governance/m3-r3-p1-local-process-boundary-acceptance-matrix.md)
 - [知识治理](04-governance/knowledge-governance.md)
 - [多项目安全与隔离](04-governance/security-and-isolation.md)
 
@@ -83,6 +87,7 @@
 
 - [M3-R2 Source Generation Threat Model](06-security/m3-r2-source-generation-threat-model.md)
 - [M3-R3-R0 Runtime Admission Threat Model](06-security/m3-r3-runtime-admission-threat-model.md)
+- [M3-R3-P1 Local Process Boundary Threat Model](06-security/m3-r3-p1-local-process-boundary-threat-model.md)
 
 ## 架构决策
 
@@ -116,3 +121,4 @@
 - [ADR-0028：以中立 IR 隔离 k6 API 编译与执行](05-adr/ADR-0028-deterministic-non-executing-k6-api-spec-compiler.md)
 - [ADR-0029：受治理的确定性 k6 Source Generation 边界](05-adr/ADR-0029-governed-deterministic-k6-source-generation.md)
 - [ADR-0030：在进程执行前建立受治理的 k6 Runtime Admission](05-adr/ADR-0030-governed-k6-runtime-admission.md)
+- [ADR-0031：在 Node 进程执行前注入非执行 LocalProcessPort](05-adr/ADR-0031-injected-local-process-boundary.md)

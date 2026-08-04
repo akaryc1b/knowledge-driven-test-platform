@@ -1,0 +1,243 @@
+name: m3-r3-p1-local-process-boundary
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r3-p1-local-process-boundary.yml'
+      - 'packages/k6-api-adapter/src/**'
+      - 'packages/k6-api-adapter/test/local-process-boundary*.js'
+      - 'schemas/execution/k6-api-runtime/**'
+      - 'scripts/m3-r3-p1-*.js'
+      - 'scripts/validate-m3-r3-p1-local-process-boundary.js'
+      - 'scripts/validate-m3-r3-p1-workflow-evidence.js'
+      - 'docs/02-development/m3-r3-p1-local-process-boundary-handoff.md'
+      - 'docs/03-roadmap/m3-r3-p1-local-process-boundary.md'
+      - 'docs/04-governance/m3-r3-p1-local-process-boundary-acceptance-matrix.md'
+      - 'docs/05-adr/ADR-0031-injected-local-process-boundary.md'
+      - 'docs/06-security/m3-r3-p1-local-process-boundary-threat-model.md'
+      - 'docs/releases/M3-R3-P1-local-process-boundary.md'
+      - 'docs/README.md'
+      - 'package.json'
+      - 'package-lock.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/m3-r3-p1-local-process-boundary.yml'
+      - 'packages/k6-api-adapter/src/**'
+      - 'packages/k6-api-adapter/test/local-process-boundary*.js'
+      - 'schemas/execution/k6-api-runtime/**'
+      - 'scripts/m3-r3-p1-*.js'
+      - 'scripts/validate-m3-r3-p1-local-process-boundary.js'
+      - 'scripts/validate-m3-r3-p1-workflow-evidence.js'
+      - 'docs/02-development/m3-r3-p1-local-process-boundary-handoff.md'
+      - 'docs/03-roadmap/m3-r3-p1-local-process-boundary.md'
+      - 'docs/04-governance/m3-r3-p1-local-process-boundary-acceptance-matrix.md'
+      - 'docs/05-adr/ADR-0031-injected-local-process-boundary.md'
+      - 'docs/06-security/m3-r3-p1-local-process-boundary-threat-model.md'
+      - 'docs/releases/M3-R3-P1-local-process-boundary.md'
+      - 'docs/README.md'
+      - 'package.json'
+      - 'package-lock.json'
+
+permissions:
+  contents: read
+
+env:
+  M3_R3_P1_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  validate-local-process-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify exact Head checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_head="$(git rev-parse HEAD)"
+          test "$actual_head" = "$M3_R3_P1_EXACT_HEAD"
+          test -z "$(git status --porcelain)"
+          echo "checkedOutExactHead=$actual_head"
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Run focused P1 local process boundary tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test packages/k6-api-adapter/test/local-process-boundary*.test.js 2>&1 \
+            | tee /tmp/m3-r3-p1-focused.tap
+      - name: Run all k6 API Adapter tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test packages/k6-api-adapter/test/*.test.js 2>&1 \
+            | tee /tmp/m3-r3-p1-adapter.tap
+      - name: Run complete Node.js test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm test 2>&1 | tee /tmp/m3-r3-p1-full-node.tap
+      - name: Export exact test counts
+        shell: bash
+        run: |
+          set -euo pipefail
+          parse_tap() {
+            local prefix="$1" file="$2"
+            local total passed failed skipped
+            total="$(awk '/^# tests /{value=$3} END{print value+0}' "$file")"
+            passed="$(awk '/^# pass /{value=$3} END{print value+0}' "$file")"
+            failed="$(awk '/^# fail /{value=$3} END{print value+0}' "$file")"
+            skipped="$(awk '/^# skipped /{value=$3} END{print value+0}' "$file")"
+            test "$total" -gt 0
+            test "$failed" -eq 0
+            printf '%s_TOTAL=%s\n%s_PASSED=%s\n%s_FAILED=%s\n%s_SKIPPED=%s\n' \
+              "$prefix" "$total" "$prefix" "$passed" "$prefix" "$failed" \
+              "$prefix" "$skipped" >> "$GITHUB_ENV"
+          }
+          parse_tap M3_R3_P1_FOCUSED /tmp/m3-r3-p1-focused.tap
+          parse_tap M3_R3_P1_ADAPTER /tmp/m3-r3-p1-adapter.tap
+          parse_tap M3_R3_P1_FULL /tmp/m3-r3-p1-full-node.tap
+          printf 'M3_R3_P1_REPOSITORY_VALIDATOR=success\n' >> "$GITHUB_ENV"
+      - name: Run complete Repository Validator
+        run: npm run validate
+      - name: Re-run P1 validator explicitly
+        run: npm run validate:m3-r3-p1-local-process-boundary
+      - name: Run accepted predecessor anti-regression validators
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run validate:m3-r3-runtime-admission
+          npm run validate:m3-r2-source-generation-p5
+          npm run validate:m3-r1-k6-api-spec-compiler
+          npm run validate:m3-r0-execution-contracts
+          npm run validate:m2-final-release-closure
+          npm run validate:m2-portable-release-readiness
+      - name: Generate exact-Head P1 Evidence and Artifact payload
+        env:
+          M3_R3_P1_BRANCH: ${{ github.head_ref || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$M3_R3_P1_EXACT_HEAD" = "${{ github.event.pull_request.head.sha || github.sha }}"
+          test "$(git rev-parse HEAD)" = "$M3_R3_P1_EXACT_HEAD"
+          mkdir -p /tmp/m3-r3-p1-artifact/evidence \
+            /tmp/m3-r3-p1-artifact/logs
+          GITHUB_HEAD_REF="$M3_R3_P1_BRANCH" \
+            node scripts/validate-m3-r3-p1-local-process-boundary.js \
+            > /tmp/m3-r3-p1-artifact/evidence/m3-r3-p1-local-process-boundary-evidence.json
+          cp --parents schemas/execution/k6-api-runtime/schema-catalog.json \
+            schemas/execution/k6-api-runtime/p1-schema-catalog.json \
+            schemas/execution/k6-api-runtime/v1/*.schema.json \
+            /tmp/m3-r3-p1-artifact/
+          cp --parents docs/02-development/m3-r3-p1-local-process-boundary-handoff.md \
+            docs/03-roadmap/m3-r3-p1-local-process-boundary.md \
+            docs/04-governance/m3-r3-p1-local-process-boundary-acceptance-matrix.md \
+            docs/05-adr/ADR-0031-injected-local-process-boundary.md \
+            docs/06-security/m3-r3-p1-local-process-boundary-threat-model.md \
+            docs/releases/M3-R3-P1-local-process-boundary.md \
+            /tmp/m3-r3-p1-artifact/
+          cp /tmp/m3-r3-p1-focused.tap /tmp/m3-r3-p1-adapter.tap \
+            /tmp/m3-r3-p1-full-node.tap /tmp/m3-r3-p1-artifact/logs/
+      - name: Verify Artifact layout and scan credential-shaped material
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readdir, readFile } from 'node:fs/promises';
+          import { join, relative, sep } from 'node:path';
+          import { scanSensitiveValues } from './packages/k6-api-adapter/test/p5-test-helpers.js';
+          const root = '/tmp/m3-r3-p1-artifact';
+          const expectedPaths = [
+            'evidence/m3-r3-p1-local-process-boundary-evidence.json',
+            'schemas/execution/k6-api-runtime/schema-catalog.json',
+            'schemas/execution/k6-api-runtime/p1-schema-catalog.json',
+            'schemas/execution/k6-api-runtime/v1/k6-local-process-port.schema.json',
+            'schemas/execution/k6-api-runtime/v1/k6-process-launch-specification.schema.json',
+            'schemas/execution/k6-api-runtime/v1/k6-process-launch-decision.schema.json',
+            'schemas/execution/k6-api-runtime/v1/k6-process-boundary-evidence.schema.json',
+            'schemas/execution/k6-api-runtime/v1/m3-r3-local-process-boundary-p1-evidence.schema.json',
+            'docs/02-development/m3-r3-p1-local-process-boundary-handoff.md',
+            'docs/03-roadmap/m3-r3-p1-local-process-boundary.md',
+            'docs/04-governance/m3-r3-p1-local-process-boundary-acceptance-matrix.md',
+            'docs/05-adr/ADR-0031-injected-local-process-boundary.md',
+            'docs/06-security/m3-r3-p1-local-process-boundary-threat-model.md',
+            'docs/releases/M3-R3-P1-local-process-boundary.md',
+            'logs/m3-r3-p1-focused.tap',
+            'logs/m3-r3-p1-adapter.tap',
+            'logs/m3-r3-p1-full-node.tap',
+          ];
+          async function walk(directory) {
+            const files = [];
+            for (const entry of await readdir(directory, { withFileTypes: true })) {
+              const path = join(directory, entry.name);
+              if (entry.isDirectory()) files.push(...await walk(path));
+              else if (entry.isFile()) files.push(path);
+              else throw new Error(`unsafe Artifact entry: ${path}`);
+            }
+            return files;
+          }
+          const files = await walk(root);
+          const relativePaths = files.map((path) => relative(root, path).split(sep).join('/'));
+          const pathSet = new Set(relativePaths);
+          for (const expectedPath of expectedPaths) {
+            if (!pathSet.has(expectedPath)) throw new Error(`missing Artifact path: ${expectedPath}`);
+          }
+          const lowerPaths = new Map();
+          for (const relativePath of relativePaths) {
+            const key = relativePath.toLowerCase();
+            if (lowerPaths.has(key)) {
+              throw new Error(`duplicate Artifact path under case-insensitive storage: ${relativePath}`);
+            }
+            lowerPaths.set(key, relativePath);
+          }
+          for (const path of files) scanSensitiveValues(await readFile(path, 'utf8'), path);
+          console.log(`artifact layout: ${files.length} safe, case-insensitively unique files`);
+          console.log(`credential-shaped scan: zero matches across ${files.length} files`);
+          NODE
+      - name: Print independently auditable P1 summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const evidence = JSON.parse(await readFile(
+            '/tmp/m3-r3-p1-artifact/evidence/m3-r3-p1-local-process-boundary-evidence.json',
+            'utf8'));
+          console.log(`exactHead=${evidence.source.commitSha}`);
+          console.log(`checkedOutHead=${process.env.M3_R3_P1_EXACT_HEAD}`);
+          console.log(`baseMain=${{ github.event.pull_request.base.sha || 'not-pull-request' }}`);
+          console.log(`focused=${evidence.testResults.focused.passed}/${evidence.testResults.focused.total}`);
+          console.log(`allK6ApiAdapter=${evidence.testResults.k6ApiAdapter.passed}/${evidence.testResults.k6ApiAdapter.total}`);
+          console.log(`fullNode=${evidence.testResults.fullNode.total} total, ${evidence.testResults.fullNode.passed} passed, ${evidence.testResults.fullNode.skipped} skipped, ${evidence.testResults.fullNode.failed} failed`);
+          console.log(`portDigest=${evidence.contracts.portDigest}`);
+          console.log(`launchSpecificationDigest=${evidence.contracts.launchSpecificationDigest}`);
+          console.log(`launchDecisionDigest=${evidence.contracts.launchDecisionDigest}`);
+          console.log(`boundaryEvidenceDigest=${evidence.contracts.boundaryEvidenceDigest}`);
+          console.log(`nodeProcessAdapterImplemented=${evidence.decision.nodeProcessAdapterImplemented}`);
+          console.log(`processStarted=${evidence.decision.processStarted}`);
+          console.log(`k6Invoked=${evidence.decision.k6Invoked}`);
+          console.log(`externalProcessExecuted=${evidence.decision.externalProcessExecuted}`);
+          console.log(`nextRequiredSlice=${evidence.decision.nextRequiredSlice}`);
+          NODE
+      - name: Upload P1 permanent acceptance Artifact
+        id: upload-evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r3-p1-local-process-boundary-evidence
+          path: /tmp/m3-r3-p1-artifact
+          if-no-files-found: error
+          retention-days: 90
+      - name: Print upload-layer digest
+        run: |
+          echo "artifactId=${{ steps.upload-evidence.outputs.artifact-id }}"
+          echo "uploadedZipDigest=${{ steps.upload-evidence.outputs.artifact-digest }}"

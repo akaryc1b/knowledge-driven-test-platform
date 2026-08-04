@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "test": "node --test packages/knowledge-core/test/*.test.js packages/knowledge-registry/test/*.test.js packages/knowledge-registry-postgres/test/*.test.js packages/knowledge-governance/test/*.test.js packages/knowledge-governance-postgres/test/*.test.js packages/governance-query/test/*.test.js packages/project-membership/test/*.test.js packages/project-membership-postgres/test/*.test.js packages/governance-http/test/*.test.js packages/governance-auth-oidc/test/*.test.js apps/knowledge-cli/test/*.test.js apps/read-only-governance-service/test/*.test.js packages/test-plan/test/*.test.js packages/test-capability/test/*.test.js packages/test-planner/test/*.test.js packages/test-plan-registry/test/*.test.js packages/test-plan-postgres/test/*.test.js packages/test-plan-governance/test/*.test.js packages/test-planning-orchestration/test/*.test.js apps/test-plan-cli/test/*.test.js packages/test-plan-query/test/*.test.js packages/test-plan-http/test/*.test.js packages/execution-contract/test/*.test.js packages/k6-api-adapter/test/*.test.js",
-    "validate": "node scripts/validate-repository.js && node scripts/validate-m2-production-promotion-repository.js && node scripts/validate-m2-portable-release-readiness.js && node scripts/validate-m3-r0-execution-contracts.js && node scripts/validate-m3-r1-k6-api-spec-compiler.js && node scripts/validate-m3-r2-source-generation-r0.js && node scripts/validate-m3-r2-source-generation-p1.js && node scripts/validate-m3-r2-source-generation-p2.js && node scripts/validate-m3-r2-source-generation-p3.js && node scripts/validate-m3-r2-source-generation-p4.js && node scripts/validate-m3-r2-source-generation-p5.js && node scripts/validate-m3-r3-runtime-admission.js && node scripts/validate-m2-final-release-closure.js",
+    "validate": "node scripts/validate-repository.js && node scripts/validate-m2-production-promotion-repository.js && node scripts/validate-m2-portable-release-readiness.js && node scripts/validate-m3-r0-execution-contracts.js && node scripts/validate-m3-r1-k6-api-spec-compiler.js && node scripts/validate-m3-r2-source-generation-r0.js && node scripts/validate-m3-r2-source-generation-p1.js && node scripts/validate-m3-r2-source-generation-p2.js && node scripts/validate-m3-r2-source-generation-p3.js && node scripts/validate-m3-r2-source-generation-p4.js && node scripts/validate-m3-r2-source-generation-p5.js && node scripts/validate-m3-r3-runtime-admission.js && node scripts/validate-m3-r3-p1-local-process-boundary.js && node scripts/validate-m2-final-release-closure.js",
     "validate:deployment": "node scripts/validate-kubernetes-manifests.js",
     "validate:release": "node scripts/validate-release-candidate.js",
     "validate:m2-release": "node scripts/validate-m2-release-candidate.js",
@@ -66,6 +66,7 @@
     "validate:m3-r2-source-generation-p4": "node scripts/validate-m3-r2-source-generation-p4.js",
     "example:k6-api-source-bundle-publication": "node examples/k6-api-source-bundle-publication.js",
     "validate:m3-r2-source-generation-p5": "node scripts/validate-m3-r2-source-generation-p5.js",
-    "validate:m3-r3-runtime-admission": "node scripts/validate-m3-r3-runtime-admission.js"
+    "validate:m3-r3-runtime-admission": "node scripts/validate-m3-r3-runtime-admission.js",
+    "validate:m3-r3-p1-local-process-boundary": "node scripts/validate-m3-r3-p1-local-process-boundary.js"
   }
 }
