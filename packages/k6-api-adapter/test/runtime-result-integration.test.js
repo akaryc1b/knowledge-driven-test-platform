@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  resolveM3R3P3Branch,
+} from '../../../scripts/validate-m3-r3-p3-sanitized-runtime-result.js';
+import {
   executeK6ProcessWithSanitizedResult,
 } from '../src/process-execution-lifecycle.js';
 import {
@@ -132,4 +135,16 @@ test('P3 integrated execution exports no PID, stdio value, host path or environm
   assert.equal(result.runtimeEvidence.safetyBoundary.stderrCollected, false);
   assert.equal(result.runtimeEvidence.safetyBoundary.numericProcessIdExposed, false);
   assert.equal(result.runtimeEvidence.safetyBoundary.hostAbsolutePathExposed, false);
+});
+
+test('P3 validator resolves main when push GITHUB_HEAD_REF is empty', () => {
+  assert.equal(resolveM3R3P3Branch({}, {
+    GITHUB_HEAD_REF: '',
+    GITHUB_REF_NAME: 'main',
+  }), 'main');
+  assert.throws(() => resolveM3R3P3Branch({}, {
+    M3_R3_P3_BRANCH: '',
+    GITHUB_HEAD_REF: '',
+    GITHUB_REF_NAME: 'main',
+  }), /branch is invalid/u);
 });
