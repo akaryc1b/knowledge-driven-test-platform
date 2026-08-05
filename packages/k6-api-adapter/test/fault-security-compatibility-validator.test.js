@@ -137,5 +137,5 @@ test('P4 Evidence rejects a self-redigested Ready decision forgery', async () =>
   delete claims.evidenceDigest;
   forged.evidenceDigest = sha256(claims);
   assert.throws(() => validateM3R3P4EvidenceDocument(forged, schema),
-    /const mismatch/u);
+    /merge control mismatch/u);
 });
