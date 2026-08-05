@@ -1,36 +1,36 @@
 # M3-R3-P4 Document Index
 
-This is the controlled document entry point for **M3-R3-P4 — Fault, Security and Compatibility Acceptance**.
+Controlled entry point for **M3-R3-P4 — Fault, Security and Compatibility Acceptance**.
 
-## R0 acceptance foundation
+## Scope and implementation
 
 - [Development handoff](02-development/m3-r3-p4-fault-security-compatibility-handoff.md)
-- [Roadmap and safe-slice order](03-roadmap/m3-r3-p4-fault-security-compatibility-acceptance.md)
+- [Roadmap and safe-slice completion](03-roadmap/m3-r3-p4-fault-security-compatibility-acceptance.md)
 - [Executable acceptance matrix](04-governance/m3-r3-p4-fault-security-compatibility-acceptance-matrix.md)
-- [Threat-model extension](06-security/m3-r3-p4-fault-security-compatibility-threat-model.md)
+- [Threat-model extension and closed findings](06-security/m3-r3-p4-fault-security-compatibility-threat-model.md)
 
-## Permanent P4 records
+## Permanent acceptance
 
-The following records are added by the later P4 evidence slice and must remain separate from accepted historical P3 evidence:
-
-- P4 release note;
-- P4 exact-Head acceptance record;
-- P4 Acceptance Evidence Schema and Schema Catalog;
-- P4 permanent Workflow and path-preserving Artifact;
-- root Repository Validator registration.
+- [Exact-Head acceptance record](04-governance/m3-r3-p4-exact-head-acceptance.md)
+- [ADR-0034 Linux and Node 22/24 compatibility contract](05-adr/ADR-0034-linux-node22-node24-runtime-acceptance.md)
+- [Release note](releases/M3-R3-P4-fault-security-compatibility-acceptance.md)
+- Evidence Schema: `schemas/execution/k6-api-runtime/v1/m3-r3-fault-security-compatibility-p4-evidence.schema.json`
+- Schema Catalog: `schemas/execution/k6-api-runtime/p4-schema-catalog.json`
+- Repository Validator: `scripts/validate-m3-r3-p4-fault-security-compatibility.js`
+- Permanent Workflow: `.github/workflows/m3-r3-p4-fault-security-compatibility-acceptance.yml`
 
 ## Frozen scope
 
 ```text
 p4Issue=67
+p4Pr=68
 p4BaselineMain=8684836233837c905e0ced20e8eac2cfd0b43601
-p4ProductCapabilityAdded=false
-p4ExistingRuntimeBehaviorChanged=false
+newRuntimeCapabilityAdded=false
 governedOutputRootImplemented=false
 fileResultCollectionImplemented=false
 sourceBundleRemainsImmutable=true
-m3R3P4ReadyMarked=false
-m3R3P4Merged=false
+p4ReadyMarked=false
+p4Merged=false
 m3R3G1Started=false
 ```
 
