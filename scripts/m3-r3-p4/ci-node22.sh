@@ -5,12 +5,12 @@ node --test \
   packages/k6-api-adapter/test/adversarial-runtime-security-acceptance.test.js \
   packages/k6-api-adapter/test/compatibility-determinism-acceptance.test.js \
   packages/k6-api-adapter/test/fault-security-compatibility-validator.test.js \
-  2>&1 | tee /tmp/m3-r3-p4-focused-node22.tap
-node --test packages/k6-api-adapter/test/*.test.js 2>&1 \
-  | tee /tmp/m3-r3-p4-adapter-node22.tap
-npm test 2>&1 | tee /tmp/m3-r3-p4-full-node22.tap
+  > /tmp/m3-r3-p4-focused-node22.tap 2>&1
+node --test packages/k6-api-adapter/test/*.test.js \
+  > /tmp/m3-r3-p4-adapter-node22.tap 2>&1
+npm test > /tmp/m3-r3-p4-full-node22.tap 2>&1
 node --test packages/k6-api-adapter/test/compatibility-determinism-acceptance.test.js \
-  2>&1 | tee /tmp/m3-r3-p4-compatibility-node22.tap
+  > /tmp/m3-r3-p4-compatibility-node22.tap 2>&1
 parse_tap() {
   local prefix="$1" file="$2" total passed failed skipped
   total="$(awk '/^# tests /{value=$3} END{print value+0}' "$file")"
@@ -22,6 +22,10 @@ parse_tap() {
   printf '%s_TOTAL=%s\n%s_PASSED=%s\n%s_FAILED=%s\n%s_SKIPPED=%s\n' \
     "$prefix" "$total" "$prefix" "$passed" "$prefix" "$failed" \
     "$prefix" "$skipped" >> "$GITHUB_ENV"
+  echo "${prefix,,}Total=$total"
+  echo "${prefix,,}Passed=$passed"
+  echo "${prefix,,}Failed=$failed"
+  echo "${prefix,,}Skipped=$skipped"
 }
 parse_tap M3_R3_P4_FOCUSED /tmp/m3-r3-p4-focused-node22.tap
 parse_tap M3_R3_P4_ADAPTER /tmp/m3-r3-p4-adapter-node22.tap
@@ -31,6 +35,7 @@ digest="$(sed -n 's/^# compatibilityProductDigest=//p' \
   /tmp/m3-r3-p4-compatibility-node22.tap | tail -1)"
 test "${#digest}" -eq 64
 printf 'M3_R3_P4_NODE22_PRODUCT_DIGEST=%s\n' "$digest" >> "$GITHUB_ENV"
+echo "node22CompatibilityProductDigest=$digest"
 npm run validate
 npm run validate:m3-r3-p4-fault-security-compatibility
 npm run validate:m3-r3-p3-sanitized-runtime-result
