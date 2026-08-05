@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.kdtp.example/execution/k6-api-runtime/v1/k6-runtime-execution-evidence.schema.json",
+  "title": "K6 Runtime Execution Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "evidenceId", "predecessor", "terminalObservationDigest",
+    "outcomeDigest", "resultSources", "fileResultCollection", "decision",
+    "safetyBoundary", "evidenceDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "k6-runtime-execution-evidence/v1" },
+    "evidenceId": { "type": "string", "pattern": "^k6runtime-execution-[a-f0-9]{20}$" },
+    "predecessor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtimePolicyDigest", "runtimeAdmissionRequestDigest", "invocationPlanDigest",
+        "runtimeAdmissionEvidenceDigest", "portDigest", "launchSpecificationDigest",
+        "launchDecisionDigest", "boundaryEvidenceDigest", "adapterDigest",
+        "commandDigest", "lifecycleEvidenceDigest"
+      ],
+      "properties": {
+        "runtimePolicyDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "runtimeAdmissionRequestDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "invocationPlanDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "runtimeAdmissionEvidenceDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "portDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "launchSpecificationDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "launchDecisionDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "boundaryEvidenceDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "adapterDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "commandDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "lifecycleEvidenceDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "terminalObservationDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "outcomeDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "resultSources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lifecycleEvidencePresent", "terminalObservationPresent",
+        "sanitizedOutcomePresent", "rawRuntimeOutputPresent", "fileResultPresent",
+        "processOutcomeComplete", "runtimeResultComplete"
+      ],
+      "properties": {
+        "lifecycleEvidencePresent": { "const": true },
+        "terminalObservationPresent": { "const": true },
+        "sanitizedOutcomePresent": { "const": true },
+        "rawRuntimeOutputPresent": { "const": false },
+        "fileResultPresent": { "const": false },
+        "processOutcomeComplete": { "const": true },
+        "runtimeResultComplete": { "const": true }
+      }
+    },
+    "fileResultCollection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "supported", "implemented", "decision", "blockerCode",
+        "sourceBundleRemainsImmutable", "callerPathAccepted", "arbitraryFileReadEnabled"
+      ],
+      "properties": {
+        "supported": { "const": false },
+        "implemented": { "const": false },
+        "decision": { "const": "DEFERRED_GOVERNED_OUTPUT_ROOT_REQUIRED" },
+        "blockerCode": { "const": "governed-output-root-not-defined" },
+        "sourceBundleRemainsImmutable": { "const": true },
+        "callerPathAccepted": { "const": false },
+        "arbitraryFileReadEnabled": { "const": false }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allPredecessorsBound", "runtimeResultCollected", "rawRuntimeOutputCollected",
+        "fileResultCollectionSupported", "fileResultCollectionImplemented",
+        "outcomeClassification", "nextRequiredSlice", "repositoryBlockers"
+      ],
+      "properties": {
+        "allPredecessorsBound": { "const": true },
+        "runtimeResultCollected": { "const": true },
+        "rawRuntimeOutputCollected": { "const": false },
+        "fileResultCollectionSupported": { "const": false },
+        "fileResultCollectionImplemented": { "const": false },
+        "outcomeClassification": { "enum": [
+          "SUCCEEDED", "FAILED_EXIT_CODE", "FAILED_SIGNAL", "START_FAILED",
+          "PROCESS_ERROR", "CANCELLED", "TIMED_OUT"
+        ] },
+        "nextRequiredSlice": { "const": "M3-R3-P4" },
+        "repositoryBlockers": { "type": "array", "maxItems": 0 }
+      }
+    },
+    "safetyBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stdoutCollected", "stderrCollected", "rawErrorCollected", "stackTraceCollected",
+        "numericProcessIdExposed", "hostAbsolutePathExposed", "environmentValueExposed",
+        "secretMaterialCollected", "arbitraryFileReadEnabled", "sourceBundleMutated",
+        "allureImplemented", "workerAdded", "queueAdded", "schedulerAdded",
+        "containerStarted", "kubernetesResourceCreated", "remoteExecutionApiAdded"
+      ],
+      "properties": {
+        "stdoutCollected": { "const": false },
+        "stderrCollected": { "const": false },
+        "rawErrorCollected": { "const": false },
+        "stackTraceCollected": { "const": false },
+        "numericProcessIdExposed": { "const": false },
+        "hostAbsolutePathExposed": { "const": false },
+        "environmentValueExposed": { "const": false },
+        "secretMaterialCollected": { "const": false },
+        "arbitraryFileReadEnabled": { "const": false },
+        "sourceBundleMutated": { "const": false },
+        "allureImplemented": { "const": false },
+        "workerAdded": { "const": false },
+        "queueAdded": { "const": false },
+        "schedulerAdded": { "const": false },
+        "containerStarted": { "const": false },
+        "kubernetesResourceCreated": { "const": false },
+        "remoteExecutionApiAdded": { "const": false }
+      }
+    },
+    "evidenceDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

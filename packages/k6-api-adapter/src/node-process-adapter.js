@@ -15,6 +15,12 @@ import {
   createK6ProcessLifecycleEvidenceRecord,
   validateK6ProcessLifecycleEvidence,
 } from './process-lifecycle-evidence.js';
+import {
+  createK6ProcessTerminalObservation,
+  createK6RuntimeExecutionEvidence,
+  createK6SanitizedRuntimeOutcome,
+  freezeP3Value,
+} from './runtime-result-contracts.js';
 
 const NODE_ADAPTER_EXECUTORS = new WeakMap();
 
@@ -40,15 +46,71 @@ export async function executeK6ProcessLifecycle({
   bindings,
   executionContext,
 }) {
+  const execution = await executeRegisteredNodeLifecycle({
+    adapter,
+    command,
+    bindings,
+    executionContext,
+  });
+  return execution.lifecycleEvidence;
+}
+
+export async function executeK6ProcessWithSanitizedResult({
+  adapter,
+  command,
+  bindings,
+  executionContext,
+}) {
+  const execution = await executeRegisteredNodeLifecycle({
+    adapter,
+    command,
+    bindings,
+    executionContext,
+  });
+  const terminalObservation = createK6ProcessTerminalObservation({
+    command: execution.command,
+    adapterDescriptor: execution.adapterDescriptor,
+    lifecycleEvidence: execution.lifecycleEvidence,
+    exitCode: execution.exitCode,
+    signal: execution.signal,
+  });
+  const runtimeOutcome = createK6SanitizedRuntimeOutcome({
+    command: execution.command,
+    adapterDescriptor: execution.adapterDescriptor,
+    lifecycleEvidence: execution.lifecycleEvidence,
+    terminalObservation,
+  });
+  const runtimeEvidence = createK6RuntimeExecutionEvidence({
+    bindings,
+    command: execution.command,
+    adapterDescriptor: execution.adapterDescriptor,
+    lifecycleEvidence: execution.lifecycleEvidence,
+    terminalObservation,
+    runtimeOutcome,
+  });
+  return freezeP3Value({
+    lifecycleEvidence: execution.lifecycleEvidence,
+    terminalObservation,
+    runtimeOutcome,
+    runtimeEvidence,
+  });
+}
+
+async function executeRegisteredNodeLifecycle({
+  adapter,
+  command,
+  bindings,
+  executionContext,
+}) {
   runtimeAdmissionInvariant(adapter && typeof adapter === 'object'
       && NODE_ADAPTER_EXECUTORS.has(adapter),
   'K6_NODE_PROCESS_ADAPTER_UNAVAILABLE',
   'A registered Node process adapter is required');
   const descriptor = validateK6NodeProcessAdapterDescriptor(adapter.descriptor);
   const acceptedCommand = validateK6ProcessExecutionCommand(command, bindings);
-  let evidence;
+  let record;
   try {
-    evidence = await NODE_ADAPTER_EXECUTORS.get(adapter)(
+    record = await NODE_ADAPTER_EXECUTORS.get(adapter)(
       freezeP2Value(cloneExecutionJson(acceptedCommand)), executionContext);
   } catch (error) {
     if (error?.name === 'K6ApiRuntimeAdmissionError') throw error;
@@ -56,9 +118,18 @@ export async function executeK6ProcessLifecycle({
       'K6_NODE_PROCESS_ADAPTER_FAILED',
       'Node process adapter failed before producing lifecycle Evidence');
   }
-  return validateK6ProcessLifecycleEvidence(evidence, {
+  exactFields(record, ['lifecycleEvidence', 'exitCode', 'signal'],
+    'K6_NODE_PROCESS_RESULT_INVALID', 'Node process result');
+  const lifecycleEvidence = validateK6ProcessLifecycleEvidence(record.lifecycleEvidence, {
     command: acceptedCommand,
     adapterDescriptor: descriptor,
+  });
+  return freezeP3Value({
+    command: acceptedCommand,
+    adapterDescriptor: descriptor,
+    lifecycleEvidence,
+    exitCode: record.exitCode,
+    signal: record.signal,
   });
 }
 
@@ -76,12 +147,14 @@ async function runNodeProcessLifecycle({ command, executionContext, descriptor, 
   const finishBeforeStart = () => {
     observations.abortRequested = true;
     pushEvent(events, 'CANCELLED_BEFORE_START');
-    return createK6ProcessLifecycleEvidenceRecord({
+    return createLifecycleRecord({
       command: acceptedCommand,
       adapterDescriptor: acceptedDescriptor,
       terminalState: 'CANCELLED_BEFORE_START',
       events,
       observations,
+      exitCode: null,
+      signal: null,
     });
   };
   if (context.abortSignal?.aborted === true) return finishBeforeStart();
@@ -97,6 +170,8 @@ async function runNodeProcessLifecycle({ command, executionContext, descriptor, 
     let spawned = false;
     let cancellationReason = null;
     let cancellationPending = false;
+    let terminalExitCode = null;
+    let terminalSignal = null;
     let startupTimer = null;
     let timeoutTimer = null;
     let forceTimer = null;
@@ -119,12 +194,14 @@ async function runNodeProcessLifecycle({ command, executionContext, descriptor, 
       if (settled) return;
       settled = true;
       cleanup();
-      resolve(createK6ProcessLifecycleEvidenceRecord({
+      resolve(createLifecycleRecord({
         command: acceptedCommand,
         adapterDescriptor: acceptedDescriptor,
         terminalState,
         events,
         observations,
+        exitCode: terminalExitCode,
+        signal: terminalSignal,
       }));
     };
     const forceTerminalPrefix = () => {
@@ -200,8 +277,10 @@ async function runNodeProcessLifecycle({ command, executionContext, descriptor, 
       pushEvent(events, spawned ? 'PROCESS_ERROR' : 'PROCESS_START_FAILED');
       finish(spawned ? 'PROCESS_ERROR' : 'START_FAILED');
     };
-    const onExit = () => {
+    const onExit = (exitCode, signal) => {
       if (settled) return;
+      terminalExitCode = exitCode ?? null;
+      terminalSignal = signal ?? null;
       observations.exitObserved = true;
       observations.processTerminationConfirmed = true;
       pushEvent(events, 'PROCESS_EXITED');
@@ -249,6 +328,28 @@ async function runNodeProcessLifecycle({ command, executionContext, descriptor, 
       pushEvent(events, 'PROCESS_START_FAILED');
       finish('START_FAILED');
     }
+  });
+}
+
+function createLifecycleRecord({
+  command,
+  adapterDescriptor,
+  terminalState,
+  events,
+  observations,
+  exitCode,
+  signal,
+}) {
+  return freezeP3Value({
+    lifecycleEvidence: createK6ProcessLifecycleEvidenceRecord({
+      command,
+      adapterDescriptor,
+      terminalState,
+      events,
+      observations,
+    }),
+    exitCode,
+    signal,
   });
 }
 

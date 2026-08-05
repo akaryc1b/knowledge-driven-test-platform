@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.kdtp.example/execution/k6-api-runtime/v1/k6-process-terminal-observation.schema.json",
+  "title": "K6 Process Terminal Observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "observationId",
+    "commandDigest",
+    "adapterDigest",
+    "lifecycleEvidenceDigest",
+    "exitObserved",
+    "exitCodePresent",
+    "exitCode",
+    "signalObserved",
+    "signal",
+    "signalClassification",
+    "processTerminationConfirmed",
+    "observationDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "k6-process-terminal-observation/v1" },
+    "observationId": { "type": "string", "pattern": "^k6process-terminal-[a-f0-9]{20}$" },
+    "commandDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "adapterDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "lifecycleEvidenceDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "exitObserved": { "type": "boolean" },
+    "exitCodePresent": { "type": "boolean" },
+    "exitCode": { "anyOf": [{ "type": "integer", "minimum": 0, "maximum": 255 }, { "type": "null" }] },
+    "signalObserved": { "type": "boolean" },
+    "signal": { "anyOf": [{ "enum": ["SIGABRT", "SIGHUP", "SIGINT", "SIGKILL", "SIGQUIT", "SIGTERM"] }, { "type": "null" }] },
+    "signalClassification": { "enum": ["NONE", "COOPERATIVE_TERMINATION", "FORCED_TERMINATION", "EXTERNAL_TERMINATION"] },
+    "processTerminationConfirmed": { "type": "boolean" },
+    "observationDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "exitObserved": { "const": false },
+        "exitCodePresent": { "const": false },
+        "exitCode": { "type": "null" },
+        "signalObserved": { "const": false },
+        "signal": { "type": "null" },
+        "signalClassification": { "const": "NONE" },
+        "processTerminationConfirmed": { "const": false }
+      }
+    },
+    {
+      "properties": {
+        "exitObserved": { "const": true },
+        "processTerminationConfirmed": { "const": true }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "exitCodePresent": { "const": true },
+            "exitCode": { "type": "integer", "minimum": 0, "maximum": 255 },
+            "signalObserved": { "const": false },
+            "signal": { "type": "null" },
+            "signalClassification": { "const": "NONE" }
+          }
+        },
+        {
+          "properties": {
+            "exitCodePresent": { "const": false },
+            "exitCode": { "type": "null" },
+            "signalObserved": { "const": true },
+            "signal": { "enum": ["SIGABRT", "SIGHUP", "SIGINT", "SIGKILL", "SIGQUIT", "SIGTERM"] },
+            "signalClassification": { "enum": ["COOPERATIVE_TERMINATION", "FORCED_TERMINATION", "EXTERNAL_TERMINATION"] }
+          }
+        }
+      ]
+    }
+  ]
+}

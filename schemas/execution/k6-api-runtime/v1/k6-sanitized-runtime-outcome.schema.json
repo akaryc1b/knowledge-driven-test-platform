@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.kdtp.example/execution/k6-api-runtime/v1/k6-sanitized-runtime-outcome.schema.json",
+  "title": "K6 Sanitized Runtime Outcome",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "resultId", "commandDigest", "adapterDigest",
+    "lifecycleEvidenceDigest", "terminalObservationDigest", "terminalState",
+    "outcomeClassification", "exitObserved", "exitCodePresent", "exitCode",
+    "signalObserved", "signal", "signalClassification", "processStarted",
+    "processStartUnknown", "processTerminationConfirmed", "timedOut", "cancelled",
+    "forceKillRequested", "forceKillSent", "runtimeResultCollected", "resultDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "k6-sanitized-runtime-outcome/v1" },
+    "resultId": { "type": "string", "pattern": "^k6runtime-result-[a-f0-9]{20}$" },
+    "commandDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "adapterDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "lifecycleEvidenceDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "terminalObservationDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "terminalState": { "enum": [
+      "CANCELLED_BEFORE_START", "EXITED", "START_FAILED",
+      "START_TIMED_OUT_FORCE_TERMINATED", "START_TIMED_OUT_FORCE_UNCONFIRMED",
+      "PROCESS_ERROR", "CANCELLED", "CANCELLED_FORCE_TERMINATED",
+      "CANCELLED_FORCE_UNCONFIRMED", "TIMED_OUT",
+      "TIMED_OUT_FORCE_TERMINATED", "TIMED_OUT_FORCE_UNCONFIRMED"
+    ] },
+    "outcomeClassification": { "enum": [
+      "SUCCEEDED", "FAILED_EXIT_CODE", "FAILED_SIGNAL", "START_FAILED",
+      "PROCESS_ERROR", "CANCELLED", "TIMED_OUT"
+    ] },
+    "exitObserved": { "type": "boolean" },
+    "exitCodePresent": { "type": "boolean" },
+    "exitCode": { "anyOf": [{ "type": "integer", "minimum": 0, "maximum": 255 }, { "type": "null" }] },
+    "signalObserved": { "type": "boolean" },
+    "signal": { "anyOf": [{ "enum": ["SIGABRT", "SIGHUP", "SIGINT", "SIGKILL", "SIGQUIT", "SIGTERM"] }, { "type": "null" }] },
+    "signalClassification": { "enum": ["NONE", "COOPERATIVE_TERMINATION", "FORCED_TERMINATION", "EXTERNAL_TERMINATION"] },
+    "processStarted": { "type": "boolean" },
+    "processStartUnknown": { "type": "boolean" },
+    "processTerminationConfirmed": { "type": "boolean" },
+    "timedOut": { "type": "boolean" },
+    "cancelled": { "type": "boolean" },
+    "forceKillRequested": { "type": "boolean" },
+    "forceKillSent": { "type": "boolean" },
+    "runtimeResultCollected": { "const": true },
+    "resultDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}
