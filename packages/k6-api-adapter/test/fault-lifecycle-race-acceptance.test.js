@@ -54,12 +54,17 @@ function assertNoPrivateRuntimeMaterial(value) {
     'private realpath failure',
     'private stat failure',
     'private kill failure',
-    'stack',
     '987654',
   ]) {
     assert.equal(serialized.includes(forbidden), false,
       `Private runtime material leaked: ${forbidden}`);
   }
+  const visit = (node) => {
+    if (!node || typeof node !== 'object') return;
+    assert.equal(Object.hasOwn(node, 'stack'), false, 'Raw stack property leaked');
+    for (const child of Object.values(node)) visit(child);
+  };
+  visit(value);
 }
 
 test('P4 P1 uses static fixtures with injected fake clock, timer, process, resolver and abort signal', async () => {
@@ -380,6 +385,7 @@ test('P4 P1 keeps every public result deeply immutable and omits raw output and 
   assert.equal(result.lifecycleEvidence.observations.stdoutCollected, false);
   assert.equal(result.lifecycleEvidence.observations.stderrCollected, false);
   assert.equal(result.runtimeEvidence.decision.rawRuntimeOutputCollected, false);
+  assert.equal(result.runtimeEvidence.safetyBoundary.stackTraceCollected, false);
 });
 
 test('P4 P1 repeats fail-closed classifications byte-for-byte for identical static input', async () => {
