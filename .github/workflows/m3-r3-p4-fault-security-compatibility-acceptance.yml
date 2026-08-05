@@ -82,20 +82,28 @@ jobs:
         if: ${{ steps.node24.outputs.node_status != '0' }}
         shell: bash
         run: exit 1
-      - name: Reject Node.js 24 TAP count mismatch
-        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.counts_ok != 'true' }}
+      - name: Reject missing Node.js 24 TAP total
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.total_positive != 'true' }}
+        shell: bash
+        run: exit 1
+      - name: Reject Node.js 24 passed and total mismatch
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.total_positive == 'true' && steps.node24.outputs.passed_equal_total != 'true' }}
+        shell: bash
+        run: exit 1
+      - name: Reject nonzero Node.js 24 TAP failures
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.total_positive == 'true' && steps.node24.outputs.passed_equal_total == 'true' && steps.node24.outputs.failed_zero != 'true' }}
         shell: bash
         run: exit 1
       - name: Reject missing Node.js 24 product digest
-        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.counts_ok == 'true' && steps.node24.outputs.digest_valid != 'true' }}
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.total_positive == 'true' && steps.node24.outputs.passed_equal_total == 'true' && steps.node24.outputs.failed_zero == 'true' && steps.node24.outputs.digest_valid != 'true' }}
         shell: bash
         run: exit 1
       - name: Reject Node.js 22 and 24 product digest mismatch
-        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.counts_ok == 'true' && steps.node24.outputs.digest_valid == 'true' && steps.node24.outputs.digest_equal != 'true' }}
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.total_positive == 'true' && steps.node24.outputs.passed_equal_total == 'true' && steps.node24.outputs.failed_zero == 'true' && steps.node24.outputs.digest_valid == 'true' && steps.node24.outputs.digest_equal != 'true' }}
         shell: bash
         run: exit 1
       - name: Accept Node.js 24 compatibility
-        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.counts_ok == 'true' && steps.node24.outputs.digest_valid == 'true' && steps.node24.outputs.digest_equal == 'true' }}
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.total_positive == 'true' && steps.node24.outputs.passed_equal_total == 'true' && steps.node24.outputs.failed_zero == 'true' && steps.node24.outputs.digest_valid == 'true' && steps.node24.outputs.digest_equal == 'true' }}
         shell: bash
         run: |
           echo "node24CompatibilityAccepted=true"

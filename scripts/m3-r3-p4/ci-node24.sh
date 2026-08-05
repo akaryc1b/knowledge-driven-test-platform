@@ -12,16 +12,15 @@ failed="$(awk '/^# fail /{value=$3} END{print value+0}' \
   /tmp/m3-r3-p4-compatibility-node24.tap)"
 digest="$(sed -n 's/^# compatibilityProductDigest=//p' \
   /tmp/m3-r3-p4-compatibility-node24.tap | tail -1)"
-counts_ok=false
+total_positive=false
+passed_equal_total=false
+failed_zero=false
 digest_valid=false
 digest_equal=false
-if test "$total" -gt 0 && test "$passed" -eq "$total" \
-    && test "$failed" -eq 0; then
-  counts_ok=true
-fi
-if test "${#digest}" -eq 64; then
-  digest_valid=true
-fi
+if test "$total" -gt 0; then total_positive=true; fi
+if test "$passed" -eq "$total"; then passed_equal_total=true; fi
+if test "$failed" -eq 0; then failed_zero=true; fi
+if test "${#digest}" -eq 64; then digest_valid=true; fi
 if test "$digest_valid" = true \
     && test "$digest" = "$M3_R3_P4_NODE22_PRODUCT_DIGEST"; then
   digest_equal=true
@@ -38,7 +37,9 @@ if test "$node_status" -ne 0; then
 fi
 {
   echo "node_status=$node_status"
-  echo "counts_ok=$counts_ok"
+  echo "total_positive=$total_positive"
+  echo "passed_equal_total=$passed_equal_total"
+  echo "failed_zero=$failed_zero"
   echo "digest_valid=$digest_valid"
   echo "digest_equal=$digest_equal"
   echo "total=$total"
