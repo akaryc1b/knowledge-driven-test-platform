@@ -215,6 +215,11 @@ function validateRepositoryFiles(files) {
     'persist-credentials: false', '${{ github.event.pull_request.head.sha || github.sha }}',
     'm3-r3-p3-sanitized-runtime-result-evidence',
   ]) assert(workflow.includes(required), `P3 Workflow missing: ${required}`);
+  const catalog = JSON.parse(files[CATALOG_PATH]);
+  for (const entry of catalog.schemas ?? []) {
+    assert(workflow.includes(entry.path),
+      `P3 Workflow Artifact does not include Catalog Schema: ${entry.path}`);
+  }
   for (const forbidden of [
     'workflow_dispatch', 'workflow_call', 'id-token: write', 'contents: write',
     'actions: write', 'packages: write', 'k6 run', 'xk6 run', 'playwright test',
@@ -312,23 +317,23 @@ function validateJsonSchema(value, schema, root = schema, path = '$') {
       try { validateJsonSchema(value, candidate, root, path); return true; } catch { return false; }
     });
     assert(accepted, `${path} anyOf mismatch`);
-    return;
   }
   if (schema.oneOf) {
     const accepted = schema.oneOf.filter((candidate) => {
       try { validateJsonSchema(value, candidate, root, path); return true; } catch { return false; }
     }).length;
     assert(accepted === 1, `${path} oneOf mismatch`);
-    return;
   }
-  if (schema.type === 'object') {
+  const objectSchema = schema.type === 'object' || schema.properties !== undefined
+    || schema.required !== undefined || schema.additionalProperties !== undefined;
+  if (objectSchema) {
     assert(value && typeof value === 'object' && !Array.isArray(value), `${path} type`);
     const properties = schema.properties ?? {};
     for (const key of schema.required ?? []) assert(Object.hasOwn(value, key), `${path}.${key} required`);
     if (schema.additionalProperties === false) {
-      assert(canonicalStringify(Object.keys(value).sort())
-          === canonicalStringify(Object.keys(properties).sort()),
-      `${path} closed fields mismatch`);
+      const unexpected = Object.keys(value).filter((key) => !Object.hasOwn(properties, key));
+      assert(unexpected.length === 0,
+        `${path} additional properties: ${unexpected.join(',')}`);
     }
     for (const [key, child] of Object.entries(properties)) {
       if (Object.hasOwn(value, key)) validateJsonSchema(value[key], child, root, `${path}.${key}`);
