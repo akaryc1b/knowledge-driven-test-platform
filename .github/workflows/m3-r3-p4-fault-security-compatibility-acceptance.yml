@@ -74,9 +74,32 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Run fake-only Node.js 24 compatibility
+      - name: Collect fake-only Node.js 24 compatibility
+        id: node24
         shell: bash
         run: bash scripts/m3-r3-p4/ci-node24.sh
+      - name: Reject Node.js 24 test failure
+        if: ${{ steps.node24.outputs.node_status != '0' }}
+        shell: bash
+        run: exit 1
+      - name: Reject Node.js 24 TAP count mismatch
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.counts_ok != 'true' }}
+        shell: bash
+        run: exit 1
+      - name: Reject missing Node.js 24 product digest
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.counts_ok == 'true' && steps.node24.outputs.digest_valid != 'true' }}
+        shell: bash
+        run: exit 1
+      - name: Reject Node.js 22 and 24 product digest mismatch
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.counts_ok == 'true' && steps.node24.outputs.digest_valid == 'true' && steps.node24.outputs.digest_equal != 'true' }}
+        shell: bash
+        run: exit 1
+      - name: Accept Node.js 24 compatibility
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.counts_ok == 'true' && steps.node24.outputs.digest_valid == 'true' && steps.node24.outputs.digest_equal == 'true' }}
+        shell: bash
+        run: |
+          echo "node24CompatibilityAccepted=true"
+          echo "crossNodeCompatibilityProductDigest=${{ steps.node24.outputs.digest }}"
       - name: Restore Node.js 22 for Evidence generation
         uses: actions/setup-node@v4
         with:
