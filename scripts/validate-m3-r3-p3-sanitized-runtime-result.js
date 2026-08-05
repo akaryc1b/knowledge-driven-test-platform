@@ -64,6 +64,16 @@ const SAFETY_FIELDS = Object.freeze([
   'remoteExecutionApiAdded', 'm3R3P4Started',
 ]);
 
+export function resolveM3R3P3Branch(options = {}, env = process.env) {
+  const githubHeadRef = env.GITHUB_HEAD_REF;
+  const branch = options.branch ?? env.M3_R3_P3_BRANCH
+    ?? (githubHeadRef === '' ? undefined : githubHeadRef)
+    ?? env.GITHUB_REF_NAME ?? 'local';
+  assert(typeof branch === 'string' && branch.length >= 1 && branch.length <= 256,
+    'M3-R3-P3 branch is invalid');
+  return branch;
+}
+
 export async function validateM3R3P3SanitizedRuntimeResult(options = {}) {
   const files = options.files ?? await loadRequiredFiles();
   validateRepositoryFiles(files);
@@ -128,10 +138,7 @@ export async function validateM3R3P3SanitizedRuntimeResult(options = {}) {
     ?? process.env.GITHUB_SHA ?? 'local';
   assert(commitSha === 'local' || /^[a-f0-9]{40}$/u.test(commitSha),
     'M3-R3-P3 exact Head must be local or a 40-character SHA');
-  const branch = options.branch ?? process.env.M3_R3_P3_BRANCH
-    ?? process.env.GITHUB_HEAD_REF ?? process.env.GITHUB_REF_NAME ?? 'local';
-  assert(typeof branch === 'string' && branch.length >= 1 && branch.length <= 256,
-    'M3-R3-P3 branch is invalid');
+  const branch = resolveM3R3P3Branch(options);
   const testResults = options.testResults ?? readTestResults();
   validateTestResults(testResults);
   const safetyBoundary = Object.fromEntries(SAFETY_FIELDS.map((field) => [field, false]));
@@ -257,11 +264,11 @@ async function computeSchemaCatalogDigest(catalog, files) {
 
 function readTestResults() {
   return {
-    focused: result('M3_R3_P3_FOCUSED', 33, 33, 0),
-    k6ApiAdapter: result('M3_R3_P3_ADAPTER', 294, 294, 0),
+    focused: result('M3_R3_P3_FOCUSED', 34, 34, 0),
+    k6ApiAdapter: result('M3_R3_P3_ADAPTER', 295, 295, 0),
     fullNode: {
-      total: numberEnv('M3_R3_P3_FULL_TOTAL', 646),
-      passed: numberEnv('M3_R3_P3_FULL_PASSED', 634),
+      total: numberEnv('M3_R3_P3_FULL_TOTAL', 647),
+      passed: numberEnv('M3_R3_P3_FULL_PASSED', 635),
       skipped: numberEnv('M3_R3_P3_FULL_SKIPPED', 12),
       failed: numberEnv('M3_R3_P3_FULL_FAILED', 0),
     },
