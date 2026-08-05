@@ -66,7 +66,6 @@ export const VALIDATOR_PATH =
   'scripts/validate-m3-r3-p4-fault-security-compatibility.js';
 export const VALIDATOR_MODULE_PATHS = Object.freeze([
   'scripts/m3-r3-p4/constants.js',
-  'scripts/m3-r3-p4/repository-validator.js',
   'scripts/m3-r3-p4/evidence.js',
   'scripts/m3-r3-p4/ci-node22.sh',
   'scripts/m3-r3-p4/ci-node24.sh',
