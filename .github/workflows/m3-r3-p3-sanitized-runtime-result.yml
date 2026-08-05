@@ -133,6 +133,9 @@ jobs:
           node scripts/validate-m3-r3-p3-sanitized-runtime-result.js \
             > /tmp/m3-r3-p3-artifact/evidence/m3-r3-p3-sanitized-runtime-result-evidence.json
           cp --parents schemas/execution/k6-api-runtime/p3-schema-catalog.json \
+            schemas/execution/k6-api-runtime/v1/k6-node-process-adapter.schema.json \
+            schemas/execution/k6-api-runtime/v1/k6-process-execution-command.schema.json \
+            schemas/execution/k6-api-runtime/v1/k6-process-lifecycle-evidence.schema.json \
             schemas/execution/k6-api-runtime/v1/k6-process-terminal-observation.schema.json \
             schemas/execution/k6-api-runtime/v1/k6-sanitized-runtime-outcome.schema.json \
             schemas/execution/k6-api-runtime/v1/k6-runtime-execution-evidence.schema.json \
@@ -147,7 +150,11 @@ jobs:
             /tmp/m3-r3-p3-artifact/
           cp /tmp/m3-r3-p3-focused.tap /tmp/m3-r3-p3-adapter.tap \
             /tmp/m3-r3-p3-full-node.tap /tmp/m3-r3-p3-artifact/logs/
-          test -z "$(git status --porcelain)"
+          dirty="$(git status --porcelain)"
+          if [ -n "$dirty" ]; then
+            printf '%s\n' "$dirty"
+            exit 1
+          fi
       - name: Independently validate P3 Evidence, Schema and digests
         shell: bash
         run: |
@@ -163,6 +170,7 @@ jobs:
             'utf8'));
           function validate(value, rule, rootSchema = schema, path = '$') {
             if (rule.$ref) {
+              if (!rule.$ref.startsWith('#/')) throw new Error(`${path} external $ref`);
               const target = rule.$ref.slice(2).split('/').reduce((current, token) =>
                 current[token.replaceAll('~1', '/').replaceAll('~0', '~')], rootSchema);
               return validate(value, target, rootSchema, path);
@@ -177,25 +185,37 @@ jobs:
                 try { validate(value, candidate, rootSchema, path); return true; } catch { return false; }
               });
               if (!accepted) throw new Error(`${path} anyOf mismatch`);
-              return;
             }
-            if (rule.type === 'object') {
+            if (rule.oneOf) {
+              const accepted = rule.oneOf.filter((candidate) => {
+                try { validate(value, candidate, rootSchema, path); return true; } catch { return false; }
+              }).length;
+              if (accepted !== 1) throw new Error(`${path} oneOf mismatch`);
+            }
+            const objectRule = rule.type === 'object' || rule.properties !== undefined
+              || rule.required !== undefined || rule.additionalProperties !== undefined;
+            if (objectRule) {
               if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${path} type`);
               const properties = rule.properties ?? {};
               for (const key of rule.required ?? []) {
                 if (!Object.hasOwn(value, key)) throw new Error(`${path}.${key} required`);
               }
-              if (rule.additionalProperties === false
-                  && canonicalStringify(Object.keys(value).sort())
-                    !== canonicalStringify(Object.keys(properties).sort())) {
-                throw new Error(`${path} closed fields mismatch`);
+              if (rule.additionalProperties === false) {
+                const unexpected = Object.keys(value).filter((key) => !Object.hasOwn(properties, key));
+                if (unexpected.length > 0) throw new Error(`${path} additional properties: ${unexpected.join(',')}`);
               }
               for (const [key, child] of Object.entries(properties)) {
                 if (Object.hasOwn(value, key)) validate(value[key], child, rootSchema, `${path}.${key}`);
               }
             } else if (rule.type === 'array') {
               if (!Array.isArray(value)) throw new Error(`${path} type`);
+              if (rule.minItems !== undefined && value.length < rule.minItems) throw new Error(`${path} minItems`);
               if (rule.maxItems !== undefined && value.length > rule.maxItems) throw new Error(`${path} maxItems`);
+              if (rule.uniqueItems
+                  && new Set(value.map(canonicalStringify)).size !== value.length) {
+                throw new Error(`${path} uniqueItems`);
+              }
+              value.forEach((item, index) => validate(item, rule.items ?? {}, rootSchema, `${path}[${index}]`));
             } else if (rule.type === 'string') {
               if (typeof value !== 'string') throw new Error(`${path} type`);
               if (rule.minLength !== undefined && value.length < rule.minLength) throw new Error(`${path} minLength`);
@@ -204,7 +224,10 @@ jobs:
             } else if (rule.type === 'integer') {
               if (!Number.isInteger(value)) throw new Error(`${path} type`);
               if (rule.minimum !== undefined && value < rule.minimum) throw new Error(`${path} minimum`);
+              if (rule.maximum !== undefined && value > rule.maximum) throw new Error(`${path} maximum`);
             } else if (rule.type === 'boolean' && typeof value !== 'boolean') {
+              throw new Error(`${path} type`);
+            } else if (rule.type === 'null' && value !== null) {
               throw new Error(`${path} type`);
             }
           }
@@ -243,6 +266,9 @@ jobs:
           const expectedPaths = [
             'evidence/m3-r3-p3-sanitized-runtime-result-evidence.json',
             'schemas/execution/k6-api-runtime/p3-schema-catalog.json',
+            'schemas/execution/k6-api-runtime/v1/k6-node-process-adapter.schema.json',
+            'schemas/execution/k6-api-runtime/v1/k6-process-execution-command.schema.json',
+            'schemas/execution/k6-api-runtime/v1/k6-process-lifecycle-evidence.schema.json',
             'schemas/execution/k6-api-runtime/v1/k6-process-terminal-observation.schema.json',
             'schemas/execution/k6-api-runtime/v1/k6-sanitized-runtime-outcome.schema.json',
             'schemas/execution/k6-api-runtime/v1/k6-runtime-execution-evidence.schema.json',
