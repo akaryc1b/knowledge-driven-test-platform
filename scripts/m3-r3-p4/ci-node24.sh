@@ -1,6 +1,7 @@
 set -euo pipefail
 set +e
-node --test packages/k6-api-adapter/test/compatibility-determinism-acceptance.test.js \
+node --test --test-reporter=tap \
+  packages/k6-api-adapter/test/compatibility-determinism-acceptance.test.js \
   > /tmp/m3-r3-p4-compatibility-node24.tap 2>&1
 node_status=$?
 set -e

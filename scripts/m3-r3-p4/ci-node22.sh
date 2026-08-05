@@ -1,15 +1,16 @@
 set -euo pipefail
-node --test \
+node --test --test-reporter=tap \
   packages/k6-api-adapter/test/fault-security-compatibility-r0.test.js \
   packages/k6-api-adapter/test/fault-lifecycle-race-acceptance.test.js \
   packages/k6-api-adapter/test/adversarial-runtime-security-acceptance.test.js \
   packages/k6-api-adapter/test/compatibility-determinism-acceptance.test.js \
   packages/k6-api-adapter/test/fault-security-compatibility-validator.test.js \
   > /tmp/m3-r3-p4-focused-node22.tap 2>&1
-node --test packages/k6-api-adapter/test/*.test.js \
+node --test --test-reporter=tap packages/k6-api-adapter/test/*.test.js \
   > /tmp/m3-r3-p4-adapter-node22.tap 2>&1
 npm test > /tmp/m3-r3-p4-full-node22.tap 2>&1
-node --test packages/k6-api-adapter/test/compatibility-determinism-acceptance.test.js \
+node --test --test-reporter=tap \
+  packages/k6-api-adapter/test/compatibility-determinism-acceptance.test.js \
   > /tmp/m3-r3-p4-compatibility-node22.tap 2>&1
 parse_tap() {
   local prefix="$1" file="$2" total passed failed skipped
