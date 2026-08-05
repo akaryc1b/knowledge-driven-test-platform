@@ -12,21 +12,75 @@ export class FakeChildProcess extends EventEmitter {
     this.pid = options.pid ?? 4242;
     this.signals = [];
     this.killResult = options.killResult ?? true;
+    this.killThrows = options.killThrows ?? false;
   }
 
   kill(signal) {
     this.signals.push(signal);
+    if (this.killThrows) throw new Error('private kill failure');
     return this.killResult;
   }
 }
 
-export function createManualTimers() {
+export class FakeAbortSignal {
+  #listeners = new Set();
+
+  constructor(aborted = false) {
+    this.aborted = aborted;
+  }
+
+  addEventListener(type, listener) {
+    if (type === 'abort') this.#listeners.add(listener);
+  }
+
+  removeEventListener(type, listener) {
+    if (type === 'abort') this.#listeners.delete(listener);
+  }
+
+  abort() {
+    if (this.aborted) return;
+    this.aborted = true;
+    for (const listener of [...this.#listeners]) listener.call(this, { type: 'abort' });
+  }
+
+  listenerCount() {
+    return this.#listeners.size;
+  }
+}
+
+export function createFakeClock(initialTime = 1_700_000_000_000) {
+  let currentTime = initialTime;
+  return Object.freeze({
+    now() {
+      return currentTime;
+    },
+    advanceTo(nextTime) {
+      if (!Number.isSafeInteger(nextTime) || nextTime < currentTime) {
+        throw new Error('Fake clock cannot move backwards or outside safe integer range');
+      }
+      currentTime = nextTime;
+      return currentTime;
+    },
+  });
+}
+
+export function createManualTimers(options = {}) {
   let nextId = 1;
   const tasks = [];
+  const clock = options.clock ?? createFakeClock();
   return {
     tasks,
+    clock,
     setTimer(callback, delay) {
-      const task = { id: nextId++, callback, delay, cleared: false, fired: false };
+      const task = {
+        id: nextId++,
+        callback,
+        delay,
+        scheduledAt: clock.now(),
+        dueAt: clock.now() + delay,
+        cleared: false,
+        fired: false,
+      };
       tasks.push(task);
       return task.id;
     },
@@ -38,6 +92,7 @@ export function createManualTimers() {
       const task = tasks.find((candidate) =>
         !candidate.cleared && !candidate.fired && candidate.delay === delay);
       if (!task) throw new Error(`No active timer for delay ${delay}`);
+      clock.advanceTo(task.dueAt);
       task.fired = true;
       task.callback();
       return task;
@@ -45,6 +100,7 @@ export function createManualTimers() {
     fireNext() {
       const task = tasks.find((candidate) => !candidate.cleared && !candidate.fired);
       if (!task) throw new Error('No active timer');
+      clock.advanceTo(task.dueAt);
       task.fired = true;
       task.callback();
       return task;
@@ -69,7 +125,8 @@ export async function processExecutionFixture(options = {}) {
   const command = createK6ProcessExecutionCommand(bindings);
   const child = options.child ?? new FakeChildProcess(options.childOptions);
   const spawnCalls = [];
-  const timers = options.timers ?? createManualTimers();
+  const clock = options.clock ?? createFakeClock();
+  const timers = options.timers ?? createManualTimers({ clock });
   const adapter = createNodeK6ProcessAdapter({
     spawnProcess(executable, argv, spawnOptions) {
       spawnCalls.push({ executable, argv, options: spawnOptions });
@@ -77,9 +134,11 @@ export async function processExecutionFixture(options = {}) {
       return child;
     },
     realpathPath(path) {
+      if (options.realpathThrows) throw new Error('private realpath failure');
       return options.realPath ?? path;
     },
     statPath() {
+      if (options.statThrows) throw new Error('private stat failure');
       return { isDirectory: () => options.isDirectory ?? true };
     },
     setTimer: timers.setTimer,
@@ -101,6 +160,7 @@ export async function processExecutionFixture(options = {}) {
     command,
     child,
     spawnCalls,
+    clock,
     timers,
     adapter,
     adapterDescriptor,
