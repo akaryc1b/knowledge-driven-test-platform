@@ -106,8 +106,20 @@ function validateWorkflow(files) {
     'actions/upload-artifact@v4', P4_ARTIFACT_NAME,
     'M3_R3_P4_EMIT_EVIDENCE: true',
   ]) invariant(workflow.includes(token), `P4 Workflow missing: ${token}`);
-  for (const path of [...TEST_PATHS, ...P4_ARTIFACT_PATHS]) {
-    invariant(execution.includes(path), `P4 Workflow allow-list missing: ${path}`);
+  for (const path of TEST_PATHS) {
+    invariant(execution.includes(path), `P4 Workflow test allow-list missing: ${path}`);
+  }
+  invariant(P4_ARTIFACT_PATHS.length === 23
+    && new Set(P4_ARTIFACT_PATHS).size === P4_ARTIFACT_PATHS.length
+    && execution.includes('for (const path of P4_ARTIFACT_PATHS)')
+    && execution.includes('const expected = [...P4_ARTIFACT_PATHS].sort()'),
+  'P4 Artifact allow-list is missing, duplicated or not enforced');
+  for (const path of P4_ARTIFACT_PATHS) {
+    invariant(typeof path === 'string' && path.length > 0
+      && !path.includes('\0') && !path.startsWith('/')
+      && !path.split('/').includes('..') && !/^[a-z]:/iu.test(path)
+      && !path.startsWith('\\\\'),
+    `P4 Artifact allow-list contains unsafe path: ${path}`);
   }
   for (const token of [
     'workflow_dispatch', 'workflow_call', 'id-token: write', 'contents: write',
