@@ -107,7 +107,8 @@ test('P4 P3 preserves P2 lifecycle semantics and P3 integrated single-spawn beha
   assert.equal(integratedFixture.spawnCalls.length, 1);
   assert.equal(integrated.lifecycleEvidence.terminalState, 'EXITED');
   assert.equal(integrated.runtimeEvidence.decision.fileResultCollectionImplemented, false);
-  assert.equal(integrated.runtimeEvidence.decision.sourceBundleRemainsImmutable, true);
+  assert.equal(
+    integrated.runtimeEvidence.fileResultCollection.sourceBundleRemainsImmutable, true);
 });
 
 test('P4 P3 produces a byte-stable compatibility product for identical static fixtures', async () => {
