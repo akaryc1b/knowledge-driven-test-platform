@@ -8,6 +8,7 @@ on:
       - 'packages/k6-api-adapter/src/**'
       - 'packages/k6-api-adapter/test/**'
       - 'schemas/execution/k6-api-runtime/**'
+      - 'scripts/json-schema-draft-2020.js'
       - 'scripts/validate-m3-r3-p4-fault-security-compatibility.js'
       - 'scripts/m3-r3-p4/**'
       - 'docs/02-development/m3-r3-p4-fault-security-compatibility-handoff.md'
@@ -26,6 +27,7 @@ on:
       - 'packages/k6-api-adapter/src/**'
       - 'packages/k6-api-adapter/test/**'
       - 'schemas/execution/k6-api-runtime/**'
+      - 'scripts/json-schema-draft-2020.js'
       - 'scripts/validate-m3-r3-p4-fault-security-compatibility.js'
       - 'scripts/m3-r3-p4/**'
       - 'docs/02-development/m3-r3-p4-fault-security-compatibility-handoff.md'
@@ -42,6 +44,7 @@ permissions:
 
 env:
   M3_R3_P4_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+  M3_R3_P4_ACCEPTED_EVIDENCE_HEAD: e98357109bfc71f013c6f1af83a06a4358a1f922
 
 jobs:
   validate-fault-security-compatibility:
@@ -61,6 +64,18 @@ jobs:
           test "$(git rev-parse HEAD)" = "$M3_R3_P4_EXACT_HEAD"
           test -z "$(git status --porcelain)"
           echo "checkedOutExactHead=$M3_R3_P4_EXACT_HEAD"
+      - name: Select immutable P4 Evidence mode
+        id: p4_evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$M3_R3_P4_EXACT_HEAD" = "$M3_R3_P4_ACCEPTED_EVIDENCE_HEAD" ]; then
+            echo 'emit=true' >> "$GITHUB_OUTPUT"
+            echo 'p4HistoricalEvidenceEmission=accepted-head'
+          else
+            echo 'emit=false' >> "$GITHUB_OUTPUT"
+            echo 'p4HistoricalEvidenceEmission=validation-only'
+          fi
       - name: Set up project baseline Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -109,14 +124,22 @@ jobs:
           echo "node24CompatibilityAccepted=true"
           echo "crossNodeCompatibilityProductDigest=${{ steps.node24.outputs.digest }}"
       - name: Restore Node.js 22 for Evidence generation
+        if: ${{ steps.p4_evidence.outputs.emit == 'true' }}
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Generate and audit exact-Head Evidence payload
+      - name: Generate and audit immutable P4 Evidence payload
+        if: ${{ steps.p4_evidence.outputs.emit == 'true' }}
         env:
           M3_R3_P4_BRANCH: ${{ github.head_ref || github.ref_name }}
           M3_R3_P4_EMIT_EVIDENCE: true
         run: node scripts/m3-r3-p4/ci-artifact.js
+      - name: Record validation-only historical Evidence mode
+        if: ${{ steps.p4_evidence.outputs.emit != 'true' }}
+        shell: bash
+        run: |
+          echo 'historicalP4EvidenceReissued=false'
+          echo 'p4ValidationOnly=true'
       - name: Verify clean repository state
         shell: bash
         run: |
@@ -124,6 +147,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$M3_R3_P4_EXACT_HEAD"
           test -z "$(git status --porcelain)"
       - name: Upload permanent P4 Evidence Artifact
+        if: ${{ steps.p4_evidence.outputs.emit == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: m3-r3-p4-fault-security-compatibility-evidence
