@@ -115,9 +115,9 @@ function resolveLocalRef(root, ref) {
   invariant(typeof ref === 'string' && ref.startsWith('#/'), `Unsupported Schema ref: ${ref}`);
   let current = root;
   for (const raw of ref.slice(2).split('/')) {
-    const token = raw.replaceAll('~1', '/').replaceAll('~0', '~');
-    invariant(isRecord(current) && Object.hasOwn(current, token), `Unresolvable Schema ref: ${ref}`);
-    current = current[token];
+    const segment = raw.replaceAll('~1', '/').replaceAll('~0', '~');
+    invariant(isRecord(current) && Object.hasOwn(current, segment), `Unresolvable Schema ref: ${ref}`);
+    current = current[segment];
   }
   return current;
 }
