@@ -15,6 +15,7 @@ on:
       - 'packages/k6-api-adapter/test/fault-security-compatibility-validator.test.js'
       - 'packages/k6-api-adapter/test/m3-r3-g1-formal-acceptance.test.js'
       - 'packages/k6-api-adapter/test/m3-r3-g4-evidence-correction.test.js'
+      - 'schemas/execution/k6-api-runtime/README.md'
       - 'schemas/execution/k6-api-runtime/v1/m3-r3-g4-evidence-correction.schema.json'
       - 'docs/04-governance/m3-r3-g4-evidence-correction.md'
   push:
@@ -32,6 +33,7 @@ on:
       - 'packages/k6-api-adapter/test/fault-security-compatibility-validator.test.js'
       - 'packages/k6-api-adapter/test/m3-r3-g1-formal-acceptance.test.js'
       - 'packages/k6-api-adapter/test/m3-r3-g4-evidence-correction.test.js'
+      - 'schemas/execution/k6-api-runtime/README.md'
       - 'schemas/execution/k6-api-runtime/v1/m3-r3-g4-evidence-correction.schema.json'
       - 'docs/04-governance/m3-r3-g4-evidence-correction.md'
 
@@ -106,4 +108,5 @@ jobs:
           name: m3-r3-g4-evidence-correction
           path: /tmp/m3-r3-g4-c1-artifact
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 90
