@@ -23,6 +23,7 @@ import {
 } from './runtime-result-contracts.js';
 
 const NODE_ADAPTER_EXECUTORS = new WeakMap();
+const ENCODED_PATH_BOUNDARY_PATTERN = /%(?:2e|2f|5c)/iu;
 
 export function createNodeK6ProcessAdapter(options = {}) {
   validateAdapterOptions(options);
@@ -423,8 +424,9 @@ function resolveWorkingDirectoryPath(command, resolver, runtime) {
       'Process working directory could not be resolved');
   }
   runtimeAdmissionInvariant(typeof candidate === 'string' && candidate.length > 0
-      && !candidate.includes('\0') && isAbsolute(candidate)
-      && normalize(candidate) === candidate,
+      && !candidate.includes('\0') && !candidate.includes('\\')
+      && !ENCODED_PATH_BOUNDARY_PATTERN.test(candidate)
+      && isAbsolute(candidate) && normalize(candidate) === candidate,
   'K6_PROCESS_WORKING_DIRECTORY_INVALID',
   'Resolved working directory must be a normalized absolute path');
   let realPath;

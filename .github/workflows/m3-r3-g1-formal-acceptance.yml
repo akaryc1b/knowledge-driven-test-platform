@@ -1,0 +1,103 @@
+name: m3-r3-g1-formal-acceptance
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r3-g1-formal-acceptance.yml'
+      - 'packages/k6-api-adapter/src/**'
+      - 'packages/k6-api-adapter/test/**'
+      - 'schemas/execution/k6-api-runtime/**'
+      - 'scripts/m3-r3-g1/**'
+      - 'scripts/validate-m3-r3-g1-formal-acceptance.js'
+      - 'scripts/m3-r3-p4/**'
+      - 'scripts/validate-m3-r3-p4-fault-security-compatibility.js'
+      - 'docs/02-development/m3-r3-g1-formal-acceptance-handoff.md'
+      - 'docs/04-governance/m3-r3-g1-**'
+      - 'docs/releases/M3-R3-G1-formal-acceptance.md'
+      - 'docs/m3-r3-g1-index.md'
+      - 'package.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/m3-r3-g1-formal-acceptance.yml'
+      - 'packages/k6-api-adapter/src/**'
+      - 'packages/k6-api-adapter/test/**'
+      - 'schemas/execution/k6-api-runtime/**'
+      - 'scripts/m3-r3-g1/**'
+      - 'scripts/validate-m3-r3-g1-formal-acceptance.js'
+      - 'scripts/m3-r3-p4/**'
+      - 'scripts/validate-m3-r3-p4-fault-security-compatibility.js'
+      - 'docs/02-development/m3-r3-g1-formal-acceptance-handoff.md'
+      - 'docs/04-governance/m3-r3-g1-**'
+      - 'docs/releases/M3-R3-G1-formal-acceptance.md'
+      - 'docs/m3-r3-g1-index.md'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+env:
+  M3_R3_G1_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+  M3_R3_G1_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+  M3_R3_G1_BRANCH: ${{ github.head_ref || github.ref_name }}
+  M3_R3_G1_EVENT_NAME: ${{ github.event_name }}
+
+jobs:
+  validate-formal-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact Head and accepted base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$M3_R3_G1_EXACT_HEAD"
+          test "$M3_R3_G1_BASE_SHA" = \
+            "8684836233837c905e0ced20e8eac2cfd0b43601"
+          git cat-file -e "$M3_R3_G1_BASE_SHA^{commit}"
+          test -z "$(git status --porcelain)"
+          echo "checkedOutExactHead=$M3_R3_G1_EXACT_HEAD"
+          echo "acceptedBase=$M3_R3_G1_BASE_SHA"
+      - name: Set up baseline Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Run G1 scope, tests and permanent Validators
+        shell: bash
+        run: bash scripts/m3-r3-g1/ci-node22.sh
+      - name: Set up compatibility Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Run fake-only Node.js 24 compatibility
+        shell: bash
+        run: bash scripts/m3-r3-g1/ci-node24.sh
+      - name: Restore Node.js 22 for Evidence generation
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Generate and audit exact-Head G1 Evidence
+        env:
+          M3_R3_G1_EMIT_EVIDENCE: true
+        run: node scripts/m3-r3-g1/ci-artifact.js
+      - name: Verify clean repository state
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$M3_R3_G1_EXACT_HEAD"
+          test -z "$(git status --porcelain)"
+      - name: Upload permanent G1 Evidence Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r3-g1-formal-acceptance-evidence
+          path: /tmp/m3-r3-g1-artifact
+          if-no-files-found: error
+          retention-days: 90

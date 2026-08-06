@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "m3-r3-g1-schema-catalog/v1",
+  "schemas": [
+    {
+      "schemaVersion": "m3-r3-formal-acceptance-g1-evidence/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/m3-r3-formal-acceptance-g1-evidence.schema.json"
+    }
+  ]
+}

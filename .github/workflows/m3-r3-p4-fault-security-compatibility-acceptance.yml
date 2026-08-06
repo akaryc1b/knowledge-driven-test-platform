@@ -1,0 +1,132 @@
+name: m3-r3-p4-fault-security-compatibility-acceptance
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r3-p4-fault-security-compatibility-acceptance.yml'
+      - 'package.json'
+      - 'packages/k6-api-adapter/src/**'
+      - 'packages/k6-api-adapter/test/**'
+      - 'schemas/execution/k6-api-runtime/**'
+      - 'scripts/validate-m3-r3-p4-fault-security-compatibility.js'
+      - 'scripts/m3-r3-p4/**'
+      - 'docs/02-development/m3-r3-p4-fault-security-compatibility-handoff.md'
+      - 'docs/03-roadmap/m3-r3-p4-fault-security-compatibility-acceptance.md'
+      - 'docs/04-governance/**m3-r3-p4**'
+      - 'docs/05-adr/ADR-0034-linux-node22-node24-runtime-acceptance.md'
+      - 'docs/06-security/m3-r3-p4-fault-security-compatibility-threat-model.md'
+      - 'docs/releases/M3-R3-P4-fault-security-compatibility-acceptance.md'
+      - 'docs/m3-r3-p4-index.md'
+      - 'docs/README.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/m3-r3-p4-fault-security-compatibility-acceptance.yml'
+      - 'package.json'
+      - 'packages/k6-api-adapter/src/**'
+      - 'packages/k6-api-adapter/test/**'
+      - 'schemas/execution/k6-api-runtime/**'
+      - 'scripts/validate-m3-r3-p4-fault-security-compatibility.js'
+      - 'scripts/m3-r3-p4/**'
+      - 'docs/02-development/m3-r3-p4-fault-security-compatibility-handoff.md'
+      - 'docs/03-roadmap/m3-r3-p4-fault-security-compatibility-acceptance.md'
+      - 'docs/04-governance/**m3-r3-p4**'
+      - 'docs/05-adr/ADR-0034-linux-node22-node24-runtime-acceptance.md'
+      - 'docs/06-security/m3-r3-p4-fault-security-compatibility-threat-model.md'
+      - 'docs/releases/M3-R3-P4-fault-security-compatibility-acceptance.md'
+      - 'docs/m3-r3-p4-index.md'
+      - 'docs/README.md'
+
+permissions:
+  contents: read
+
+env:
+  M3_R3_P4_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  validate-fault-security-compatibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify exact Head checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$M3_R3_P4_EXACT_HEAD"
+          test -z "$(git status --porcelain)"
+          echo "checkedOutExactHead=$M3_R3_P4_EXACT_HEAD"
+      - name: Set up project baseline Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Run Node.js 22 acceptance and predecessor Validators
+        shell: bash
+        run: bash scripts/m3-r3-p4/ci-node22.sh
+      - name: Set up compatibility Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Collect fake-only Node.js 24 compatibility
+        id: node24
+        shell: bash
+        run: bash scripts/m3-r3-p4/ci-node24.sh
+      - name: Reject Node.js 24 test failure
+        if: ${{ steps.node24.outputs.node_status != '0' }}
+        shell: bash
+        run: exit 1
+      - name: Reject missing Node.js 24 TAP total
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.total_positive != 'true' }}
+        shell: bash
+        run: exit 1
+      - name: Reject Node.js 24 passed and total mismatch
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.total_positive == 'true' && steps.node24.outputs.passed_equal_total != 'true' }}
+        shell: bash
+        run: exit 1
+      - name: Reject nonzero Node.js 24 TAP failures
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.total_positive == 'true' && steps.node24.outputs.passed_equal_total == 'true' && steps.node24.outputs.failed_zero != 'true' }}
+        shell: bash
+        run: exit 1
+      - name: Reject missing Node.js 24 product digest
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.total_positive == 'true' && steps.node24.outputs.passed_equal_total == 'true' && steps.node24.outputs.failed_zero == 'true' && steps.node24.outputs.digest_valid != 'true' }}
+        shell: bash
+        run: exit 1
+      - name: Reject Node.js 22 and 24 product digest mismatch
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.total_positive == 'true' && steps.node24.outputs.passed_equal_total == 'true' && steps.node24.outputs.failed_zero == 'true' && steps.node24.outputs.digest_valid == 'true' && steps.node24.outputs.digest_equal != 'true' }}
+        shell: bash
+        run: exit 1
+      - name: Accept Node.js 24 compatibility
+        if: ${{ steps.node24.outputs.node_status == '0' && steps.node24.outputs.total_positive == 'true' && steps.node24.outputs.passed_equal_total == 'true' && steps.node24.outputs.failed_zero == 'true' && steps.node24.outputs.digest_valid == 'true' && steps.node24.outputs.digest_equal == 'true' }}
+        shell: bash
+        run: |
+          echo "node24CompatibilityAccepted=true"
+          echo "crossNodeCompatibilityProductDigest=${{ steps.node24.outputs.digest }}"
+      - name: Restore Node.js 22 for Evidence generation
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Generate and audit exact-Head Evidence payload
+        env:
+          M3_R3_P4_BRANCH: ${{ github.head_ref || github.ref_name }}
+          M3_R3_P4_EMIT_EVIDENCE: true
+        run: node scripts/m3-r3-p4/ci-artifact.js
+      - name: Verify clean repository state
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$M3_R3_P4_EXACT_HEAD"
+          test -z "$(git status --porcelain)"
+      - name: Upload permanent P4 Evidence Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r3-p4-fault-security-compatibility-evidence
+          path: /tmp/m3-r3-p4-artifact
+          if-no-files-found: error
+          retention-days: 90
