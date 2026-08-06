@@ -21,6 +21,13 @@ import {
   validateM3R3G1Repository,
 } from '../../../scripts/m3-r3-g1/repository-validator.js';
 
+function redigest(evidence) {
+  const claims = structuredClone(evidence);
+  delete claims.evidenceDigest;
+  evidence.evidenceDigest = sha256(claims);
+  return evidence;
+}
+
 function acceptedResults() {
   return {
     focused: { total: 7, passed: 7, failed: 0 },
@@ -89,9 +96,7 @@ test('G1 rejects a re-digested Ready forgery', async () => {
   const files = await loadM3R3G1RepositoryFiles();
   const evidence = await acceptedEvidence(files);
   evidence.decision.readyMarked = true;
-  const claims = structuredClone(evidence);
-  delete claims.evidenceDigest;
-  evidence.evidenceDigest = sha256(claims);
+  redigest(evidence);
   assert.throws(() => validateM3R3G1EvidenceDocument(
     evidence, JSON.parse(files[G1_EVIDENCE_SCHEMA_PATH])),
   /merge control mismatch/u);
@@ -102,13 +107,42 @@ test('G1 rejects substituted accepted P4 identity after re-digest',
     const files = await loadM3R3G1RepositoryFiles();
     const evidence = await acceptedEvidence(files);
     evidence.acceptedP4.artifactId += 1;
-    const claims = structuredClone(evidence);
-    delete claims.evidenceDigest;
-    evidence.evidenceDigest = sha256(claims);
+    redigest(evidence);
     assert.throws(() => validateM3R3G1EvidenceDocument(
       evidence, JSON.parse(files[G1_EVIDENCE_SCHEMA_PATH])),
     /accepted P4 identity changed/u);
   });
+
+test('G1 Evidence rejects invalid date-time after re-digest', async () => {
+  const files = await loadM3R3G1RepositoryFiles();
+  const evidence = await acceptedEvidence(files);
+  evidence.generatedAt = 'not-a-date';
+  redigest(evidence);
+  assert.throws(() => validateM3R3G1EvidenceDocument(
+    evidence, JSON.parse(files[G1_EVIDENCE_SCHEMA_PATH])),
+  /Schema date-time mismatch/u);
+});
+
+test('G1 Evidence rejects an unexpected nested property after re-digest',
+  async () => {
+    const files = await loadM3R3G1RepositoryFiles();
+    const evidence = await acceptedEvidence(files);
+    evidence.acceptance.unexpected = true;
+    redigest(evidence);
+    assert.throws(() => validateM3R3G1EvidenceDocument(
+      evidence, JSON.parse(files[G1_EVIDENCE_SCHEMA_PATH])),
+    /Schema additional property/u);
+  });
+
+test('G1 Evidence executes local refs for nested closed contracts', async () => {
+  const files = await loadM3R3G1RepositoryFiles();
+  const evidence = await acceptedEvidence(files);
+  evidence.testResults.focused.unexpected = true;
+  redigest(evidence);
+  assert.throws(() => validateM3R3G1EvidenceDocument(
+    evidence, JSON.parse(files[G1_EVIDENCE_SCHEMA_PATH])),
+  /Schema additional property/u);
+});
 
 test('G1 repository Validator rejects write-capable Workflow permissions',
   async () => {
@@ -121,7 +155,6 @@ test('G1 repository Validator rejects write-capable Workflow permissions',
       /forbidden token|Workflow missing/u,
     );
   });
-
 
 test('G1 Repository Validator rejects a missing root G1 Validator binding',
   async () => {
