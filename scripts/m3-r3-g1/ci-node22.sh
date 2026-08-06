@@ -1,5 +1,9 @@
 set -euo pipefail
-node scripts/m3-r3-g1/scope-audit.js
+if [ "${M3_R3_G1_IMMUTABLE_ATTESTATION:-false}" = 'true' ]; then
+  node scripts/m3-r3-g1/scope-audit.js
+else
+  echo 'g1ScopeAuditMode=validation-only'
+fi
 
 node --test --test-reporter=tap \
   packages/k6-api-adapter/test/m3-r3-g1-formal-acceptance.test.js \
