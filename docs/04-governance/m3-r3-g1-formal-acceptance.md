@@ -33,6 +33,7 @@ The authoritative G1 natural Run must prove:
 checkedOutExactEventHead=true
 cleanTreeBeforeValidation=true
 fullPrScopeMatchesManifest=true
+rootValidatorIncludesG1=true
 node22BaselineAccepted=true
 node24CompatibilityAccepted=true
 crossNodeProductDigestEqual=true
@@ -76,6 +77,28 @@ through the available connector.
 ```text
 securityDashboardEnumerationAvailable=false
 zeroAlertClaimMade=false
+```
+
+## Metadata and Validator-chain correction
+
+The PR metadata was corrected after G1 began so it no longer states that G1 is
+unstarted. During that metadata operation, an empty root placeholder path was
+created accidentally and removed immediately by an append-only corrective
+commit. The final scope manifest excludes that path, the final Tree contains no
+such file, and no historical commit was rewritten.
+
+The same correction cycle closes a real governance omission: the dedicated G1
+Validator is now explicitly registered as
+`validate:m3-r3-g1-formal-acceptance` and ordered in the root `validate` chain
+after P4 and before the final release-closure Validator. A focused mutation test
+rejects removal of either binding.
+
+```text
+accidentalPlaceholderPresentInFinalTree=false
+historyRewritten=false
+forcePushUsed=false
+rootValidatorIncludesG1=true
+exactHeadRevalidationRequired=true
 ```
 
 ## Decision target

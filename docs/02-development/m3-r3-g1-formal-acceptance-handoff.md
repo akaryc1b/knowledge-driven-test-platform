@@ -79,6 +79,7 @@ upload, independent download audit, review/thread recheck and permanent comments
 g1Complete=true
 g1ExactHeadAcceptanceComplete=true
 g1ArtifactVerificationComplete=true
+rootValidatorIncludesG1=true
 readyMarked=false
 merged=false
 g2Started=false

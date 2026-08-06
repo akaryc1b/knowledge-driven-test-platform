@@ -34,6 +34,7 @@ localProcessAdapterImplemented=true
 boundedLifecycleImplemented=true
 sanitizedRuntimeResultImplemented=true
 faultSecurityCompatibilityAccepted=true
+rootValidatorIncludesG1=true
 newRuntimeCapabilityAdded=false
 realProcessStartedInCi=false
 k6InvokedInCi=false

@@ -10,6 +10,9 @@ import {
   G1_WORKFLOW_PATH,
 } from '../../../scripts/m3-r3-g1/constants.js';
 import {
+  validateG1RootValidatorPackage,
+} from '../../../scripts/validate-m3-r3-g1-formal-acceptance.js';
+import {
   createM3R3G1Evidence,
   validateM3R3G1EvidenceDocument,
 } from '../../../scripts/m3-r3-g1/evidence.js';
@@ -20,7 +23,7 @@ import {
 
 function acceptedResults() {
   return {
-    focused: { total: 6, passed: 6, failed: 0 },
+    focused: { total: 7, passed: 7, failed: 0 },
     allK6ApiAdapter: { total: 1, passed: 1, failed: 0 },
     fullNode: { total: 1, passed: 1, skipped: 0, failed: 0 },
     node22Compatibility: {
@@ -116,6 +119,22 @@ test('G1 repository Validator rejects write-capable Workflow permissions',
     await assert.rejects(
       validateM3R3G1Repository({ files: forged }),
       /forbidden token|Workflow missing/u,
+    );
+  });
+
+
+test('G1 Repository Validator rejects a missing root G1 Validator binding',
+  async () => {
+    const files = await loadM3R3G1RepositoryFiles();
+    const pkg = JSON.parse(files['package.json']);
+    delete pkg.scripts['validate:m3-r3-g1-formal-acceptance'];
+    pkg.scripts.validate = pkg.scripts.validate.replace(
+      ' && node scripts/validate-m3-r3-g1-formal-acceptance.js',
+      '',
+    );
+    assert.throws(
+      () => validateG1RootValidatorPackage(`${JSON.stringify(pkg, null, 2)}\n`),
+      /explicit Validator script is missing|root Validator missing or reordered/u,
     );
   });
 
