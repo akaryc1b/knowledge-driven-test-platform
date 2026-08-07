@@ -15,3 +15,10 @@
 - Version: `m3-r3-final-main-closure/v1`
 - Scope: binds PR #68 source merge, PR #73 correction merge, exact-main natural Runs/Jobs, G1 and correction Artifacts, and Observer merge replay.
 - Boundary: governance-only; it does not rewrite P4/G1 Evidence or add runtime execution capability.
+
+### M3-R3 G4 Final Exact-Main Natural Workflow Manifest Evidence
+
+- Schema: `v1/m3-r3-g4-final-main-run-manifest.schema.json`
+- Version: `m3-r3-g4-final-main-run-manifest/v1`
+- Scope: derives the accepted exact-Head Workflow names and permanently binds the complete natural exact-main Run and Job manifest after an ordinary Merge Commit.
+- Boundary: governance-only; it preserves all P4, G1, correction and Observer Evidence and adds no runtime execution capability.
