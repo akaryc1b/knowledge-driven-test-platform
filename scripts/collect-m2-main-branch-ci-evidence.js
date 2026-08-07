@@ -54,7 +54,7 @@ export async function collectM2MainBranchCiEvidence(options = {}) {
 
   const runs = await fetchJson(
     fetchImpl,
-    `${apiBase}/repos/${repository}/actions/runs?branch=main&event=push&per_page=100`,
+    `${apiBase}/repos/${repository}/actions/runs?branch=main&event=push&status=completed&head_sha=${encodeURIComponent(sourceSha)}&per_page=100`,
     headers,
   );
   const matches = (runs.workflow_runs ?? []).filter((run) => run.path === WORKFLOW_PATH
