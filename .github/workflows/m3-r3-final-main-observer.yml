@@ -34,6 +34,8 @@ env:
   M3_R3_FINAL_OBSERVER_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
   M3_R3_FINAL_OBSERVER_BRANCH: ${{ github.head_ref || github.ref_name }}
   M3_R3_FINAL_OBSERVER_EVENT_NAME: ${{ github.event_name }}
+  M3_R3_FINAL_OBSERVER_ACCEPTED_HEAD: e67ec1f8e63b7ba2332bbe41ba40b453326b5985
+  M3_R3_FINAL_OBSERVER_MERGE_REPLAY: cdecd4e28cc9426b41c7f21d6fcd319f9ab8b3f9
 
 jobs:
   validate-final-main-observer:
@@ -41,6 +43,7 @@ jobs:
     timeout-minutes: 40
     outputs:
       evidence_digest: ${{ steps.observer_evidence.outputs.evidence_digest }}
+      emit_historical_evidence: ${{ steps.observer_mode.outputs.emit }}
     steps:
       - name: Check out exact Observer state
         uses: actions/checkout@v4
@@ -55,6 +58,18 @@ jobs:
           test "$(git rev-parse HEAD)" = "$M3_R3_FINAL_OBSERVER_EXACT_HEAD"
           test -z "$(git status --porcelain)"
           echo "checkedOutExactHead=$M3_R3_FINAL_OBSERVER_EXACT_HEAD"
+      - name: Select immutable Observer Evidence mode
+        id: observer_mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          emit=false
+          if [ "$M3_R3_FINAL_OBSERVER_EXACT_HEAD" = "$M3_R3_FINAL_OBSERVER_ACCEPTED_HEAD" ] \
+              || [ "$M3_R3_FINAL_OBSERVER_EXACT_HEAD" = "$M3_R3_FINAL_OBSERVER_MERGE_REPLAY" ]; then
+            emit=true
+          fi
+          echo "emit=$emit" >> "$GITHUB_OUTPUT"
+          echo "observerHistoricalEvidenceEmission=$emit"
       - name: Set up baseline Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -83,7 +98,8 @@ jobs:
           node scripts/m3-r3-final-main-observer.js --validate-repository \
             > /tmp/m3-r3-final-main-observer-validator.log 2>&1
           printf 'M3_R3_FINAL_OBSERVER_VALIDATOR_STATUS=success\n' >> "$GITHUB_ENV"
-      - name: Generate and pre-audit exact Observer Evidence
+      - name: Generate and pre-audit immutable Observer Evidence
+        if: ${{ steps.observer_mode.outputs.emit == 'true' }}
         id: observer_evidence
         env:
           GH_TOKEN: ${{ github.token }}
@@ -94,6 +110,12 @@ jobs:
           echo "$result"
           digest="$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).evidenceDigest)' "$result")"
           echo "evidence_digest=$digest" >> "$GITHUB_OUTPUT"
+      - name: Record validation-only historical Observer mode
+        if: ${{ steps.observer_mode.outputs.emit != 'true' }}
+        shell: bash
+        run: |
+          echo 'historicalObserverEvidenceReissued=false'
+          echo 'observerValidationOnly=true'
       - name: Verify clean repository state
         shell: bash
         run: |
@@ -101,6 +123,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$M3_R3_FINAL_OBSERVER_EXACT_HEAD"
           test -z "$(git status --porcelain)"
       - name: Upload permanent Observer Evidence Artifact
+        if: ${{ steps.observer_mode.outputs.emit == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: m3-r3-final-main-observer-evidence
@@ -119,7 +142,13 @@ jobs:
       actions: read
       issues: write
     steps:
+      - name: Record validation-only Observer report mode
+        if: ${{ needs.validate-final-main-observer.outputs.emit_historical_evidence != 'true' }}
+        run: |
+          echo 'historicalObserverSelfReportReissued=false'
+          echo 'observerReportValidationOnly=true'
       - name: Append exact Run and Artifact identity to Issue 71
+        if: ${{ needs.validate-final-main-observer.outputs.emit_historical_evidence == 'true' }}
         uses: actions/github-script@v7
         with:
           script: |
