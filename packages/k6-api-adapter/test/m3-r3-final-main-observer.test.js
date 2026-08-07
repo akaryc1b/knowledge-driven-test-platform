@@ -47,7 +47,7 @@ test('M3-R3 final Observer repository contract is permanent and read-only', asyn
   const result = await validateRepository();
   assert.equal(result.status, 'success');
   assert.equal(result.sourceWorkflowCount, 16);
-  assert.equal(result.correctionWorkflowCount, 15);
+  assert.equal(result.correctionWorkflowCount, 14);
   assert.equal(result.artifactPathCount, 16);
 });
 
@@ -59,7 +59,7 @@ test('Observer binds source/correction merges, natural Runs, Jobs and Artifacts'
   assert.deepEqual(evidence.correctionMerge.parents, [SOURCE_MERGE, CORRECTION_HEAD]);
   assert.equal(evidence.main.observedSha, CORRECTION_MERGE);
   assert.equal(evidence.naturalRuns.sourceMerge.workflowCount, 16);
-  assert.equal(evidence.naturalRuns.correctionMerge.workflowCount, 16);
+  assert.equal(evidence.naturalRuns.correctionMerge.workflowCount, 15);
   assert(evidence.naturalRuns.correctionMerge.expectedWorkflowNames
     .includes('m2-r2a-external-evidence-intake'));
   assert.equal(evidence.naturalRuns.correctionMerge

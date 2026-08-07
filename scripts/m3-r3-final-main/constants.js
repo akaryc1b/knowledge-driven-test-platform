@@ -31,7 +31,6 @@ export const SOURCE_WORKFLOWS = Object.freeze([
 ]);
 
 export const CORRECTION_WORKFLOWS = Object.freeze([
-  'm2-r0-main-ci-closure',
   'm3-r0-execution-contract-foundation',
   'm3-r1-k6-api-spec-compiler',
   'm3-r2-k6-api-source-generation',
