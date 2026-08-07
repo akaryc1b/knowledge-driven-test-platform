@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/m3-r3-g4-final-main-run-manifest.yml'
+      - '.github/workflows/m3-r3-final-main-observer.yml'
       - 'scripts/m3-r3-g4-final-main-run-manifest.js'
       - 'scripts/json-schema-draft-2020.js'
       - 'packages/k6-api-adapter/test/m3-r3-g4-final-main-run-manifest.test.js'
@@ -14,6 +15,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/m3-r3-g4-final-main-run-manifest.yml'
+      - '.github/workflows/m3-r3-final-main-observer.yml'
       - 'scripts/m3-r3-g4-final-main-run-manifest.js'
       - 'scripts/json-schema-draft-2020.js'
       - 'packages/k6-api-adapter/test/m3-r3-g4-final-main-run-manifest.test.js'
