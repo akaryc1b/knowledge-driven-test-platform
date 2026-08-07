@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { sha256 } from '@kdtp/knowledge-core';
+import { collectM2MainBranchCiEvidence } from '../../../scripts/collect-m2-main-branch-ci-evidence.js';
 import {
   C1_ARTIFACT_PATHS,
   C1_SCHEMA_PATH,
@@ -38,6 +39,39 @@ test('M3-R3-G4-C1 repository contract accepts the minimal correction slice',
     assert.equal(result.status, 'success');
     assert.equal(result.artifactPathCount, 19);
     assert.equal(C1_ARTIFACT_PATHS.length, 19);
+  });
+
+test('M3-R3-G4-C1 binds the historical main-run query to the exact SHA',
+  async () => {
+    const sourceSha = '991b5f0f9cfa3a382f9aff3c600f98b76aed9c08';
+    let requestedUrl = null;
+    await assert.rejects(
+      collectM2MainBranchCiEvidence({
+        promotion: {
+          releaseId: 'M2-RC1',
+          version: '0.12.0',
+          promotionSource: { mainSha: sourceSha },
+        },
+        collectedAt: '2026-08-06T13:00:00.000Z',
+        credential: '',
+        fetchImpl: async (url) => {
+          requestedUrl = url;
+          return {
+            ok: true,
+            status: 200,
+            async json() { return { workflow_runs: [] }; },
+          };
+        },
+      }),
+      /completed main push validation run, found 0/u,
+    );
+    assert.equal(typeof requestedUrl, 'string');
+    const request = new URL(requestedUrl);
+    assert.equal(request.searchParams.get('branch'), 'main');
+    assert.equal(request.searchParams.get('event'), 'push');
+    assert.equal(request.searchParams.get('status'), 'completed');
+    assert.equal(request.searchParams.get('head_sha'), sourceSha);
+    assert.equal(request.searchParams.get('per_page'), '100');
   });
 
 test('M3-R3-G4-C1 Evidence is closed and digest-bound', async () => {
