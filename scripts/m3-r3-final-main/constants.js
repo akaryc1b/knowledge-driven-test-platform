@@ -48,6 +48,22 @@ export const CORRECTION_WORKFLOWS = Object.freeze([
   'validation',
 ]);
 
+export const SOURCE_EXPECTED_CONCLUSIONS = Object.freeze(Object.fromEntries(
+  SOURCE_WORKFLOWS.map((name) => [name, name === 'validation' ? 'failure' : 'success']),
+));
+export const CORRECTION_EXPECTED_CONCLUSIONS = Object.freeze(Object.fromEntries(
+  CORRECTION_WORKFLOWS.map((name) => [name, 'success']),
+));
+export const SOURCE_HISTORICAL_FAILURE = Object.freeze({
+  workflow: 'validation',
+  classification: 'staleMainPushAssumption/workflowDefect',
+  correctedByPullRequest: 73,
+  correctedByHead: CORRECTION_HEAD,
+  correctedByMerge: CORRECTION_MERGE,
+  preserved: true,
+  manualRerunPerformed: false,
+});
+
 export const ARTIFACT_PATHS = Object.freeze([
   'evidence/m3-r3-final-main-closure.json',
   SCHEMA_PATH,

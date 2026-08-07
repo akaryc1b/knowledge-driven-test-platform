@@ -2,10 +2,11 @@ import { canonicalStringify, sha256 } from '@kdtp/knowledge-core';
 import { scanSensitiveValues } from '../../packages/k6-api-adapter/test/p5-test-helpers.js';
 import { validateJsonSchemaDraft202012 } from '../json-schema-draft-2020.js';
 import {
-  ARTIFACT_NAME, ARTIFACT_PATHS, CORRECTION_HEAD, CORRECTION_MERGE,
-  CORRECTION_WORKFLOWS, FIXED_DIGESTS, OBSERVER_BRANCH, REPOSITORY,
-  SAFETY_FIELDS, SCHEMA_PATH, SCHEMA_VERSION, SOURCE_BASE, SOURCE_HEAD,
-  SOURCE_MERGE, SOURCE_WORKFLOWS,
+  ARTIFACT_NAME, ARTIFACT_PATHS, CORRECTION_EXPECTED_CONCLUSIONS,
+  CORRECTION_HEAD, CORRECTION_MERGE, CORRECTION_WORKFLOWS, FIXED_DIGESTS,
+  OBSERVER_BRANCH, REPOSITORY, SAFETY_FIELDS, SCHEMA_PATH, SCHEMA_VERSION,
+  SOURCE_BASE, SOURCE_EXPECTED_CONCLUSIONS, SOURCE_HEAD,
+  SOURCE_HISTORICAL_FAILURE, SOURCE_MERGE, SOURCE_WORKFLOWS,
 } from './constants.js';
 import { loadRepositoryFiles, validateRepository } from './repository.js';
 import {
@@ -82,13 +83,21 @@ export async function createEvidence(options = {}) {
 
   const sourceRuns = await collectExactPushRunSet({
     fetchImpl, apiBase, headers, commitSha: SOURCE_MERGE,
-    expectedNames: SOURCE_WORKFLOWS, label: 'source Merge',
+    expectedNames: SOURCE_WORKFLOWS,
+    expectedConclusions: SOURCE_EXPECTED_CONCLUSIONS,
+    label: 'source Merge',
   });
   const correctionRuns = await collectExactPushRunSet({
     fetchImpl, apiBase, headers, commitSha: CORRECTION_MERGE,
-    expectedNames: CORRECTION_WORKFLOWS, label: 'correction Merge',
+    expectedNames: CORRECTION_WORKFLOWS,
+    expectedConclusions: CORRECTION_EXPECTED_CONCLUSIONS,
+    label: 'correction Merge',
   });
   const sourceG1 = requireRun(sourceRuns, 'm3-r3-g1-formal-acceptance');
+  const sourceFailure = requireRun(sourceRuns, SOURCE_HISTORICAL_FAILURE.workflow);
+  const failedJobs = sourceFailure.jobs.filter((job) => job.conclusion === 'failure');
+  invariant(sourceFailure.conclusion === 'failure' && failedJobs.length > 0,
+    'Source historical validation failure is not preserved');
   const correctionC1 = requireRun(correctionRuns, 'm3-r3-g4-evidence-correction');
   const artifacts = {
     sourceMergeG1: await collectRunArtifact({ fetchImpl, apiBase, headers, run: sourceG1,
@@ -115,9 +124,22 @@ export async function createEvidence(options = {}) {
       parents: correctionCommit.parents },
     observer,
     naturalRuns: {
-      sourceMerge: runSet(SOURCE_MERGE, SOURCE_WORKFLOWS, sourceRuns),
-      correctionMerge: runSet(CORRECTION_MERGE, CORRECTION_WORKFLOWS, correctionRuns),
+      sourceMerge: runSet(SOURCE_MERGE, SOURCE_WORKFLOWS,
+        SOURCE_EXPECTED_CONCLUSIONS, sourceRuns),
+      correctionMerge: runSet(CORRECTION_MERGE, CORRECTION_WORKFLOWS,
+        CORRECTION_EXPECTED_CONCLUSIONS, correctionRuns),
     },
+    historicalFailures: [{
+      stage: 'sourceMerge', workflow: SOURCE_HISTORICAL_FAILURE.workflow,
+      runId: sourceFailure.id, runConclusion: sourceFailure.conclusion,
+      failedJobIds: failedJobs.map((job) => job.id),
+      classification: SOURCE_HISTORICAL_FAILURE.classification,
+      correctedByPullRequest: SOURCE_HISTORICAL_FAILURE.correctedByPullRequest,
+      correctedByHead: SOURCE_HISTORICAL_FAILURE.correctedByHead,
+      correctedByMerge: SOURCE_HISTORICAL_FAILURE.correctedByMerge,
+      preserved: SOURCE_HISTORICAL_FAILURE.preserved,
+      manualRerunPerformed: SOURCE_HISTORICAL_FAILURE.manualRerunPerformed,
+    }],
     artifacts, fixedDigests: { ...FIXED_DIGESTS }, validation,
     artifact: { name: ARTIFACT_NAME, expectedPaths: [...ARTIFACT_PATHS],
       pathCount: ARTIFACT_PATHS.length, preUploadAudit: {
@@ -127,7 +149,10 @@ export async function createEvidence(options = {}) {
         credentialShapedMatches: 0,
       } },
     decision: {
-      sourceMergeExactMainVerified: true, correctionMergeExactMainVerified: true,
+      sourceMergeExactMainVerified: true,
+      sourceHistoricalFailurePreserved: true,
+      correctionMergeExactMainVerified: true,
+      correctionClosesHistoricalFailure: true,
       observerPullRequestVerified: true, observerMerged: eventName === 'push',
       finalClosureEligible: eventName === 'push',
       nextRequiredAction: eventName === 'push'
@@ -153,9 +178,26 @@ export function validateEvidence(evidence, schema) {
   invariant(canonicalStringify(evidence.correctionMerge.parents)
     === canonicalStringify([SOURCE_MERGE, CORRECTION_HEAD]), 'Correction Merge parents changed');
   validateRunSet(evidence.naturalRuns.sourceMerge, SOURCE_MERGE,
-    SOURCE_WORKFLOWS, 'source Merge');
+    SOURCE_WORKFLOWS, SOURCE_EXPECTED_CONCLUSIONS, 'source Merge');
   validateRunSet(evidence.naturalRuns.correctionMerge, CORRECTION_MERGE,
-    CORRECTION_WORKFLOWS, 'correction Merge');
+    CORRECTION_WORKFLOWS, CORRECTION_EXPECTED_CONCLUSIONS, 'correction Merge');
+  const sourceFailure = requireRun(evidence.naturalRuns.sourceMerge.runs,
+    SOURCE_HISTORICAL_FAILURE.workflow);
+  const failedJobIds = sourceFailure.jobs.filter((job) => job.conclusion === 'failure')
+    .map((job) => job.id);
+  const failure = evidence.historicalFailures[0];
+  invariant(evidence.historicalFailures.length === 1
+    && failure.stage === 'sourceMerge'
+    && failure.workflow === SOURCE_HISTORICAL_FAILURE.workflow
+    && failure.runId === sourceFailure.id
+    && failure.runConclusion === 'failure'
+    && canonicalStringify(failure.failedJobIds) === canonicalStringify(failedJobIds)
+    && failure.classification === SOURCE_HISTORICAL_FAILURE.classification
+    && failure.correctedByPullRequest === 73
+    && failure.correctedByHead === CORRECTION_HEAD
+    && failure.correctedByMerge === CORRECTION_MERGE
+    && failure.preserved === true && failure.manualRerunPerformed === false,
+  'Observer historical failure identity changed');
   invariant(evidence.artifacts.sourceMergeG1.headSha === SOURCE_MERGE
     && evidence.artifacts.sourceMergeG1.runId
       === requireRun(evidence.naturalRuns.sourceMerge.runs,
@@ -166,6 +208,9 @@ export function validateEvidence(evidence, schema) {
         'm3-r3-g4-evidence-correction').id, 'Correction C1 Artifact binding changed');
   invariant(canonicalStringify(evidence.fixedDigests) === canonicalStringify(FIXED_DIGESTS),
     'Observer fixed digest chain changed');
+  invariant(evidence.decision.sourceHistoricalFailurePreserved === true
+    && evidence.decision.correctionClosesHistoricalFailure === true,
+  'Observer correction closure decision changed');
   invariant(canonicalStringify(evidence.artifact.expectedPaths)
     === canonicalStringify(ARTIFACT_PATHS)
     && evidence.artifact.pathCount === ARTIFACT_PATHS.length,
@@ -199,21 +244,30 @@ export function validateEvidence(evidence, schema) {
   return true;
 }
 
-function runSet(commitSha, names, runs) {
-  return { commitSha, expectedWorkflowNames: [...names], workflowCount: names.length, runs };
+function runSet(commitSha, names, expectedConclusions, runs) {
+  return { commitSha, expectedWorkflowNames: [...names], workflowCount: names.length,
+    expectedConclusions: { ...expectedConclusions }, runs };
 }
-function validateRunSet(value, sha, names, label) {
+function validateRunSet(value, sha, names, expectedConclusions, label) {
   invariant(value.commitSha === sha && value.workflowCount === names.length
     && canonicalStringify([...value.expectedWorkflowNames].sort())
       === canonicalStringify([...names].sort())
+    && canonicalStringify(value.expectedConclusions)
+      === canonicalStringify(expectedConclusions)
     && canonicalStringify(value.runs.map((run) => run.name).sort())
       === canonicalStringify([...names].sort()), `${label} Evidence run set changed`);
-  invariant(value.runs.every((run) => run.event === 'push'
-    && run.headBranch === 'main' && run.headSha === sha && run.attempt === 1
-    && run.status === 'completed' && run.conclusion === 'success'
-    && run.jobs.length > 0 && run.jobs.every((job) =>
-      job.status === 'completed' && job.conclusion === 'success')),
-  `${label} Evidence contains an unsuccessful natural Run or Job`);
+  invariant(value.runs.every((run) => {
+    const expected = expectedConclusions[run.name];
+    const jobsObserved = run.jobs.length > 0 && run.jobs.every((job) =>
+      job.status === 'completed' && ['success', 'failure'].includes(job.conclusion));
+    const jobsMatch = expected === 'success'
+      ? run.jobs.every((job) => job.conclusion === 'success')
+      : run.jobs.some((job) => job.conclusion === 'failure');
+    return run.event === 'push' && run.headBranch === 'main'
+      && run.headSha === sha && run.attempt === 1 && run.status === 'completed'
+      && run.expectedConclusion === expected && run.conclusion === expected
+      && jobsObserved && jobsMatch;
+  }), `${label} Evidence contains an unexpected natural Run or Job outcome`);
 }
 function requiredEnv(name) {
   const value = process.env[name];

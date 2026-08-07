@@ -14,6 +14,7 @@
     "correctionMerge",
     "observer",
     "naturalRuns",
+    "historicalFailures",
     "artifacts",
     "fixedDigests",
     "validation",
@@ -301,7 +302,9 @@
       "required": [
         "sourceMergeExactMainVerified",
         "correctionMergeExactMainVerified",
+        "sourceHistoricalFailurePreserved",
         "observerPullRequestVerified",
+        "correctionClosesHistoricalFailure",
         "observerMerged",
         "finalClosureEligible",
         "nextRequiredAction",
@@ -337,6 +340,12 @@
             "minLength": 1,
             "maxLength": 512
           }
+        },
+        "sourceHistoricalFailurePreserved": {
+          "const": true
+        },
+        "correctionClosesHistoricalFailure": {
+          "const": true
         }
       }
     },
@@ -435,6 +444,70 @@
     "evidenceDigest": {
       "type": "string",
       "pattern": "^[a-f0-9]{64}$"
+    },
+    "historicalFailures": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "stage",
+          "workflow",
+          "runId",
+          "runConclusion",
+          "failedJobIds",
+          "classification",
+          "correctedByPullRequest",
+          "correctedByHead",
+          "correctedByMerge",
+          "preserved",
+          "manualRerunPerformed"
+        ],
+        "properties": {
+          "stage": {
+            "const": "sourceMerge"
+          },
+          "workflow": {
+            "const": "validation"
+          },
+          "runId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "runConclusion": {
+            "const": "failure"
+          },
+          "failedJobIds": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "classification": {
+            "const": "staleMainPushAssumption/workflowDefect"
+          },
+          "correctedByPullRequest": {
+            "const": 73
+          },
+          "correctedByHead": {
+            "const": "d55d3483064e38bb0c7853a6d57729fa97c48070"
+          },
+          "correctedByMerge": {
+            "const": "c34c9e8234713f109bc98ff3b7ed663066083875"
+          },
+          "preserved": {
+            "const": true
+          },
+          "manualRerunPerformed": {
+            "const": false
+          }
+        }
+      }
     }
   },
   "$defs": {
@@ -461,7 +534,10 @@
           "const": "completed"
         },
         "conclusion": {
-          "const": "success"
+          "enum": [
+            "success",
+            "failure"
+          ]
         }
       }
     },
@@ -477,6 +553,7 @@
         "headSha",
         "attempt",
         "status",
+        "expectedConclusion",
         "conclusion",
         "jobs"
       ],
@@ -511,7 +588,10 @@
           "const": "completed"
         },
         "conclusion": {
-          "const": "success"
+          "enum": [
+            "success",
+            "failure"
+          ]
         },
         "jobs": {
           "type": "array",
@@ -519,6 +599,12 @@
           "items": {
             "$ref": "#/$defs/job"
           }
+        },
+        "expectedConclusion": {
+          "enum": [
+            "success",
+            "failure"
+          ]
         }
       }
     },
@@ -529,6 +615,7 @@
         "commitSha",
         "expectedWorkflowNames",
         "workflowCount",
+        "expectedConclusions",
         "runs"
       ],
       "properties": {
@@ -555,6 +642,15 @@
           "minItems": 1,
           "items": {
             "$ref": "#/$defs/run"
+          }
+        },
+        "expectedConclusions": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "success",
+              "failure"
+            ]
           }
         }
       }

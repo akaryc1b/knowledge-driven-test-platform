@@ -20,7 +20,24 @@ correctionMerge=c34c9e8234713f109bc98ff3b7ed663066083875
 observerBranch=agent/m3-r3-final-main-observer-583e848
 ```
 
-The Observer verifies both Merge Commit parent arrays through GitHub's read-only commit API. It queries exact natural `push(main)` Runs by `head_sha`, requires the accepted Workflow names, attempt `1`, and completed/successful Jobs, and rejects missing, duplicate, failed, incomplete, or rerun observations.
+The Observer verifies both Merge Commit parent arrays through GitHub's read-only commit API. It queries exact natural `push(main)` Runs by `head_sha`, requires the accepted Workflow names and attempt `1`, preserves the source Merge `validation` failure as `staleMainPushAssumption/workflowDefect`, requires all other source Runs to succeed, and requires every correction exact-main Run and Job to succeed. It rejects missing, duplicate, unexpected, incomplete, or rerun observations.
+
+
+## Preserved source-main failure
+
+```text
+sourceMerge=583e848a289a6fff2e2d2c4052002125b47bb853
+workflow=validation
+expectedConclusion=failure
+classification=staleMainPushAssumption/workflowDefect
+historicalFailurePreserved=true
+correctedByPullRequest=73
+correctedByHead=d55d3483064e38bb0c7853a6d57729fa97c48070
+correctedByMerge=c34c9e8234713f109bc98ff3b7ed663066083875
+manualRerunPerformed=false
+```
+
+This is not promoted to success. The final closure chain records the exact failed Run and Job identities, then proves closure through the successful correction exact-main natural Workflow set.
 
 ## Permanent bindings
 

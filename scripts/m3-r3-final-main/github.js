@@ -2,6 +2,8 @@ import { readFile } from 'node:fs/promises';
 import { canonicalStringify } from '@kdtp/knowledge-core';
 import { OBSERVER_BRANCH, REPOSITORY } from './constants.js';
 
+const OBSERVED_CONCLUSIONS = new Set(['success', 'failure']);
+
 export function apiHeaders(credential) {
   const headers = {
     Accept: 'application/vnd.github+json',
@@ -24,8 +26,11 @@ export async function fetchJson(fetchImpl, url, headers) {
 }
 
 export async function collectExactPushRunSet({
-  fetchImpl, apiBase, headers, commitSha, expectedNames, label,
+  fetchImpl, apiBase, headers, commitSha, expectedNames, expectedConclusions, label,
 }) {
+  invariant(canonicalStringify(Object.keys(expectedConclusions).sort())
+    === canonicalStringify([...expectedNames].sort()),
+  `${label} expected conclusion map changed`);
   const query = new URL(`${apiBase}/repos/${REPOSITORY}/actions/runs`);
   for (const [key, value] of Object.entries({
     branch: 'main', event: 'push', status: 'completed', head_sha: commitSha, per_page: '100',
@@ -40,8 +45,11 @@ export async function collectExactPushRunSet({
 
   const normalized = [];
   for (const run of exact.sort((a, b) => a.name.localeCompare(b.name))) {
-    invariant(run.run_attempt === 1, `${label} contains a rerun attempt`);
-    invariant(run.conclusion === 'success', `${label} Workflow failed: ${run.name}`);
+    const expectedConclusion = expectedConclusions[run.name];
+    invariant(run.run_attempt === 1,
+      `${label} contains a rerun attempt: ${run.name} Run ${run.id}`);
+    invariant(run.conclusion === expectedConclusion,
+      `${label} Workflow outcome changed: ${run.name} Run ${run.id} expected ${expectedConclusion} observed ${run.conclusion}`);
     const responseJobs = await fetchJson(fetchImpl,
       `${apiBase}/repos/${REPOSITORY}/actions/runs/${run.id}/jobs?filter=latest&per_page=100`,
       headers);
@@ -50,15 +58,22 @@ export async function collectExactPushRunSet({
       name: requireString(job.name, `${label} Job name`, 256),
       status: job.status, conclusion: job.conclusion,
     })).sort((a, b) => a.name.localeCompare(b.name));
-    invariant(jobs.length > 0 && jobs.every((job) =>
-      job.status === 'completed' && job.conclusion === 'success'),
-    `${label} Workflow has an unsuccessful Job: ${run.name}`);
+    invariant(jobs.length > 0 && jobs.every((job) => job.status === 'completed'
+      && OBSERVED_CONCLUSIONS.has(job.conclusion)),
+    `${label} Workflow has an invalid Job observation: ${run.name} Run ${run.id}`);
+    if (expectedConclusion === 'success') {
+      invariant(jobs.every((job) => job.conclusion === 'success'),
+        `${label} successful Workflow has a failed Job: ${run.name} Run ${run.id}`);
+    } else {
+      invariant(jobs.some((job) => job.conclusion === 'failure'),
+        `${label} failed Workflow has no failed Job: ${run.name} Run ${run.id}`);
+    }
     normalized.push({
       id: positiveInteger(run.id, `${label} Run ID`),
       workflowId: positiveInteger(run.workflow_id, `${label} Workflow ID`),
       name: run.name, event: run.event, headBranch: run.head_branch,
       headSha: run.head_sha, attempt: run.run_attempt,
-      status: run.status, conclusion: run.conclusion, jobs,
+      status: run.status, expectedConclusion, conclusion: run.conclusion, jobs,
     });
   }
   return normalized;

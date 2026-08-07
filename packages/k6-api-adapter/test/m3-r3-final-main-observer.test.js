@@ -4,7 +4,7 @@ import { sha256 } from '@kdtp/knowledge-core';
 import {
   CORRECTION_HEAD, CORRECTION_MERGE, CORRECTION_WORKFLOWS,
   OBSERVER_BRANCH, SCHEMA_PATH, SOURCE_BASE, SOURCE_HEAD, SOURCE_MERGE,
-  SOURCE_WORKFLOWS, createEvidence, loadRepositoryFiles,
+  SOURCE_HISTORICAL_FAILURE, SOURCE_WORKFLOWS, createEvidence, loadRepositoryFiles,
   validateEvidence, validateRepository,
 } from '../../../scripts/m3-r3-final-main-observer.js';
 
@@ -58,6 +58,18 @@ test('Observer binds source/correction merges, natural Runs, Jobs and Artifacts'
   assert.equal(evidence.main.observedSha, CORRECTION_MERGE);
   assert.equal(evidence.naturalRuns.sourceMerge.workflowCount, 16);
   assert.equal(evidence.naturalRuns.correctionMerge.workflowCount, 15);
+  const preserved = evidence.naturalRuns.sourceMerge.runs.find(
+    (run) => run.name === 'validation');
+  assert.equal(preserved.conclusion, 'failure');
+  assert.equal(preserved.expectedConclusion, 'failure');
+  assert.deepEqual(evidence.historicalFailures, [{
+    stage: 'sourceMerge', workflow: 'validation', runId: preserved.id,
+    runConclusion: 'failure', failedJobIds: preserved.jobs.map((job) => job.id),
+    classification: SOURCE_HISTORICAL_FAILURE.classification,
+    correctedByPullRequest: 73, correctedByHead: CORRECTION_HEAD,
+    correctedByMerge: CORRECTION_MERGE, preserved: true,
+    manualRerunPerformed: false,
+  }]);
   assert(evidence.naturalRuns.sourceMerge.runs.every((run) => run.jobs.length === 1));
   assert.equal(evidence.artifacts.sourceMergeG1.headSha, SOURCE_MERGE);
   assert.equal(evidence.artifacts.correctionMergeC1.headSha, CORRECTION_MERGE);
@@ -72,11 +84,13 @@ test('Observer post-merge Evidence binds exact Observer Merge parents', async ()
   assert.equal(evidence.decision.finalClosureEligible, true);
 });
 
-test('Observer rejects missing, failed or rerun natural Workflow evidence', async () => {
+test('Observer rejects missing, unexpected or rerun natural Workflow evidence', async () => {
   await assert.rejects(acceptedEvidence({ omitCorrectionWorkflow: 'validation' }),
     /correction Merge exact natural Workflow set changed/u);
   await assert.rejects(acceptedEvidence({ failedSourceWorkflow: 'm3-r3-g1-formal-acceptance' }),
-    /source Merge Workflow failed/u);
+    /source Merge Workflow outcome changed/u);
+  await assert.rejects(acceptedEvidence({ sourceValidationConclusion: 'success' }),
+    /source Merge Workflow outcome changed/u);
   await assert.rejects(acceptedEvidence({ rerunSourceWorkflow: 'validation' }),
     /source Merge contains a rerun attempt/u);
 });
@@ -103,13 +117,24 @@ test('Observer Evidence is closed, semantic and digest-bound', async () => {
   forged.decision.finalClosureEligible = true;
   redigest(forged);
   assert.throws(() => validateEvidence(forged, schema), /pre-merge decision is invalid/u);
+
+  const reclassified = structuredClone(evidence);
+  reclassified.historicalFailures[0].classification = 'productDefect';
+  redigest(reclassified);
+  assert.throws(() => validateEvidence(reclassified, schema),
+    /Schema const mismatch|historical failure identity changed/u);
 });
 
 function fakeFetch(options = {}) {
-  const sourceRuns = SOURCE_WORKFLOWS.map((name, index) => run(
-    41000000000 + index, name, SOURCE_MERGE,
-    name === options.failedSourceWorkflow ? 'failure' : 'success',
-    name === options.rerunSourceWorkflow ? 2 : 1));
+  const sourceRuns = SOURCE_WORKFLOWS.map((name, index) => {
+    let conclusion = name === 'validation' ? 'failure' : 'success';
+    if (name === options.failedSourceWorkflow) conclusion = 'failure';
+    if (name === 'validation' && options.sourceValidationConclusion) {
+      conclusion = options.sourceValidationConclusion;
+    }
+    return run(41000000000 + index, name, SOURCE_MERGE, conclusion,
+      name === options.rerunSourceWorkflow ? 2 : 1);
+  });
   const correctionRuns = CORRECTION_WORKFLOWS
     .filter((name) => name !== options.omitCorrectionWorkflow)
     .map((name, index) => run(42000000000 + index, name, CORRECTION_MERGE));
