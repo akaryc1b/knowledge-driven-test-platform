@@ -22,6 +22,17 @@ observerExactMainCanonicalEvidenceDigest=04412a6b1569cdbfb004203c3d2d12d46bd1c26
 
 The prior P4, G1, correction and Observer Evidence remains unchanged.
 
+## Preserved first C2 natural failure
+
+```text
+failedRun=31150846667
+failedJob=92779951740
+failureClassification=workflowDefect/historicalObserverReissuance
+manualRerunPerformed=false
+```
+
+The historical Observer Workflow completed its focused tests, root validation and dedicated Validator, then rejected the later C2 branch while attempting to regenerate Observer Evidence. C2 therefore also adds an immutable emission gate: only the accepted Observer Head or its original Merge replay may emit the historical Observer Artifact and self-report; all later Heads are validation-only.
+
 ## Collector contract
 
 The branch is:

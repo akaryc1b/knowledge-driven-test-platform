@@ -401,8 +401,8 @@
         },
         "expectedPaths": {
           "type": "array",
-          "minItems": 11,
-          "maxItems": 11,
+          "minItems": 12,
+          "maxItems": 12,
           "uniqueItems": true,
           "items": {
             "enum": [
@@ -412,6 +412,7 @@
               "scripts/json-schema-draft-2020.js",
               "packages/k6-api-adapter/test/m3-r3-g4-final-main-run-manifest.test.js",
               ".github/workflows/m3-r3-g4-final-main-run-manifest.yml",
+              ".github/workflows/m3-r3-final-main-observer.yml",
               "docs/04-governance/m3-r3-g4-final-main-run-manifest.md",
               "schemas/execution/k6-api-runtime/README.md",
               "logs/m3-r3-g4-final-main-run-manifest-focused-node22.tap",
@@ -421,7 +422,7 @@
           }
         },
         "pathCount": {
-          "const": 11
+          "const": 12
         },
         "preUploadAudit": {
           "type": "object",

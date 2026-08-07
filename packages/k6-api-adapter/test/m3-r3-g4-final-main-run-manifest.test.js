@@ -24,8 +24,8 @@ test('C2 repository contract is permanent and read-only', async () => {
   const result = await validateRepository();
   assert.equal(result.status, 'success');
   assert.equal(result.baselineMain, OBSERVER_MERGE);
-  assert.equal(result.artifactPathCount, 11);
-  assert.equal(ARTIFACT_PATHS.length, 11);
+  assert.equal(result.artifactPathCount, 12);
+  assert.equal(ARTIFACT_PATHS.length, 12);
 });
 
 test('C2 pre-merge Evidence preserves the exact baseline and remains blocked', async () => {

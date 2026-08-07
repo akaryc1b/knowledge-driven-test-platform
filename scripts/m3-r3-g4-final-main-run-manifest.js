@@ -40,6 +40,7 @@ export const ARTIFACT_PATHS = Object.freeze([
   'scripts/json-schema-draft-2020.js',
   'packages/k6-api-adapter/test/m3-r3-g4-final-main-run-manifest.test.js',
   WORKFLOW_PATH,
+  '.github/workflows/m3-r3-final-main-observer.yml',
   'docs/04-governance/m3-r3-g4-final-main-run-manifest.md',
   'schemas/execution/k6-api-runtime/README.md',
   'logs/m3-r3-g4-final-main-run-manifest-focused-node22.tap',
@@ -106,6 +107,17 @@ export async function validateRepository(options = {}) {
     'kubectl', 'curl ', 'wget ', 'gh ',
   ]) invariant(!workflow.includes(marker),
     `C2 Workflow contains forbidden entry: ${marker}`);
+
+  const observerWorkflow = files[
+    '.github/workflows/m3-r3-final-main-observer.yml'];
+  for (const marker of [
+    OBSERVER_HEAD, OBSERVER_MERGE,
+    'Select immutable Observer Evidence mode',
+    'historicalObserverEvidenceReissued=false',
+    "steps.observer_mode.outputs.emit == 'true'",
+    'observerReportValidationOnly=true',
+  ]) invariant(observerWorkflow.includes(marker),
+    `Historical Observer emission gate missing: ${marker}`);
 
   const docs = files[
     'docs/04-governance/m3-r3-g4-final-main-run-manifest.md'];
