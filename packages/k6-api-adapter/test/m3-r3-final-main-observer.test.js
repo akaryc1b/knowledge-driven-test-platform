@@ -52,12 +52,18 @@ test('M3-R3 final Observer repository contract is permanent and read-only', asyn
 });
 
 test('Observer binds source/correction merges, natural Runs, Jobs and Artifacts', async () => {
-  const evidence = await acceptedEvidence();
+  const evidence = await acceptedEvidence({
+    extraCorrectionWorkflow: 'm2-r2a-external-evidence-intake',
+  });
   assert.deepEqual(evidence.sourceMerge.parents, [SOURCE_BASE, SOURCE_HEAD]);
   assert.deepEqual(evidence.correctionMerge.parents, [SOURCE_MERGE, CORRECTION_HEAD]);
   assert.equal(evidence.main.observedSha, CORRECTION_MERGE);
   assert.equal(evidence.naturalRuns.sourceMerge.workflowCount, 16);
-  assert.equal(evidence.naturalRuns.correctionMerge.workflowCount, 15);
+  assert.equal(evidence.naturalRuns.correctionMerge.workflowCount, 16);
+  assert(evidence.naturalRuns.correctionMerge.expectedWorkflowNames
+    .includes('m2-r2a-external-evidence-intake'));
+  assert.equal(evidence.naturalRuns.correctionMerge
+    .expectedConclusions['m2-r2a-external-evidence-intake'], 'success');
   const preserved = evidence.naturalRuns.sourceMerge.runs.find(
     (run) => run.name === 'validation');
   assert.equal(preserved.conclusion, 'failure');
@@ -86,7 +92,7 @@ test('Observer post-merge Evidence binds exact Observer Merge parents', async ()
 
 test('Observer rejects missing, unexpected or rerun natural Workflow evidence', async () => {
   await assert.rejects(acceptedEvidence({ omitCorrectionWorkflow: 'validation' }),
-    /correction Merge exact natural Workflow set changed/u);
+    /correction Merge missing mandatory Workflows/u);
   await assert.rejects(acceptedEvidence({ failedSourceWorkflow: 'm3-r3-g1-formal-acceptance' }),
     /source Merge Workflow outcome changed/u);
   await assert.rejects(acceptedEvidence({ sourceValidationConclusion: 'success' }),
@@ -135,7 +141,11 @@ function fakeFetch(options = {}) {
     return run(41000000000 + index, name, SOURCE_MERGE, conclusion,
       name === options.rerunSourceWorkflow ? 2 : 1);
   });
-  const correctionRuns = CORRECTION_WORKFLOWS
+  const correctionNames = [
+    ...CORRECTION_WORKFLOWS,
+    ...(options.extraCorrectionWorkflow ? [options.extraCorrectionWorkflow] : []),
+  ];
+  const correctionRuns = correctionNames
     .filter((name) => name !== options.omitCorrectionWorkflow)
     .map((name, index) => run(42000000000 + index, name, CORRECTION_MERGE));
   const byId = new Map([...sourceRuns, ...correctionRuns].map((item) => [item.id, item]));

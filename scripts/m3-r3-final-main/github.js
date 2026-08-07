@@ -27,6 +27,7 @@ export async function fetchJson(fetchImpl, url, headers) {
 
 export async function collectExactPushRunSet({
   fetchImpl, apiBase, headers, commitSha, expectedNames, expectedConclusions, label,
+  allowAdditionalNames = false,
 }) {
   invariant(canonicalStringify(Object.keys(expectedConclusions).sort())
     === canonicalStringify([...expectedNames].sort()),
@@ -39,13 +40,30 @@ export async function collectExactPushRunSet({
   const exact = (response.workflow_runs ?? []).filter((run) =>
     run.event === 'push' && run.head_branch === 'main'
       && run.head_sha === commitSha && run.status === 'completed');
-  invariant(canonicalStringify(exact.map((run) => run.name).sort())
-    === canonicalStringify([...expectedNames].sort()),
-  `${label} exact natural Workflow set changed`);
+  const exactNames = exact.map((run) => run.name);
+  invariant(new Set(exactNames).size === exactNames.length,
+    `${label} contains duplicate Workflow names`);
+  if (Number.isInteger(response.total_count)) {
+    invariant(response.total_count === exact.length,
+      `${label} exact natural Workflow page is incomplete`);
+  }
+  if (allowAdditionalNames) {
+    const observed = new Set(exactNames);
+    const missing = expectedNames.filter((name) => !observed.has(name));
+    invariant(missing.length === 0,
+      `${label} missing mandatory Workflows: ${missing.join(',')}; observed: ${exactNames.sort().join(',')}`);
+  } else {
+    invariant(canonicalStringify(exactNames.sort())
+      === canonicalStringify([...expectedNames].sort()),
+    `${label} exact natural Workflow set changed`);
+  }
 
   const normalized = [];
   for (const run of exact.sort((a, b) => a.name.localeCompare(b.name))) {
-    const expectedConclusion = expectedConclusions[run.name];
+    const expectedConclusion = expectedConclusions[run.name]
+      ?? (allowAdditionalNames ? 'success' : undefined);
+    invariant(OBSERVED_CONCLUSIONS.has(expectedConclusion),
+      `${label} Workflow has no accepted expected conclusion: ${run.name}`);
     invariant(run.run_attempt === 1,
       `${label} contains a rerun attempt: ${run.name} Run ${run.id}`);
     invariant(run.conclusion === expectedConclusion,

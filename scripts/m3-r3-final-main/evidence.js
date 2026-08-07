@@ -91,7 +91,7 @@ export async function createEvidence(options = {}) {
     fetchImpl, apiBase, headers, commitSha: CORRECTION_MERGE,
     expectedNames: CORRECTION_WORKFLOWS,
     expectedConclusions: CORRECTION_EXPECTED_CONCLUSIONS,
-    label: 'correction Merge',
+    label: 'correction Merge', allowAdditionalNames: true,
   });
   const sourceG1 = requireRun(sourceRuns, 'm3-r3-g1-formal-acceptance');
   const sourceFailure = requireRun(sourceRuns, SOURCE_HISTORICAL_FAILURE.workflow);
@@ -99,6 +99,10 @@ export async function createEvidence(options = {}) {
   invariant(sourceFailure.conclusion === 'failure' && failedJobs.length > 0,
     'Source historical validation failure is not preserved');
   const correctionC1 = requireRun(correctionRuns, 'm3-r3-g4-evidence-correction');
+  const correctionWorkflowNames = correctionRuns.map((run) => run.name);
+  const correctionObservedConclusions = Object.fromEntries(
+    correctionRuns.map((run) => [run.name, run.expectedConclusion]),
+  );
   const artifacts = {
     sourceMergeG1: await collectRunArtifact({ fetchImpl, apiBase, headers, run: sourceG1,
       name: 'm3-r3-g1-formal-acceptance-evidence', expectedHead: SOURCE_MERGE }),
@@ -126,8 +130,8 @@ export async function createEvidence(options = {}) {
     naturalRuns: {
       sourceMerge: runSet(SOURCE_MERGE, SOURCE_WORKFLOWS,
         SOURCE_EXPECTED_CONCLUSIONS, sourceRuns),
-      correctionMerge: runSet(CORRECTION_MERGE, CORRECTION_WORKFLOWS,
-        CORRECTION_EXPECTED_CONCLUSIONS, correctionRuns),
+      correctionMerge: runSet(CORRECTION_MERGE, correctionWorkflowNames,
+        correctionObservedConclusions, correctionRuns),
     },
     historicalFailures: [{
       stage: 'sourceMerge', workflow: SOURCE_HISTORICAL_FAILURE.workflow,
@@ -179,8 +183,18 @@ export function validateEvidence(evidence, schema) {
     === canonicalStringify([SOURCE_MERGE, CORRECTION_HEAD]), 'Correction Merge parents changed');
   validateRunSet(evidence.naturalRuns.sourceMerge, SOURCE_MERGE,
     SOURCE_WORKFLOWS, SOURCE_EXPECTED_CONCLUSIONS, 'source Merge');
-  validateRunSet(evidence.naturalRuns.correctionMerge, CORRECTION_MERGE,
-    CORRECTION_WORKFLOWS, CORRECTION_EXPECTED_CONCLUSIONS, 'correction Merge');
+  const correctionRunSet = evidence.naturalRuns.correctionMerge;
+  const correctionNames = new Set(correctionRunSet.expectedWorkflowNames);
+  invariant(CORRECTION_WORKFLOWS.every((name) => correctionNames.has(name)),
+    'Correction Merge mandatory Workflow set changed');
+  invariant(Object.keys(correctionRunSet.expectedConclusions).length
+      === correctionRunSet.expectedWorkflowNames.length
+    && Object.values(correctionRunSet.expectedConclusions)
+      .every((conclusion) => conclusion === 'success'),
+  'Correction Merge expected conclusions changed');
+  validateRunSet(correctionRunSet, CORRECTION_MERGE,
+    correctionRunSet.expectedWorkflowNames, correctionRunSet.expectedConclusions,
+    'correction Merge');
   const sourceFailure = requireRun(evidence.naturalRuns.sourceMerge.runs,
     SOURCE_HISTORICAL_FAILURE.workflow);
   const failedJobIds = sourceFailure.jobs.filter((job) => job.conclusion === 'failure')
