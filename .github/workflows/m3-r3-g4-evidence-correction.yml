@@ -1,0 +1,112 @@
+name: m3-r3-g4-evidence-correction
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r3-g4-evidence-correction.yml'
+      - '.github/workflows/m3-r3-p4-fault-security-compatibility-acceptance.yml'
+      - '.github/workflows/m3-r3-g1-formal-acceptance.yml'
+      - 'scripts/json-schema-draft-2020.js'
+      - 'scripts/m3-r3-p4/evidence.js'
+      - 'scripts/m3-r3-g1/evidence.js'
+      - 'scripts/m3-r3-g1/ci-node22.sh'
+      - 'scripts/m3-r3-g4-correction/**'
+      - 'scripts/validate-m3-r3-g4-evidence-correction.js'
+      - 'packages/k6-api-adapter/test/fault-security-compatibility-validator.test.js'
+      - 'packages/k6-api-adapter/test/m3-r3-g1-formal-acceptance.test.js'
+      - 'packages/k6-api-adapter/test/m3-r3-g4-evidence-correction.test.js'
+      - 'schemas/execution/k6-api-runtime/README.md'
+      - 'schemas/execution/k6-api-runtime/v1/m3-r3-g4-evidence-correction.schema.json'
+      - 'docs/04-governance/m3-r3-g4-evidence-correction.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/m3-r3-g4-evidence-correction.yml'
+      - '.github/workflows/m3-r3-p4-fault-security-compatibility-acceptance.yml'
+      - '.github/workflows/m3-r3-g1-formal-acceptance.yml'
+      - 'scripts/json-schema-draft-2020.js'
+      - 'scripts/m3-r3-p4/evidence.js'
+      - 'scripts/m3-r3-g1/evidence.js'
+      - 'scripts/m3-r3-g1/ci-node22.sh'
+      - 'scripts/m3-r3-g4-correction/**'
+      - 'scripts/validate-m3-r3-g4-evidence-correction.js'
+      - 'packages/k6-api-adapter/test/fault-security-compatibility-validator.test.js'
+      - 'packages/k6-api-adapter/test/m3-r3-g1-formal-acceptance.test.js'
+      - 'packages/k6-api-adapter/test/m3-r3-g4-evidence-correction.test.js'
+      - 'schemas/execution/k6-api-runtime/README.md'
+      - 'schemas/execution/k6-api-runtime/v1/m3-r3-g4-evidence-correction.schema.json'
+      - 'docs/04-governance/m3-r3-g4-evidence-correction.md'
+
+permissions:
+  contents: read
+
+env:
+  M3_R3_G4_C1_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+  M3_R3_G4_C1_BRANCH: ${{ github.head_ref || github.ref_name }}
+  M3_R3_G4_C1_EVENT_NAME: ${{ github.event_name }}
+
+jobs:
+  validate-evidence-correction:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out exact correction state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Verify exact correction Head
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$M3_R3_G4_C1_EXACT_HEAD"
+          test -z "$(git status --porcelain)"
+          echo "checkedOutExactHead=$M3_R3_G4_C1_EXACT_HEAD"
+      - name: Set up baseline Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Run focused correction and mutation tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-reporter=tap \
+            packages/k6-api-adapter/test/fault-security-compatibility-validator.test.js \
+            packages/k6-api-adapter/test/m3-r3-g1-formal-acceptance.test.js \
+            packages/k6-api-adapter/test/m3-r3-g4-evidence-correction.test.js \
+            > /tmp/m3-r3-g4-c1-focused-node22.tap 2>&1
+          printf 'M3_R3_G4_C1_FOCUSED_STATUS=success\n' >> "$GITHUB_ENV"
+      - name: Run complete root validation chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run validate > /tmp/m3-r3-g4-c1-root-validation.log 2>&1
+          printf 'M3_R3_G4_C1_ROOT_STATUS=success\n' >> "$GITHUB_ENV"
+      - name: Run dedicated correction Validator
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/validate-m3-r3-g4-evidence-correction.js \
+            > /tmp/m3-r3-g4-c1-validator.log 2>&1
+          printf 'M3_R3_G4_C1_VALIDATOR_STATUS=success\n' >> "$GITHUB_ENV"
+      - name: Generate and audit exact-Head correction Evidence
+        env:
+          M3_R3_G4_C1_EMIT_EVIDENCE: true
+        run: node scripts/m3-r3-g4-correction/ci-artifact.js
+      - name: Verify clean repository state
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$M3_R3_G4_C1_EXACT_HEAD"
+          test -z "$(git status --porcelain)"
+      - name: Upload permanent correction Evidence Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r3-g4-evidence-correction
+          path: /tmp/m3-r3-g4-c1-artifact
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 90

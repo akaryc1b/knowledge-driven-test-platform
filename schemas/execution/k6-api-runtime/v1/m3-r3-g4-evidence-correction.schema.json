@@ -1,0 +1,267 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.kdtp.local/execution/k6-api-runtime/v1/m3-r3-g4-evidence-correction.schema.json",
+  "title": "M3-R3 G4 Historical Evidence and Closed-Schema Correction Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "source",
+    "findings",
+    "corrections",
+    "historicalEvidence",
+    "validation",
+    "artifact",
+    "decision",
+    "safetyBoundary",
+    "evidenceDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "m3-r3-g4-evidence-correction/v1"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eventName", "branch", "commitSha", "baselineMain"],
+      "properties": {
+        "eventName": { "type": "string", "minLength": 1 },
+        "branch": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "commitSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "baselineMain": {
+          "const": "583e848a289a6fff2e2d2c4052002125b47bb853"
+        }
+      }
+    },
+    "findings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pullRequest", "reviewThreads", "classifications"],
+      "properties": {
+        "pullRequest": { "const": 68 },
+        "reviewThreads": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "PRRT_kwDOTkiSCc6W20yK",
+              "PRRT_kwDOTkiSCc6W20yO"
+            ]
+          }
+        },
+        "classifications": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "workflowDefect/evidenceSemanticDefect",
+              "validatorDefect"
+            ]
+          }
+        }
+      }
+    },
+    "corrections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "p4HistoricalEvidenceEmissionRestricted",
+        "g1HistoricalEvidenceEmissionRestricted",
+        "p4ClosedSchemaValidationComplete",
+        "g1ClosedSchemaValidationComplete",
+        "g1ValidationOnlyStaleBaseSupported",
+        "correctionWorkflowPermanent"
+      ],
+      "properties": {
+        "p4HistoricalEvidenceEmissionRestricted": { "const": true },
+        "g1HistoricalEvidenceEmissionRestricted": { "const": true },
+        "p4ClosedSchemaValidationComplete": { "const": true },
+        "g1ClosedSchemaValidationComplete": { "const": true },
+        "g1ValidationOnlyStaleBaseSupported": { "const": true },
+        "correctionWorkflowPermanent": { "const": true }
+      }
+    },
+    "historicalEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "acceptedP4Head",
+        "acceptedG1Head",
+        "sourceMergeSha",
+        "p4EvidenceRewritten",
+        "g1EvidenceRewritten"
+      ],
+      "properties": {
+        "acceptedP4Head": {
+          "const": "e98357109bfc71f013c6f1af83a06a4358a1f922"
+        },
+        "acceptedG1Head": {
+          "const": "3bcdab12e8fcea909ca6aa8479bac6a69b545747"
+        },
+        "sourceMergeSha": {
+          "const": "583e848a289a6fff2e2d2c4052002125b47bb853"
+        },
+        "p4EvidenceRewritten": { "const": false },
+        "g1EvidenceRewritten": { "const": false }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "focusedStatus",
+        "rootValidationStatus",
+        "correctionValidatorStatus"
+      ],
+      "properties": {
+        "focusedStatus": { "const": "success" },
+        "rootValidationStatus": { "const": "success" },
+        "correctionValidatorStatus": { "const": "success" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "expectedPaths", "pathCount", "preUploadAudit"],
+      "properties": {
+        "name": { "const": "m3-r3-g4-evidence-correction" },
+        "expectedPaths": {
+          "type": "array",
+          "minItems": 19,
+          "maxItems": 19,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "evidence/m3-r3-g4-evidence-correction.json",
+              "schemas/execution/k6-api-runtime/v1/m3-r3-g4-evidence-correction.schema.json",
+              "scripts/json-schema-draft-2020.js",
+              "scripts/m3-r3-p4/evidence.js",
+              "scripts/m3-r3-g1/evidence.js",
+              ".github/workflows/m3-r3-p4-fault-security-compatibility-acceptance.yml",
+              ".github/workflows/m3-r3-g1-formal-acceptance.yml",
+              "scripts/m3-r3-g1/ci-node22.sh",
+              "packages/k6-api-adapter/test/fault-security-compatibility-validator.test.js",
+              "packages/k6-api-adapter/test/m3-r3-g1-formal-acceptance.test.js",
+              "scripts/m3-r3-g4-correction/contract.js",
+              "scripts/m3-r3-g4-correction/ci-artifact.js",
+              "scripts/validate-m3-r3-g4-evidence-correction.js",
+              "packages/k6-api-adapter/test/m3-r3-g4-evidence-correction.test.js",
+              ".github/workflows/m3-r3-g4-evidence-correction.yml",
+              "docs/04-governance/m3-r3-g4-evidence-correction.md",
+              "logs/m3-r3-g4-c1-focused-node22.tap",
+              "logs/m3-r3-g4-c1-root-validation.log",
+              "logs/m3-r3-g4-c1-validator.log"
+            ]
+          }
+        },
+        "pathCount": { "const": 19 },
+        "preUploadAudit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "missingEntries",
+            "unexpectedEntries",
+            "regularFilesOnly",
+            "unsafePathEntries",
+            "symlinkEntries",
+            "specialFileEntries",
+            "unicodeNormalizationCollisions",
+            "caseFoldCollisions",
+            "credentialShapedMatches"
+          ],
+          "properties": {
+            "missingEntries": { "const": 0 },
+            "unexpectedEntries": { "const": 0 },
+            "regularFilesOnly": { "const": true },
+            "unsafePathEntries": { "const": 0 },
+            "symlinkEntries": { "const": 0 },
+            "specialFileEntries": { "const": 0 },
+            "unicodeNormalizationCollisions": { "const": 0 },
+            "caseFoldCollisions": { "const": 0 },
+            "credentialShapedMatches": { "const": 0 }
+          }
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "correctionComplete",
+        "newRuntimeCapabilityAdded",
+        "finalG4Complete",
+        "nextRequiredAction",
+        "repositoryBlockers"
+      ],
+      "properties": {
+        "correctionComplete": { "const": true },
+        "newRuntimeCapabilityAdded": { "const": false },
+        "finalG4Complete": { "const": false },
+        "nextRequiredAction": {
+          "const": "independent-review-and-g4-reverification"
+        },
+        "repositoryBlockers": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    },
+    "safetyBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "k6Invoked",
+        "xk6Invoked",
+        "playwrightInvoked",
+        "realExternalProcessAdded",
+        "rawStdoutCollectionAdded",
+        "rawStderrCollectionAdded",
+        "governedOutputRootImplemented",
+        "fileResultCollectionImplemented",
+        "sourceBundleModified",
+        "callerProvidedPathAccepted",
+        "arbitraryFileReadEnabled",
+        "workerAdded",
+        "queueAdded",
+        "schedulerAdded",
+        "containerExecutionAdded",
+        "kubernetesExecutionAdded",
+        "remoteExecutionApiAdded",
+        "allureImplemented"
+      ],
+      "properties": {
+        "k6Invoked": { "const": false },
+        "xk6Invoked": { "const": false },
+        "playwrightInvoked": { "const": false },
+        "realExternalProcessAdded": { "const": false },
+        "rawStdoutCollectionAdded": { "const": false },
+        "rawStderrCollectionAdded": { "const": false },
+        "governedOutputRootImplemented": { "const": false },
+        "fileResultCollectionImplemented": { "const": false },
+        "sourceBundleModified": { "const": false },
+        "callerProvidedPathAccepted": { "const": false },
+        "arbitraryFileReadEnabled": { "const": false },
+        "workerAdded": { "const": false },
+        "queueAdded": { "const": false },
+        "schedulerAdded": { "const": false },
+        "containerExecutionAdded": { "const": false },
+        "kubernetesExecutionAdded": { "const": false },
+        "remoteExecutionApiAdded": { "const": false },
+        "allureImplemented": { "const": false }
+      }
+    },
+    "evidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

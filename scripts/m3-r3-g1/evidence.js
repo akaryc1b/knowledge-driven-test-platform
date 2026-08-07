@@ -1,5 +1,6 @@
 import { canonicalStringify, sha256 } from '@kdtp/knowledge-core';
 import { scanSensitiveValues } from '../../packages/k6-api-adapter/test/p5-test-helpers.js';
+import { validateJsonSchemaDraft202012 } from '../json-schema-draft-2020.js';
 import {
   ACCEPTED_BASE_MAIN,
   ACCEPTED_P4,
@@ -195,6 +196,7 @@ export function validateM3R3G1EvidenceDocument(evidence, schema) {
     && evidence.contracts.compatibilityProductDigest
       === evidence.testResults.node24Compatibility.productDigest,
   'M3-R3-G1 cross-Node digest binding mismatch');
+  validateJsonSchemaDraft202012(evidence, schema, 'M3-R3-G1 Evidence');
   const claims = structuredClone(evidence);
   delete claims.evidenceDigest;
   invariant(sha256(claims) === evidence.evidenceDigest,

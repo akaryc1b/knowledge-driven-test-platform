@@ -14,6 +14,13 @@ function cloneFiles(files) {
   return { ...files };
 }
 
+function redigest(evidence) {
+  const claims = structuredClone(evidence);
+  delete claims.evidenceDigest;
+  evidence.evidenceDigest = sha256(claims);
+  return evidence;
+}
+
 function acceptedTestResults() {
   const productDigest = 'b'.repeat(64);
   return {
@@ -43,6 +50,16 @@ function acceptedTestResults() {
       ],
     },
   };
+}
+
+async function acceptedEvidence(files) {
+  return createM3R3P4Evidence({
+    files,
+    generatedAt: '2026-08-05T08:00:00.000Z',
+    commitSha: 'a'.repeat(40),
+    branch: 'agent/m3-r3-p4-fault-security-compatibility-acceptance',
+    testResults: acceptedTestResults(),
+  });
 }
 
 test('P4 Repository Validator accepts the complete permanent acceptance slice', async () => {
@@ -103,13 +120,7 @@ test('P4 Repository Validator rejects G1 start or merge-control widening', async
 
 test('P4 Evidence is closed, digest-bound and keeps Ready, merge and G1 false', async () => {
   const files = await loadM3R3P4RepositoryFiles();
-  const evidence = await createM3R3P4Evidence({
-    files,
-    generatedAt: '2026-08-05T08:00:00.000Z',
-    commitSha: 'a'.repeat(40),
-    branch: 'agent/m3-r3-p4-fault-security-compatibility-acceptance',
-    testResults: acceptedTestResults(),
-  });
+  const evidence = await acceptedEvidence(files);
   const schema = JSON.parse(files[P4_EVIDENCE_SCHEMA_PATH]);
   assert.equal(validateM3R3P4EvidenceDocument(evidence, schema), true);
   assert.equal(evidence.decision.m3R3P4ReadyMarked, false);
@@ -124,18 +135,46 @@ test('P4 Evidence is closed, digest-bound and keeps Ready, merge and G1 false', 
 test('P4 Evidence rejects a self-redigested Ready decision forgery', async () => {
   const files = await loadM3R3P4RepositoryFiles();
   const schema = JSON.parse(files[P4_EVIDENCE_SCHEMA_PATH]);
-  const evidence = await createM3R3P4Evidence({
-    files,
-    generatedAt: '2026-08-05T08:00:00.000Z',
-    commitSha: 'a'.repeat(40),
-    branch: 'agent/m3-r3-p4-fault-security-compatibility-acceptance',
-    testResults: acceptedTestResults(),
-  });
+  const evidence = await acceptedEvidence(files);
   const forged = structuredClone(evidence);
   forged.decision.m3R3P4ReadyMarked = true;
-  const claims = structuredClone(forged);
-  delete claims.evidenceDigest;
-  forged.evidenceDigest = sha256(claims);
+  redigest(forged);
   assert.throws(() => validateM3R3P4EvidenceDocument(forged, schema),
     /merge control mismatch/u);
+});
+
+test('P4 Evidence rejects a re-digested nested const forgery', async () => {
+  const files = await loadM3R3P4RepositoryFiles();
+  const schema = JSON.parse(files[P4_EVIDENCE_SCHEMA_PATH]);
+  const forged = structuredClone(await acceptedEvidence(files));
+  forged.runtimeFindings[0].correctionCommit = '0'.repeat(40);
+  redigest(forged);
+  assert.throws(() => validateM3R3P4EvidenceDocument(forged, schema),
+    /Schema const mismatch/u);
+});
+
+test('P4 Evidence rejects a re-digested unexpected nested property', async () => {
+  const files = await loadM3R3P4RepositoryFiles();
+  const schema = JSON.parse(files[P4_EVIDENCE_SCHEMA_PATH]);
+  const forged = structuredClone(await acceptedEvidence(files));
+  forged.runtimeFindings[0].unexpected = true;
+  redigest(forged);
+  assert.throws(() => validateM3R3P4EvidenceDocument(forged, schema),
+    /Schema additional property/u);
+});
+
+test('P4 Evidence executes local refs and uniqueItems', async () => {
+  const files = await loadM3R3P4RepositoryFiles();
+  const schema = JSON.parse(files[P4_EVIDENCE_SCHEMA_PATH]);
+  const forged = structuredClone(await acceptedEvidence(files));
+  forged.runtimeFindings[1] = structuredClone(forged.runtimeFindings[0]);
+  redigest(forged);
+  assert.throws(() => validateM3R3P4EvidenceDocument(forged, schema),
+    /Schema uniqueItems mismatch/u);
+
+  const refForged = structuredClone(await acceptedEvidence(files));
+  refForged.testResults.focused.unexpected = true;
+  redigest(refForged);
+  assert.throws(() => validateM3R3P4EvidenceDocument(refForged, schema),
+    /Schema additional property/u);
 });
