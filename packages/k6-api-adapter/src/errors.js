@@ -75,3 +75,16 @@ export class K6ApiRuntimeAdmissionError extends Error {
 export function runtimeAdmissionInvariant(condition, code, message, details = {}) {
   if (!condition) throw new K6ApiRuntimeAdmissionError(code, message, details);
 }
+
+export class K6OutputRootContractError extends Error {
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = 'K6OutputRootContractError';
+    this.code = code;
+    this.details = details;
+  }
+}
+
+export function outputRootInvariant(condition, code, message, details = {}) {
+  if (!condition) throw new K6OutputRootContractError(code, message, details);
+}
