@@ -62,34 +62,61 @@ M3-R3 保留以下已接受边界：
 - Source Bundle 保持内容寻址和不可变；
 - 文件结果收集继续因缺少独立 Governed Output Root 而延期。
 
-### 当前阶段：M3-R4-R0 Governed Output Root Rebaseline
+### 已接受阶段：M3-R4-R0 Governed Output Root Rebaseline
 
-M3-R4 在任何文件结果收集之前建立独立的可写输出根目录治理边界。R0 只允许：
-
-- 重新绑定 M3-R3 最终 exact-main Evidence；
-- 冻结根目录所有权、身份、路径语法、对象类型、容量、生命周期、清理和失败要求；
-- 建立 ADR、威胁模型、边界矩阵、交接和静态测试；
-- 保持产品运行时代码、Invocation Plan、Source Bundle 和 Node Adapter 不变；
-- 使用 Draft PR 和自然 CI 完成 exact-Head 验收。
+R0 已在 exact Head `e522c13065dd77770d414a727d030a5108488eae` 完成边界冻结和自然 CI 验收。R0 仅建立路线、ADR、威胁模型、边界矩阵、交接与静态反升级测试；未增加产品运行时能力，PR #78 继续保持 Draft/Open/Unmerged。
 
 ```text
-m3R3FinalClosureReverified=true
-m3R4Started=true
-m3R4R0Started=true
-m3R4ProductImplementationStarted=false
+m3R4R0ImplementationComplete=true
+m3R4R0BoundaryFreezeComplete=true
+m3R4R0ExactHeadAcceptanceComplete=true
+m3R4R0ReadyMarked=false
+m3R4R0Merged=false
 governedOutputRootDefined=false
 governedOutputRootImplemented=false
-outputDirectoryCreated=false
-fileResultCollectionSupported=false
 fileResultCollectionImplemented=false
-sourceBundleRemainsImmutable=true
-callerPathAccepted=false
-arbitraryFileReadEnabled=false
-repositoryBlockers=[]
-nextRequiredSlice=M3-R4-R0
 ```
 
-M3-R4-P1 及后续 allocator、resolver、collector、fault/security acceptance 与 G1–G4 均保持冻结，必须在 R0 exact-Head 验收后通过新的独立指令启动。
+### 当前阶段：M3-R4-P1 Versioned Output-Root Contracts
+
+P1 只建立纯数据、闭合 Schema 与 canonical digest 合同：
+
+- 平台拥有、执行级隔离的逻辑输出根身份；
+- 一个精确 `outputs/summary.json` / `k6-run-summary-json` Artifact Descriptor；
+- 文件数量、单文件字节、总字节、JSON 深度和收集时限上限；
+- `DECLARED` 到 `CLEANED` 的七状态有序生命周期语法；
+- 对 Runtime Policy、Admission、Invocation Plan 和 Runtime Evidence 的不可变 digest 绑定；
+- Node.js 22 baseline 与 Node.js 24 fake-only contract compatibility；
+- Draft PR 自然 CI 和永久 Artifact。
+
+```text
+m3R4P1Started=true
+m3R4P1ImplementationComplete=true
+implementationStatus=CONTRACT_ONLY
+ownership=PLATFORM_OWNED
+rootRole=EXECUTION_SCOPED_WRITABLE_RESULTS
+hostPathIncluded=false
+callerPathAccepted=false
+absolutePathAccepted=false
+recursiveDiscoveryAllowed=false
+artifactDescriptorCount=1
+artifactRelativePath=outputs/summary.json
+maxFiles=1
+maxFileBytes=1048576
+maxTotalBytes=1048576
+maxJsonDepth=32
+maxCollectionDurationMs=10000
+governedOutputRootImplemented=false
+outputDirectoryCreated=false
+filesystemPortImplemented=false
+fileResultCollectionSupported=false
+fileResultCollectionImplemented=false
+m3R4P2Started=false
+repositoryBlockers=[]
+nextRequiredSlice=M3-R4-P2
+```
+
+P2 的 injected allocator/resolver port、P3 的 bounded collector、P4 fault/security acceptance 与 G1–G4 均保持冻结。P1 exact-Head 验收不自动授权 Ready、Merge 或任何文件系统效果。
 
 ## M4 — Multi-Project Operations
 
