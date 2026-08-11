@@ -126,3 +126,45 @@ export const K6_LOCAL_PROCESS_PORT_ID = 'k6-local-process-port';
 export const K6_LOCAL_PROCESS_PORT_VERSION = '1.0.0';
 export const K6_PROCESS_LOGICAL_WORKING_DIRECTORY = 'accepted-source-bundle-root';
 export const K6_PROCESS_CAPTURE_MAX_BYTES = 65_536;
+
+export const K6_GOVERNED_OUTPUT_ROOT_POLICY_SCHEMA_VERSION =
+  'k6-governed-output-root-policy/v1';
+export const K6_OUTPUT_ARTIFACT_DESCRIPTOR_SCHEMA_VERSION =
+  'k6-output-artifact-descriptor/v1';
+export const K6_GOVERNED_OUTPUT_ROOT_CONTRACT_SCHEMA_VERSION =
+  'k6-governed-output-root-contract/v1';
+export const K6_GOVERNED_OUTPUT_ROOT_CONTRACT_ID = 'k6-governed-output-root';
+export const K6_GOVERNED_OUTPUT_ROOT_CONTRACT_VERSION = '1.0.0';
+export const K6_GOVERNED_OUTPUT_ROOT_IMPLEMENTATION_STATUS = 'CONTRACT_ONLY';
+export const K6_GOVERNED_OUTPUT_ROOT_OWNERSHIP = 'PLATFORM_OWNED';
+export const K6_GOVERNED_OUTPUT_ROOT_ROLE = 'EXECUTION_SCOPED_WRITABLE_RESULTS';
+export const K6_GOVERNED_OUTPUT_ROOT_LOGICAL_NAME = 'execution-output-root';
+export const K6_OUTPUT_ARTIFACT_DESCRIPTOR_ID = 'k6-output-summary-json';
+export const K6_OUTPUT_ARTIFACT_KIND = 'k6-run-summary-json';
+export const K6_OUTPUT_ARTIFACT_RELATIVE_PATH = 'outputs/summary.json';
+export const K6_OUTPUT_ARTIFACT_MEDIA_TYPE = 'application/json';
+export const K6_OUTPUT_ARTIFACT_ENCODING = 'UTF-8';
+export const K6_OUTPUT_ROOT_LIMITS = Object.freeze({
+  maxFiles: 1,
+  maxFileBytes: 1_048_576,
+  maxTotalBytes: 1_048_576,
+  maxJsonDepth: 32,
+  maxCollectionDurationMs: 10_000,
+});
+export const K6_GOVERNED_OUTPUT_ROOT_LIFECYCLE_STATES = Object.freeze([
+  'DECLARED',
+  'ALLOCATED',
+  'ACTIVE',
+  'TERMINAL_OBSERVED',
+  'SEALED',
+  'COLLECTED',
+  'CLEANED',
+]);
+export const K6_GOVERNED_OUTPUT_ROOT_LIFECYCLE_TRANSITIONS = Object.freeze([
+  Object.freeze({ from: 'DECLARED', to: 'ALLOCATED' }),
+  Object.freeze({ from: 'ALLOCATED', to: 'ACTIVE' }),
+  Object.freeze({ from: 'ACTIVE', to: 'TERMINAL_OBSERVED' }),
+  Object.freeze({ from: 'TERMINAL_OBSERVED', to: 'SEALED' }),
+  Object.freeze({ from: 'SEALED', to: 'COLLECTED' }),
+  Object.freeze({ from: 'COLLECTED', to: 'CLEANED' }),
+]);
