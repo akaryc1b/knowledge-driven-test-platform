@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "k6-output-root-p1-schema-catalog/v1",
+  "schemas": [
+    {
+      "schemaVersion": "k6-governed-output-root-policy/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-governed-output-root-policy.schema.json"
+    },
+    {
+      "schemaVersion": "k6-output-artifact-descriptor/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-output-artifact-descriptor.schema.json"
+    },
+    {
+      "schemaVersion": "k6-governed-output-root-contract/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-governed-output-root-contract.schema.json"
+    },
+    {
+      "schemaVersion": "m3-r4-output-root-p1-evidence/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p1-evidence.schema.json"
+    }
+  ]
+}
