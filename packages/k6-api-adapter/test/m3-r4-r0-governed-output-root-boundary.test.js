@@ -24,16 +24,19 @@ function assertOrdered(text, fragments) {
   }
 }
 
-test('M3-R4 preserves the effectful boundary while permitting the P1 contract module', async () => {
+test('M3-R4 permits P1 contracts and the P2 injected fake-only port', async () => {
   const adapterIndex = await readRepositoryFile(
     'packages/k6-api-adapter/src/index.js');
-  assert.equal(adapterIndex.includes("export * from './output-root-contracts.js';"), true);
+  assert.equal(adapterIndex.includes(
+    "export * from './output-root-contracts.js';"), true);
+  assert.equal(adapterIndex.includes(
+    "export * from './trusted-output-root-port.js';"), true);
   for (const forbidden of [
     './governed-output-root.js',
     './output-root-allocator.js',
     './file-result-collector.js',
     'createGovernedOutputRoot',
-    'allocateGovernedOutputRoot',
+    'allocateRealOutputRoot',
     'collectFileResults',
     'readResultFile',
   ]) {
@@ -59,7 +62,8 @@ test('M3-R4 preserves Node baseline and existing runtime implementation files', 
 
   const index = await readRepositoryFile('packages/k6-api-adapter/src/index.js');
   assert.equal(index.includes("export * from './runtime-admission.js';"), true);
-  assert.equal(index.includes("export * from './local-process-boundary.js';"), true);
+  assert.equal(index.includes(
+    "export * from './local-process-boundary.js';"), true);
   assert.equal(index.includes(
     "export * from './process-execution-lifecycle.js';"), true);
 });
@@ -103,7 +107,7 @@ test('M3-R4 R0 governance records preserve the exact predecessor and non-impleme
   }
 });
 
-test('M3-R4 keeps the safe slice order and starts only the P1 contract slice', async () => {
+test('M3-R4 keeps the safe slice order and starts only P2', async () => {
   const roadmap = await readRepositoryFile(
     'docs/03-roadmap/m3-r4-governed-output-root.md');
   const r0Handoff = await readRepositoryFile(
@@ -117,9 +121,10 @@ test('M3-R4 keeps the safe slice order and starts only the P1 contract slice', a
     '**G1–G4 — Formal acceptance and exact-main closure**',
   ]);
   assert.equal(r0Handoff.includes('m3R4P1Started=false'), true);
-  assert.equal(roadmap.includes('slice=M3-R4-P1'), true);
-  assert.equal(roadmap.includes('m3R4P1Started=true'), true);
-  assert.equal(roadmap.includes('m3R4P2Started=false'), true);
+  assert.equal(roadmap.includes('slice=M3-R4-P2'), true);
+  assert.equal(roadmap.includes('m3R4P1ExactHeadAcceptanceComplete=true'), true);
+  assert.equal(roadmap.includes('m3R4P2Started=true'), true);
+  assert.equal(roadmap.includes('m3R4P3Started=false'), true);
 });
 
 test('M3-R4 R0 matrix covers path, object, race, resource and disclosure threats', async () => {
