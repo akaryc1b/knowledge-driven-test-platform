@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-runtime/v1/k6-output-root-allocation-request.schema.json",
+  "title": "K6 Output Root Allocation Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "portDigest",
+    "rootContractId",
+    "rootContractDigest",
+    "policyDigest",
+    "artifactDescriptorDigests",
+    "logicalName",
+    "ownership",
+    "role",
+    "transition",
+    "callerPathAccepted",
+    "absolutePathAccepted",
+    "hostPathIncluded",
+    "sourceBundleMutationAllowed",
+    "requestDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "k6-output-root-allocation-request/v1"
+    },
+    "requestId": {
+      "type": "string",
+      "pattern": "^k6root-allocation-[a-f0-9]{20}$"
+    },
+    "portDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "rootContractId": {
+      "type": "string",
+      "pattern": "^k6output-root-contract-[a-f0-9]{20}$"
+    },
+    "rootContractDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "policyDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "artifactDescriptorDigests": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "logicalName": {
+      "const": "execution-output-root"
+    },
+    "ownership": {
+      "const": "PLATFORM_OWNED"
+    },
+    "role": {
+      "const": "EXECUTION_SCOPED_WRITABLE_RESULTS"
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "const": "DECLARED"
+        },
+        "to": {
+          "const": "ALLOCATED"
+        }
+      }
+    },
+    "callerPathAccepted": {
+      "const": false
+    },
+    "absolutePathAccepted": {
+      "const": false
+    },
+    "hostPathIncluded": {
+      "const": false
+    },
+    "sourceBundleMutationAllowed": {
+      "const": false
+    },
+    "requestDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

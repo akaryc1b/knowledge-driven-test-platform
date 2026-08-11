@@ -13,3 +13,4 @@ export * from './runtime-admission.js';
 export * from './local-process-boundary.js';
 export * from './process-execution-lifecycle.js';
 export * from './output-root-contracts.js';
+export * from './trusted-output-root-port.js';

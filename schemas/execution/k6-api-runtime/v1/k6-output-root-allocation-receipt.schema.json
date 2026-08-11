@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-runtime/v1/k6-output-root-allocation-receipt.schema.json",
+  "title": "K6 Output Root Allocation Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "receiptId",
+    "portId",
+    "portDigest",
+    "allocationRequestDigest",
+    "rootContractId",
+    "allocationHandle",
+    "accepted",
+    "delegated",
+    "logicalRootAllocated",
+    "currentState",
+    "realDirectoryCreated",
+    "realFilesystemAccessed",
+    "hostPathIncluded",
+    "callerPathAccepted",
+    "sourceBundleMutated",
+    "receiptDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "k6-output-root-allocation-receipt/v1"
+    },
+    "receiptId": {
+      "type": "string",
+      "pattern": "^k6root-allocation-receipt-[a-f0-9]{20}$"
+    },
+    "portId": {
+      "const": "k6-trusted-output-root-port"
+    },
+    "portDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "allocationRequestDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "rootContractId": {
+      "type": "string",
+      "pattern": "^k6output-root-contract-[a-f0-9]{20}$"
+    },
+    "allocationHandle": {
+      "type": "string",
+      "pattern": "^k6root-handle-[a-f0-9]{20}$"
+    },
+    "accepted": {
+      "const": true
+    },
+    "delegated": {
+      "const": true
+    },
+    "logicalRootAllocated": {
+      "const": true
+    },
+    "currentState": {
+      "const": "ALLOCATED"
+    },
+    "realDirectoryCreated": {
+      "const": false
+    },
+    "realFilesystemAccessed": {
+      "const": false
+    },
+    "hostPathIncluded": {
+      "const": false
+    },
+    "callerPathAccepted": {
+      "const": false
+    },
+    "sourceBundleMutated": {
+      "const": false
+    },
+    "receiptDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

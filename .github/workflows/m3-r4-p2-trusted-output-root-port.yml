@@ -1,0 +1,303 @@
+name: m3-r4-p2-trusted-output-root-port
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r4-p2-trusted-output-root-port.yml'
+      - 'docs/02-development/m3-r4-p2-trusted-output-root-port-handoff.md'
+      - 'docs/03-roadmap/m3-r4-governed-output-root.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/04-governance/m3-r4-p2-trusted-output-root-port-acceptance.md'
+      - 'docs/m3-r4-p2-index.md'
+      - 'docs/releases/M3-R4-P2-trusted-output-root-port.md'
+      - 'package.json'
+      - 'packages/k6-api-adapter/src/index.js'
+      - 'packages/k6-api-adapter/src/trusted-output-root-port.js'
+      - 'packages/k6-api-adapter/test/m3-r4-r0-governed-output-root-boundary.test.js'
+      - 'packages/k6-api-adapter/test/m3-r4-p2-trusted-output-root-port.test.js'
+      - 'packages/k6-api-adapter/test/trusted-output-root-port-test-helpers.js'
+      - 'schemas/execution/k6-api-runtime/p2-trusted-output-root-schema-catalog.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-trusted-output-root-port.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-root-allocation-request.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-root-allocation-receipt.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-resolution-request.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-resolution-receipt.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-trusted-output-root-boundary-evidence.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p2-evidence.schema.json'
+      - 'scripts/validate-m3-r4-p2-trusted-output-root-port.js'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/m3-r4-p2-trusted-output-root-port.yml'
+      - 'docs/02-development/m3-r4-p2-trusted-output-root-port-handoff.md'
+      - 'docs/03-roadmap/m3-r4-governed-output-root.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/04-governance/m3-r4-p2-trusted-output-root-port-acceptance.md'
+      - 'docs/m3-r4-p2-index.md'
+      - 'docs/releases/M3-R4-P2-trusted-output-root-port.md'
+      - 'package.json'
+      - 'packages/k6-api-adapter/src/index.js'
+      - 'packages/k6-api-adapter/src/trusted-output-root-port.js'
+      - 'packages/k6-api-adapter/test/m3-r4-r0-governed-output-root-boundary.test.js'
+      - 'packages/k6-api-adapter/test/m3-r4-p2-trusted-output-root-port.test.js'
+      - 'packages/k6-api-adapter/test/trusted-output-root-port-test-helpers.js'
+      - 'schemas/execution/k6-api-runtime/p2-trusted-output-root-schema-catalog.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-trusted-output-root-port.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-root-allocation-request.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-root-allocation-receipt.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-resolution-request.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-resolution-receipt.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-trusted-output-root-boundary-evidence.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p2-evidence.schema.json'
+      - 'scripts/validate-m3-r4-p2-trusted-output-root-port.js'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m3-r4-p2-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-trusted-output-root-port:
+    runs-on: ubuntu-24.04
+    env:
+      EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+      M3_R4_P2_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXACT_HEAD }}
+          persist-credentials: false
+
+      - name: Verify exact Head checkout
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$EXACT_HEAD"
+
+      - name: Set up baseline Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run focused P2 port contracts on Node.js 22
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test packages/k6-api-adapter/test/m3-r4-p2-trusted-output-root-port.test.js \
+            2>&1 | tee /tmp/m3-r4-p2-focused-node22.tap
+
+      - name: Capture Node.js 22 compatibility product
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' > /tmp/m3-r4-p2-product-node22.txt
+          import { sha256 } from '@kdtp/knowledge-core';
+          import { trustedOutputRootPortFixture } from './packages/k6-api-adapter/test/trusted-output-root-port-test-helpers.js';
+          const fixture = await trustedOutputRootPortFixture();
+          process.stdout.write(`${sha256({
+            portDescriptor: fixture.portDescriptor,
+            allocationRequest: fixture.allocationRequest,
+            allocationReceipt: fixture.allocationReceipt,
+            resolutionRequest: fixture.resolutionRequest,
+            resolutionReceipt: fixture.resolutionReceipt,
+            boundaryEvidence: fixture.boundaryEvidence,
+          })}\n`);
+          NODE
+
+      - name: Set up fake-only compatibility Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Run focused P2 port contracts on Node.js 24
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test --test-reporter=tap \
+            packages/k6-api-adapter/test/m3-r4-p2-trusted-output-root-port.test.js \
+            2>&1 | tee /tmp/m3-r4-p2-focused-node24.tap
+
+      - name: Capture and compare Node.js 24 compatibility product
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' > /tmp/m3-r4-p2-product-node24.txt
+          import { sha256 } from '@kdtp/knowledge-core';
+          import { trustedOutputRootPortFixture } from './packages/k6-api-adapter/test/trusted-output-root-port-test-helpers.js';
+          const fixture = await trustedOutputRootPortFixture();
+          process.stdout.write(`${sha256({
+            portDescriptor: fixture.portDescriptor,
+            allocationRequest: fixture.allocationRequest,
+            allocationReceipt: fixture.allocationReceipt,
+            resolutionRequest: fixture.resolutionRequest,
+            resolutionReceipt: fixture.resolutionReceipt,
+            boundaryEvidence: fixture.boundaryEvidence,
+          })}\n`);
+          NODE
+          test "$(cat /tmp/m3-r4-p2-product-node22.txt)" \
+            = "$(cat /tmp/m3-r4-p2-product-node24.txt)"
+
+      - name: Restore baseline Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run all k6 API Adapter tests
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test packages/k6-api-adapter/test/*.test.js \
+            2>&1 | tee /tmp/m3-r4-p2-adapter-node22.tap
+
+      - name: Run complete Node.js test suite
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee /tmp/m3-r4-p2-full-node22.tap
+
+      - name: Export exact test counts
+        shell: bash
+        run: |
+          tap_value() {
+            awk -v key="$2" '$1 == "#" && $2 == key { value = $3 } END { if (value == "") exit 1; print value }' "$1"
+          }
+          export_result() {
+            prefix="$1"
+            file="$2"
+            echo "${prefix}_TOTAL=$(tap_value "$file" tests)" >> "$GITHUB_ENV"
+            echo "${prefix}_PASSED=$(tap_value "$file" pass)" >> "$GITHUB_ENV"
+            echo "${prefix}_SKIPPED=$(tap_value "$file" skipped)" >> "$GITHUB_ENV"
+            echo "${prefix}_FAILED=$(tap_value "$file" fail)" >> "$GITHUB_ENV"
+          }
+          export_result M3_R4_P2_FOCUSED_NODE22 /tmp/m3-r4-p2-focused-node22.tap
+          export_result M3_R4_P2_FOCUSED_NODE24 /tmp/m3-r4-p2-focused-node24.tap
+          export_result M3_R4_P2_ADAPTER /tmp/m3-r4-p2-adapter-node22.tap
+          export_result M3_R4_P2_FULL /tmp/m3-r4-p2-full-node22.tap
+          echo "M3_R4_P2_REPOSITORY_VALIDATOR=success" >> "$GITHUB_ENV"
+          echo "M3_R4_P2_COMPATIBILITY_PRODUCT_DIGEST=$(cat /tmp/m3-r4-p2-product-node22.txt)" \
+            >> "$GITHUB_ENV"
+
+      - name: Run complete Repository Validator
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run validate 2>&1 | tee /tmp/m3-r4-p2-repository-validator.log
+
+      - name: Generate exact-Head P2 Evidence
+        shell: bash
+        run: |
+          node scripts/validate-m3-r4-p2-trusted-output-root-port.js \
+            > /tmp/m3-r4-p2-trusted-output-root-port-evidence.json
+
+      - name: Assemble and audit permanent P2 Artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact=/tmp/m3-r4-p2-trusted-output-root-port-artifact
+          rm -rf "$artifact"
+          mkdir -p "$artifact/contracts" "$artifact/schemas" \
+            "$artifact/evidence" "$artifact/metadata"
+          cp packages/k6-api-adapter/src/index.js "$artifact/contracts/index.js"
+          cp packages/k6-api-adapter/src/trusted-output-root-port.js \
+            "$artifact/contracts/trusted-output-root-port.js"
+          cp schemas/execution/k6-api-runtime/p2-trusted-output-root-schema-catalog.json \
+            "$artifact/schemas/p2-trusted-output-root-schema-catalog.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-trusted-output-root-port.schema.json \
+            "$artifact/schemas/k6-trusted-output-root-port.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-output-root-allocation-request.schema.json \
+            "$artifact/schemas/k6-output-root-allocation-request.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-output-root-allocation-receipt.schema.json \
+            "$artifact/schemas/k6-output-root-allocation-receipt.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-output-artifact-resolution-request.schema.json \
+            "$artifact/schemas/k6-output-artifact-resolution-request.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-output-artifact-resolution-receipt.schema.json \
+            "$artifact/schemas/k6-output-artifact-resolution-receipt.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-trusted-output-root-boundary-evidence.schema.json \
+            "$artifact/schemas/k6-trusted-output-root-boundary-evidence.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p2-evidence.schema.json \
+            "$artifact/schemas/m3-r4-output-root-p2-evidence.schema.json"
+          cp /tmp/m3-r4-p2-trusted-output-root-port-evidence.json \
+            "$artifact/evidence/m3-r4-p2-trusted-output-root-port-evidence.json"
+
+          ARTIFACT_ROOT="$artifact" node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          import { scanSensitiveValues, validateStorePath } from './packages/k6-api-adapter/test/p5-test-helpers.js';
+
+          const root = process.env.ARTIFACT_ROOT;
+          const result = (prefix) => ({
+            total: Number(process.env[`${prefix}_TOTAL`]),
+            passed: Number(process.env[`${prefix}_PASSED`]),
+            skipped: Number(process.env[`${prefix}_SKIPPED`]),
+            failed: Number(process.env[`${prefix}_FAILED`]),
+          });
+          const testResults = {
+            focusedNode22: result('M3_R4_P2_FOCUSED_NODE22'),
+            focusedNode24: result('M3_R4_P2_FOCUSED_NODE24'),
+            k6ApiAdapter: result('M3_R4_P2_ADAPTER'),
+            fullNode: result('M3_R4_P2_FULL'),
+            repositoryValidator: { status: 'success' },
+            compatibilityProductDigest:
+              process.env.M3_R4_P2_COMPATIBILITY_PRODUCT_DIGEST,
+          };
+          writeFileSync(join(root, 'metadata/test-results.json'),
+            `${JSON.stringify(testResults, null, 2)}\n`);
+
+          const payloadPaths = [
+            'contracts/index.js',
+            'contracts/trusted-output-root-port.js',
+            'schemas/p2-trusted-output-root-schema-catalog.json',
+            'schemas/k6-trusted-output-root-port.schema.json',
+            'schemas/k6-output-root-allocation-request.schema.json',
+            'schemas/k6-output-root-allocation-receipt.schema.json',
+            'schemas/k6-output-artifact-resolution-request.schema.json',
+            'schemas/k6-output-artifact-resolution-receipt.schema.json',
+            'schemas/k6-trusted-output-root-boundary-evidence.schema.json',
+            'schemas/m3-r4-output-root-p2-evidence.schema.json',
+            'evidence/m3-r4-p2-trusted-output-root-port-evidence.json',
+            'metadata/test-results.json',
+          ];
+          const sensitiveScan = {};
+          const entries = payloadPaths.map((path) => {
+            validateStorePath(path);
+            const bytes = readFileSync(join(root, path));
+            const text = bytes.toString('utf8');
+            sensitiveScan[path] = path.endsWith('.json') ? JSON.parse(text) : text;
+            return {
+              path,
+              byteLength: bytes.length,
+              sha256: createHash('sha256').update(bytes).digest('hex'),
+            };
+          });
+          scanSensitiveValues(sensitiveScan, 'M3-R4-P2 Artifact');
+          const manifest = {
+            schemaVersion: 'm3-r4-p2-artifact-manifest/v1',
+            repository: 'akaryc1b/knowledge-driven-test-platform',
+            headSha: process.env.M3_R4_P2_EXACT_HEAD,
+            artifactPathCount: 13,
+            manifestedPayloadPathCount: entries.length,
+            entries,
+            sensitiveScanPassed: true,
+          };
+          writeFileSync(join(root, 'metadata/artifact-manifest.json'),
+            `${JSON.stringify(manifest, null, 2)}\n`);
+          NODE
+
+          test "$(find "$artifact" -type f | wc -l | tr -d ' ')" = "13"
+          test -z "$(find "$artifact" -type l -print -quit)"
+          test -z "$(find "$artifact" ! -type f ! -type d -print -quit)"
+
+      - name: Upload permanent P2 Evidence Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r4-p2-trusted-output-root-port-evidence
+          path: /tmp/m3-r4-p2-trusted-output-root-port-artifact
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 6
+          overwrite: false
+          include-hidden-files: false

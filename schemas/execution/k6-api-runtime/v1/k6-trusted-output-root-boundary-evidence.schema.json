@@ -1,0 +1,360 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-runtime/v1/k6-trusted-output-root-boundary-evidence.schema.json",
+  "title": "K6 Trusted Output Root Boundary Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "evidenceId",
+    "portDigest",
+    "rootContractId",
+    "rootContractDigest",
+    "allocationRequestDigest",
+    "allocationReceiptDigest",
+    "resolutionRequestDigest",
+    "resolutionReceiptDigest",
+    "lifecycle",
+    "artifact",
+    "decision",
+    "safetyBoundary",
+    "evidenceDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "k6-trusted-output-root-boundary-evidence/v1"
+    },
+    "evidenceId": {
+      "type": "string",
+      "pattern": "^k6output-root-port-[a-f0-9]{20}$"
+    },
+    "portDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "rootContractId": {
+      "type": "string",
+      "pattern": "^k6output-root-contract-[a-f0-9]{20}$"
+    },
+    "rootContractDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "allocationRequestDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "allocationReceiptDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "resolutionRequestDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "resolutionReceiptDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "initialState",
+        "currentState",
+        "logicalAllocationCompleted",
+        "realDirectoryCreated",
+        "sealed",
+        "collectionAuthorized",
+        "cleanupAuthorized"
+      ],
+      "properties": {
+        "initialState": {
+          "const": "DECLARED"
+        },
+        "currentState": {
+          "const": "ALLOCATED"
+        },
+        "logicalAllocationCompleted": {
+          "const": true
+        },
+        "realDirectoryCreated": {
+          "const": false
+        },
+        "sealed": {
+          "const": false
+        },
+        "collectionAuthorized": {
+          "const": false
+        },
+        "cleanupAuthorized": {
+          "const": false
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "descriptorId",
+        "descriptorDigest",
+        "kind",
+        "relativePath",
+        "allocationHandle",
+        "artifactHandle",
+        "resolved",
+        "regularFileVerified",
+        "opened",
+        "read",
+        "written"
+      ],
+      "properties": {
+        "descriptorId": {
+          "const": "k6-output-summary-json"
+        },
+        "descriptorDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "kind": {
+          "const": "k6-run-summary-json"
+        },
+        "relativePath": {
+          "const": "outputs/summary.json"
+        },
+        "allocationHandle": {
+          "type": "string",
+          "pattern": "^k6root-handle-[a-f0-9]{20}$"
+        },
+        "artifactHandle": {
+          "type": "string",
+          "pattern": "^k6artifact-handle-[a-f0-9]{20}$"
+        },
+        "resolved": {
+          "const": true
+        },
+        "regularFileVerified": {
+          "const": false
+        },
+        "opened": {
+          "const": false
+        },
+        "read": {
+          "const": false
+        },
+        "written": {
+          "const": false
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trustedOutputRootPortReady",
+        "logicalRootAllocationSupported",
+        "logicalRootAllocated",
+        "exactArtifactResolutionSupported",
+        "exactArtifactResolved",
+        "realFilesystemPortImplemented",
+        "outputDirectoryCreated",
+        "fileResultCollectionSupported",
+        "fileResultCollectionImplemented",
+        "nextRequiredSlice",
+        "repositoryBlockers"
+      ],
+      "properties": {
+        "trustedOutputRootPortReady": {
+          "const": true
+        },
+        "logicalRootAllocationSupported": {
+          "const": true
+        },
+        "logicalRootAllocated": {
+          "const": true
+        },
+        "exactArtifactResolutionSupported": {
+          "const": true
+        },
+        "exactArtifactResolved": {
+          "const": true
+        },
+        "realFilesystemPortImplemented": {
+          "const": false
+        },
+        "outputDirectoryCreated": {
+          "const": false
+        },
+        "fileResultCollectionSupported": {
+          "const": false
+        },
+        "fileResultCollectionImplemented": {
+          "const": false
+        },
+        "nextRequiredSlice": {
+          "const": "M3-R4-P3"
+        },
+        "repositoryBlockers": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    },
+    "safetyBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "callerPathAccepted",
+        "absolutePathAccepted",
+        "hostPathIncluded",
+        "hostPathResolved",
+        "realDirectoryCreated",
+        "realFilesystemAccessed",
+        "fileOpened",
+        "fileRead",
+        "fileWritten",
+        "recursiveDiscoveryPerformed",
+        "symbolicLinkFollowed",
+        "hardLinkTrusted",
+        "specialFileAccepted",
+        "sourceBundleMutated",
+        "invocationPlanModified",
+        "nodeProcessAdapterModified",
+        "newProcessPrimitiveAdded",
+        "k6Invoked",
+        "xk6Invoked",
+        "playwrightInvoked",
+        "realExternalProcessStartedInCi",
+        "targetNetworkAccessed",
+        "databaseAccessed",
+        "secretAccessed",
+        "filesystemCredentialAccessed",
+        "rawStdoutCollected",
+        "rawStderrCollected",
+        "numericPidExposed",
+        "workerAdded",
+        "queueAdded",
+        "schedulerAdded",
+        "containerExecutionAdded",
+        "kubernetesExecutionAdded",
+        "remoteExecutionApiAdded",
+        "allureImplemented",
+        "m4Started"
+      ],
+      "properties": {
+        "callerPathAccepted": {
+          "const": false
+        },
+        "absolutePathAccepted": {
+          "const": false
+        },
+        "hostPathIncluded": {
+          "const": false
+        },
+        "hostPathResolved": {
+          "const": false
+        },
+        "realDirectoryCreated": {
+          "const": false
+        },
+        "realFilesystemAccessed": {
+          "const": false
+        },
+        "fileOpened": {
+          "const": false
+        },
+        "fileRead": {
+          "const": false
+        },
+        "fileWritten": {
+          "const": false
+        },
+        "recursiveDiscoveryPerformed": {
+          "const": false
+        },
+        "symbolicLinkFollowed": {
+          "const": false
+        },
+        "hardLinkTrusted": {
+          "const": false
+        },
+        "specialFileAccepted": {
+          "const": false
+        },
+        "sourceBundleMutated": {
+          "const": false
+        },
+        "invocationPlanModified": {
+          "const": false
+        },
+        "nodeProcessAdapterModified": {
+          "const": false
+        },
+        "newProcessPrimitiveAdded": {
+          "const": false
+        },
+        "k6Invoked": {
+          "const": false
+        },
+        "xk6Invoked": {
+          "const": false
+        },
+        "playwrightInvoked": {
+          "const": false
+        },
+        "realExternalProcessStartedInCi": {
+          "const": false
+        },
+        "targetNetworkAccessed": {
+          "const": false
+        },
+        "databaseAccessed": {
+          "const": false
+        },
+        "secretAccessed": {
+          "const": false
+        },
+        "filesystemCredentialAccessed": {
+          "const": false
+        },
+        "rawStdoutCollected": {
+          "const": false
+        },
+        "rawStderrCollected": {
+          "const": false
+        },
+        "numericPidExposed": {
+          "const": false
+        },
+        "workerAdded": {
+          "const": false
+        },
+        "queueAdded": {
+          "const": false
+        },
+        "schedulerAdded": {
+          "const": false
+        },
+        "containerExecutionAdded": {
+          "const": false
+        },
+        "kubernetesExecutionAdded": {
+          "const": false
+        },
+        "remoteExecutionApiAdded": {
+          "const": false
+        },
+        "allureImplemented": {
+          "const": false
+        },
+        "m4Started": {
+          "const": false
+        }
+      }
+    },
+    "evidenceDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

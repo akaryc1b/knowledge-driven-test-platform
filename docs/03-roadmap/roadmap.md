@@ -33,7 +33,9 @@
 
 ## M3 — k6 Execution Adapters
 
-M3-R0 Contract Foundation、M3-R1 Deterministic Non-Executing k6 API Spec Compiler、M3-R2 Governed Deterministic Source Generation 和 M3-R3 Governed Local Runtime Boundary 均已完成正式合并与 exact-main 永久验收。
+M3-R0 Contract Foundation、M3-R1 Deterministic Non-Executing k6 API Spec
+Compiler、M3-R2 Governed Deterministic Source Generation 和 M3-R3 Governed
+Local Runtime Boundary 均已完成正式合并与 exact-main 永久验收。
 
 M3-R3 最终基线：
 
@@ -54,69 +56,65 @@ fileResultCollectionImplemented=false
 repositoryBlockers=[]
 ```
 
-M3-R3 保留以下已接受边界：
-
-- 单一 shell-free `node:child_process.spawn` 适配边界；
-- 有界启动、超时、取消、强制终止和 settle-once 生命周期；
-- 不公开 stdout、stderr、数字 PID、原始错误、堆栈、环境值或主机路径；
-- Source Bundle 保持内容寻址和不可变；
-- 文件结果收集继续因缺少独立 Governed Output Root 而延期。
-
 ### 已接受阶段：M3-R4-R0 Governed Output Root Rebaseline
 
-R0 已在 exact Head `e522c13065dd77770d414a727d030a5108488eae` 完成边界冻结和自然 CI 验收。R0 仅建立路线、ADR、威胁模型、边界矩阵、交接与静态反升级测试；未增加产品运行时能力，PR #78 继续保持 Draft/Open/Unmerged。
+R0 已在 exact Head `e522c13065dd77770d414a727d030a5108488eae`
+完成边界冻结和自然 CI 验收。R0 PR #78 继续保持 Draft/Open/Unmerged。
+
+### 已接受阶段：M3-R4-P1 Versioned Output-Root Contracts
+
+P1 已在 exact Head `3f0459700e5d7e651011f8addeda8e8164a0ccbc`
+完成自然 CI 与独立 Artifact 审计：
 
 ```text
-m3R4R0ImplementationComplete=true
-m3R4R0BoundaryFreezeComplete=true
-m3R4R0ExactHeadAcceptanceComplete=true
-m3R4R0ReadyMarked=false
-m3R4R0Merged=false
-governedOutputRootDefined=false
-governedOutputRootImplemented=false
-fileResultCollectionImplemented=false
+p1Issue=79
+p1PullRequest=80
+p1NaturalWorkflowSuccess=17/17
+p1ArtifactId=9097350510
+p1ArtifactApiDigest=sha256:99b6a309b3c335d869d21187538285318b57daacc2df78973eb7d422fa2bd84a
+p1CanonicalEvidenceDigest=9d46327e75671673a9a1cb75beb122135a54eb2508433ebc55ef255aae86fc68
+p1SchemaCatalogDigest=09a782340e4a8ff0d0335445433ebad9b5a5464c4f654930f964677f618c67bb
 ```
 
-### 当前阶段：M3-R4-P1 Versioned Output-Root Contracts
+P1 固定平台拥有的逻辑输出根、一个精确 summary descriptor、有界限制和
+七状态生命周期语法，但没有授权任何效果。
 
-P1 只建立纯数据、闭合 Schema 与 canonical digest 合同：
+### 当前阶段：M3-R4-P2 Injected Trusted Output-Root Port
 
-- 平台拥有、执行级隔离的逻辑输出根身份；
-- 一个精确 `outputs/summary.json` / `k6-run-summary-json` Artifact Descriptor；
-- 文件数量、单文件字节、总字节、JSON 深度和收集时限上限；
-- `DECLARED` 到 `CLEANED` 的七状态有序生命周期语法；
-- 对 Runtime Policy、Admission、Invocation Plan 和 Runtime Evidence 的不可变 digest 绑定；
-- Node.js 22 baseline 与 Node.js 24 fake-only contract compatibility；
+P2 建立 fake-only 注入边界：
+
+- 关闭且版本化的 port、allocation、resolution 与 Evidence 合同；
+- 只允许平台拥有的逻辑 `DECLARED -> ALLOCATED` 转换；
+- 只返回 path-independent opaque allocation/artifact handles；
+- 只解析 P1 中的 `outputs/summary.json` descriptor；
+- 不接受 caller path，不公开 absolute host path；
+- 不创建真实目录，不打开、读取或写入文件；
+- Node.js 22 baseline 与 Node.js 24 fake-only compatibility；
 - Draft PR 自然 CI 和永久 Artifact。
 
 ```text
-m3R4P1Started=true
-m3R4P1ImplementationComplete=true
-implementationStatus=CONTRACT_ONLY
-ownership=PLATFORM_OWNED
-rootRole=EXECUTION_SCOPED_WRITABLE_RESULTS
+m3R4P2Started=true
+m3R4P2ImplementationComplete=true
+implementationStatus=INJECTED_FAKE_ONLY
+logicalRootAllocationSupported=true
+logicalRootAllocated=true
+artifactResolutionSupported=true
+realFilesystemPortImplemented=false
+outputDirectoryCreated=false
 hostPathIncluded=false
 callerPathAccepted=false
-absolutePathAccepted=false
-recursiveDiscoveryAllowed=false
-artifactDescriptorCount=1
-artifactRelativePath=outputs/summary.json
-maxFiles=1
-maxFileBytes=1048576
-maxTotalBytes=1048576
-maxJsonDepth=32
-maxCollectionDurationMs=10000
-governedOutputRootImplemented=false
-outputDirectoryCreated=false
-filesystemPortImplemented=false
+fileOpened=false
+fileRead=false
+fileWritten=false
 fileResultCollectionSupported=false
 fileResultCollectionImplemented=false
-m3R4P2Started=false
+m3R4P3Started=false
 repositoryBlockers=[]
-nextRequiredSlice=M3-R4-P2
+nextRequiredSlice=M3-R4-P3
 ```
 
-P2 的 injected allocator/resolver port、P3 的 bounded collector、P4 fault/security acceptance 与 G1–G4 均保持冻结。P1 exact-Head 验收不自动授权 Ready、Merge 或任何文件系统效果。
+P3 bounded collector、P4 fault/security acceptance 与 G1–G4 均保持冻结。
+P2 exact-Head 验收不自动授权 Ready、Merge 或真实文件系统效果。
 
 ## M4 — Multi-Project Operations
 
