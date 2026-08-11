@@ -230,7 +230,8 @@ test('P1 public contracts expose no host path, PID, raw output, environment valu
     'Authorization',
     'Bearer ',
     'K6_LOG_FORMAT',
-    'absolutePath',
+    '/var/lib/kdtp/',
+    'C:\\private\\output',
   ]) {
     assert.equal(serialized.includes(forbidden), false, forbidden);
   }
