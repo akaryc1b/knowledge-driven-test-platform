@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-runtime/v1/k6-output-artifact-descriptor.schema.json",
+  "title": "K6 Output Artifact Descriptor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "descriptorId",
+    "kind",
+    "relativePath",
+    "mediaType",
+    "encoding",
+    "required",
+    "regularFileRequired",
+    "symbolicLinkAllowed",
+    "hardLinkAllowed",
+    "specialFileAllowed",
+    "maxBytes",
+    "parser",
+    "descriptorDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "k6-output-artifact-descriptor/v1" },
+    "descriptorId": { "const": "k6-output-summary-json" },
+    "kind": { "const": "k6-run-summary-json" },
+    "relativePath": { "const": "outputs/summary.json" },
+    "mediaType": { "const": "application/json" },
+    "encoding": { "const": "UTF-8" },
+    "required": { "const": true },
+    "regularFileRequired": { "const": true },
+    "symbolicLinkAllowed": { "const": false },
+    "hardLinkAllowed": { "const": false },
+    "specialFileAllowed": { "const": false },
+    "maxBytes": { "const": 1048576 },
+    "parser": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "maxDepth",
+        "duplicateKeyPolicy",
+        "bomAllowed"
+      ],
+      "properties": {
+        "kind": { "const": "JSON" },
+        "maxDepth": { "const": 32 },
+        "duplicateKeyPolicy": { "const": "REJECT" },
+        "bomAllowed": { "const": false }
+      }
+    },
+    "descriptorDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

@@ -3,34 +3,52 @@
 ## Status
 
 ```text
-slice=M3-R4-R0
-issue=77
-baselineMain=6737436f6c0f46d1ca5a2a48f0adc0c25c0771fa
+slice=M3-R4-P1
+issue=79
+r0Issue=77
+r0PullRequest=78
+r0AcceptedHead=e522c13065dd77770d414a727d030a5108488eae
+branch=agent/m3-r4-p1-output-root-contracts-e522c13
+baseMain=6737436f6c0f46d1ca5a2a48f0adc0c25c0771fa
 m3R3FinalClosureReverified=true
 m3R4Started=true
-m3R4R0Started=true
-m3R4ProductImplementationStarted=false
+m3R4R0ExactHeadAcceptanceComplete=true
+m3R4P1Started=true
+m3R4P1ImplementationComplete=true
+m3R4P1ExactHeadAcceptanceComplete=false
+m3R4P2Started=false
 ```
 
-M3-R4 begins only after M3-R3 completed its ordinary Merge Commit chain and exact-main permanent closure. R0 freezes the trust boundary for a future writable output root. It does not create a directory, change the Invocation Plan, collect a file, or add a runtime API.
+M3-R4-P1 is the first product-contract slice after the R0 boundary freeze. It defines pure-data identities, exact artifact descriptors, bounded limits and a closed lifecycle grammar. It does not allocate a directory, resolve a host path, read a file, change the Invocation Plan or alter the accepted process adapter.
 
 ## Accepted predecessor
+
+The P1 branch is stacked directly on the exact accepted R0 Head:
+
+```text
+r0Head=e522c13065dd77770d414a727d030a5108488eae
+r0BaseMain=6737436f6c0f46d1ca5a2a48f0adc0c25c0771fa
+r0ChangedPathCount=8
+r0NaturalWorkflowCount=11
+r0NaturalWorkflowSuccess=11
+r0NaturalWorkflowFailure=0
+r0ReadyMarked=false
+r0Merged=false
+```
+
+The M3-R3 final exact-main Evidence remains immutable:
 
 ```text
 m3R3FinalMain=6737436f6c0f46d1ca5a2a48f0adc0c25c0771fa
 m3R3FinalManifestRun=31151845526
-m3R3FinalManifestValidationJob=92782938227
-m3R3FinalManifestReportJob=92783043149
 m3R3FinalManifestArtifact=8983613200
 m3R3FinalManifestArtifactDigest=sha256:579b91ef2219245ea6020ad5767cab23f10297d6fd60aa3310ba18c771a08868
 m3R3FinalManifestCanonicalEvidenceDigest=65579189cf11a930f621333824219faa9e5ca11516041ab7188ed68b11ab6990
 ```
 
-The M3-R3 Source Bundle remains immutable. Its accepted result decision remains:
+P1 preserves the predecessor runtime decision rather than rewriting it:
 
 ```text
-governedOutputRootDefined=false
-governedOutputRootImplemented=false
 fileResultCollectionSupported=false
 fileResultCollectionImplemented=false
 fileResultCollectionDecision=DEFERRED_GOVERNED_OUTPUT_ROOT_REQUIRED
@@ -40,65 +58,159 @@ callerPathAccepted=false
 arbitraryFileReadEnabled=false
 ```
 
-## R0 boundary freeze
+## P1 contract surface
 
-A later output-root design must satisfy all of the following before any filesystem implementation is authorized:
+P1 publishes four versioned contracts:
 
-1. the platform, not the caller, owns allocation and lifecycle;
-2. the writable root is distinct from the immutable Source Bundle, repository checkout, process home and arbitrary host directories;
-3. public identity binds a logical contract and canonical digest, never an absolute host path;
-4. every collected object is selected through a versioned relative-path and artifact-type allow-list;
-5. traversal, absolute paths, URI-like paths, backslashes, NUL bytes, symlinks, special files and path collisions fail closed;
-6. collection is bounded by file count, per-file bytes, aggregate bytes, parsing depth and time;
-7. validation and reading must close time-of-check/time-of-use replacement opportunities;
-8. output creation, process launch, terminal observation, collection, sealing, retention and cleanup have an explicit ordered lifecycle;
-9. stale output, cross-execution reuse and partial writes cannot be promoted to current immutable Evidence;
-10. public Evidence exposes digests, enums and bounded metadata only, never host paths, raw stdout, raw stderr, numeric PID or credential material.
+```text
+policySchema=k6-governed-output-root-policy/v1
+descriptorSchema=k6-output-artifact-descriptor/v1
+rootContractSchema=k6-governed-output-root-contract/v1
+evidenceSchema=m3-r4-output-root-p1-evidence/v1
+schemaCatalog=k6-output-root-p1-schema-catalog/v1
+```
 
-R0 records these as requirements. It implements none of them.
+The product module exports constructors, validators and canonical digest recomputation only:
+
+- `createK6GovernedOutputRootPolicy`;
+- `validateK6GovernedOutputRootPolicy`;
+- `computeK6GovernedOutputRootPolicyDigest`;
+- `createK6OutputArtifactDescriptor`;
+- `validateK6OutputArtifactDescriptor`;
+- `computeK6OutputArtifactDescriptorDigest`;
+- `validateK6OutputArtifactRelativePath`;
+- `createK6GovernedOutputRootContract`;
+- `validateK6GovernedOutputRootContract`;
+- `computeK6GovernedOutputRootContractDigest`.
+
+No allocator, resolver, collector, filesystem port or lifecycle executor is exported.
+
+## Frozen policy
+
+```text
+implementationStatus=CONTRACT_ONLY
+ownership=PLATFORM_OWNED
+role=EXECUTION_SCOPED_WRITABLE_RESULTS
+logicalName=execution-output-root
+hostPathIncluded=false
+callerPathAccepted=false
+absolutePathAccepted=false
+recursiveDiscoveryAllowed=false
+regularFilesOnly=true
+symbolicLinksAllowed=false
+hardLinksAllowed=false
+specialFilesAllowed=false
+sourceBundleMutationAllowed=false
+```
+
+The public identity is derived from canonical predecessor digests, the output-root policy digest and exact artifact descriptor digests. It never contains a private host path.
+
+## Exact artifact allow-list
+
+```text
+artifactDescriptorCount=1
+descriptorId=k6-output-summary-json
+artifactKind=k6-run-summary-json
+relativePath=outputs/summary.json
+mediaType=application/json
+encoding=UTF-8
+required=true
+regularFileRequired=true
+symbolicLinkAllowed=false
+hardLinkAllowed=false
+specialFileAllowed=false
+parserKind=JSON
+duplicateKeyPolicy=REJECT
+bomAllowed=false
+```
+
+The relative-path grammar is ASCII, NFC-normalized and slash-separated. It rejects empty or dot segments, traversal, absolute paths, URI prefixes, drive letters, UNC paths, backslashes, NUL and normalization collisions. P1 defines this grammar but opens no object.
+
+## Bounded limits
+
+```text
+maxFiles=1
+maxFileBytes=1048576
+maxTotalBytes=1048576
+maxJsonDepth=32
+maxCollectionDurationMs=10000
+```
+
+These are contract limits for later implementation. No capacity is consumed by P1.
+
+## Lifecycle grammar
+
+The ordered state grammar is:
+
+```text
+DECLARED
+ALLOCATED
+ACTIVE
+TERMINAL_OBSERVED
+SEALED
+COLLECTED
+CLEANED
+```
+
+Only adjacent transitions are declared. The P1 product remains at `DECLARED` and fixes:
+
+```text
+allocationAuthorized=false
+collectionAuthorized=false
+cleanupAuthorized=false
+directoryAllocated=false
+fileOpened=false
+fileRead=false
+fileWritten=false
+processBoundaryChanged=false
+```
+
+P2 or later must not infer authorization from the existence of this grammar.
 
 ## Ordered safe slices
 
 1. **R0 — Rebaseline and boundary freeze**
    - bind exact M3-R3 final-main Evidence;
    - freeze ownership, path, identity, lifecycle, limits, failure and audit requirements;
-   - add roadmap, ADR, matrix, threat model, handoff and static boundary test;
-   - stop at Draft PR exact-Head acceptance.
+   - complete exact-Head acceptance without product behavior.
 2. **P1 — Versioned output-root contracts**
-   - pure-data contracts and closed Schemas only;
-   - no directory allocation, file read or process change;
-   - bind logical root identity, artifact descriptors, limits and lifecycle states.
+   - publish pure-data policy, descriptor, root and Evidence contracts;
+   - close Schemas and canonical digest rules;
+   - bind the accepted runtime chain while authorizing no effect.
 3. **P2 — Injected trusted root port**
    - define allocator/resolver behavior behind an injected port;
-   - use fakes for acceptance until a later slice explicitly authorizes filesystem effects;
-   - keep caller paths and absolute paths private or rejected.
+   - remain fake-first until a separate instruction authorizes filesystem effects;
+   - keep caller and public absolute paths rejected.
 4. **P3 — Bounded result collector**
-   - collect only contract-declared regular files from a sealed root;
-   - enforce path, link, type, size, count, encoding and parser bounds;
+   - collect only exact contract-declared regular files from a sealed root;
+   - enforce path, object, size, count, encoding, parser and time bounds;
    - preserve Source Bundle immutability.
 5. **P4 — Fault, security and compatibility acceptance**
-   - adversarial path and race testing;
+   - adversarial path, link, race and resource testing;
    - Linux baseline and explicit portability claim;
    - permanent Evidence and Artifact.
 6. **G1–G4 — Formal acceptance and exact-main closure**
    - full-scope audit, conditional ordinary Merge Commit and permanent exact-main verification.
 
-Only R0 is authorized now. P1 and later slices remain frozen until a separate instruction names the accepted R0 Head.
+Only P1 is implemented in this branch. P2 and later slices remain frozen.
 
-## R0 non-goals
+## P1 non-goals
 
 ```text
-newRuntimeCapabilityAdded=false
-governedOutputRootDefined=false
 governedOutputRootImplemented=false
 outputDirectoryCreated=false
-outputDirectoryAcceptedFromCaller=false
+outputDirectoryAllocated=false
+filesystemPortImplemented=false
+fileOpened=false
+fileRead=false
+fileWritten=false
 fileResultCollectionSupported=false
 fileResultCollectionImplemented=false
 arbitraryFileReadEnabled=false
 sourceBundleModified=false
 invocationPlanModified=false
 nodeProcessAdapterModified=false
+newProcessPrimitiveAdded=false
 k6Invoked=false
 xk6Invoked=false
 playwrightInvoked=false
@@ -122,7 +234,7 @@ m4Started=false
 
 ## Compatibility and security visibility
 
-Node.js 22 remains the baseline. Any Node.js 24 use remains fake-only compatibility validation. The accepted runtime compatibility claim remains Linux until later evidence proves more.
+Node.js 22 remains the baseline. Node.js 24 is used only for fake-only, contract-product compatibility. The accepted runtime platform claim remains Linux.
 
 ```text
 platformCompatibility=linux
@@ -132,19 +244,19 @@ securityDashboardsEnumerable=false
 zeroAlertClaimMade=false
 ```
 
-## R0 stop condition
+## P1 stop condition
 
-The implementation must stop at:
+After naturally triggered exact-Head CI and independent Artifact audit, P1 may stop at:
 
 ```text
-m3R4R0ImplementationComplete=true
-m3R4R0BoundaryFreezeComplete=true
-m3R4R0ExactHeadAcceptanceComplete=true
-m3R4R0ReadyMarked=false
-m3R4R0Merged=false
-m3R4P1Started=false
+m3R4P1ImplementationComplete=true
+m3R4P1ContractBoundaryComplete=true
+m3R4P1ExactHeadAcceptanceComplete=true
+m3R4P1ReadyMarked=false
+m3R4P1Merged=false
+m3R4P2Started=false
 repositoryBlockers=[]
-nextRequiredSlice=M3-R4-P1
+nextRequiredSlice=M3-R4-P2
 ```
 
-R0 completion is not authorization to mark Ready or merge.
+P1 completion does not authorize Ready, merge, P2 implementation or any filesystem effect.

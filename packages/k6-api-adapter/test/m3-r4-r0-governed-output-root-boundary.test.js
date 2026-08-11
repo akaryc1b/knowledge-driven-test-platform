@@ -10,7 +10,7 @@ async function assertRepositoryPathMissing(relativePath) {
   await assert.rejects(
     stat(new URL(`../../../${relativePath}`, import.meta.url)),
     (error) => error?.code === 'ENOENT',
-    `Unexpected R0 runtime path exists: ${relativePath}`,
+    `Unexpected runtime path exists: ${relativePath}`,
   );
 }
 
@@ -24,9 +24,10 @@ function assertOrdered(text, fragments) {
   }
 }
 
-test('M3-R4 R0 keeps the k6 adapter production surface unchanged', async () => {
+test('M3-R4 preserves the effectful boundary while permitting the P1 contract module', async () => {
   const adapterIndex = await readRepositoryFile(
     'packages/k6-api-adapter/src/index.js');
+  assert.equal(adapterIndex.includes("export * from './output-root-contracts.js';"), true);
   for (const forbidden of [
     './governed-output-root.js',
     './output-root-allocator.js',
@@ -37,7 +38,7 @@ test('M3-R4 R0 keeps the k6 adapter production surface unchanged', async () => {
     'readResultFile',
   ]) {
     assert.equal(adapterIndex.includes(forbidden), false,
-      `R0 unexpectedly exports runtime capability: ${forbidden}`);
+      `M3-R4 unexpectedly exports effectful runtime capability: ${forbidden}`);
   }
 
   await Promise.all([
@@ -50,7 +51,7 @@ test('M3-R4 R0 keeps the k6 adapter production surface unchanged', async () => {
   ]);
 });
 
-test('M3-R4 R0 preserves Node baseline and existing runtime implementation files', async () => {
+test('M3-R4 preserves Node baseline and existing runtime implementation files', async () => {
   const packageDocument = JSON.parse(await readRepositoryFile('package.json'));
   assert.equal(packageDocument.type, 'module');
   assert.equal(packageDocument.engines.node, '>=22');
@@ -63,9 +64,8 @@ test('M3-R4 R0 preserves Node baseline and existing runtime implementation files
     "export * from './process-execution-lifecycle.js';"), true);
 });
 
-test('M3-R4 R0 governance records freeze the exact predecessor and non-implementation boundary', async () => {
+test('M3-R4 R0 governance records preserve the exact predecessor and non-implementation boundary', async () => {
   const documents = await Promise.all([
-    readRepositoryFile('docs/03-roadmap/m3-r4-governed-output-root.md'),
     readRepositoryFile(
       'docs/04-governance/m3-r4-r0-governed-output-root-boundary-matrix.md'),
     readRepositoryFile(
@@ -75,7 +75,6 @@ test('M3-R4 R0 governance records freeze the exact predecessor and non-implement
     readRepositoryFile(
       'docs/02-development/m3-r4-r0-governed-output-root-handoff.md'),
     readRepositoryFile('docs/m3-r4-r0-index.md'),
-    readRepositoryFile('docs/03-roadmap/roadmap.md'),
   ]);
   const combined = documents.join('\n');
 
@@ -104,9 +103,11 @@ test('M3-R4 R0 governance records freeze the exact predecessor and non-implement
   }
 });
 
-test('M3-R4 R0 freezes the safe slice order without starting P1', async () => {
+test('M3-R4 keeps the safe slice order and starts only the P1 contract slice', async () => {
   const roadmap = await readRepositoryFile(
     'docs/03-roadmap/m3-r4-governed-output-root.md');
+  const r0Handoff = await readRepositoryFile(
+    'docs/02-development/m3-r4-r0-governed-output-root-handoff.md');
   assertOrdered(roadmap, [
     '**R0 — Rebaseline and boundary freeze**',
     '**P1 — Versioned output-root contracts**',
@@ -115,8 +116,10 @@ test('M3-R4 R0 freezes the safe slice order without starting P1', async () => {
     '**P4 — Fault, security and compatibility acceptance**',
     '**G1–G4 — Formal acceptance and exact-main closure**',
   ]);
-  assert.equal(roadmap.includes('Only R0 is authorized now.'), true);
-  assert.equal(roadmap.includes('m3R4P1Started=false'), true);
+  assert.equal(r0Handoff.includes('m3R4P1Started=false'), true);
+  assert.equal(roadmap.includes('slice=M3-R4-P1'), true);
+  assert.equal(roadmap.includes('m3R4P1Started=true'), true);
+  assert.equal(roadmap.includes('m3R4P2Started=false'), true);
 });
 
 test('M3-R4 R0 matrix covers path, object, race, resource and disclosure threats', async () => {

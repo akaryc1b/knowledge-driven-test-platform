@@ -1,0 +1,291 @@
+name: m3-r4-p1-output-root-contracts
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r4-p1-output-root-contracts.yml'
+      - 'docs/02-development/m3-r4-p1-output-root-contracts-handoff.md'
+      - 'docs/03-roadmap/m3-r4-governed-output-root.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/04-governance/m3-r4-p1-output-root-contract-acceptance.md'
+      - 'docs/m3-r4-p1-index.md'
+      - 'docs/releases/M3-R4-P1-output-root-contracts.md'
+      - 'package.json'
+      - 'packages/k6-api-adapter/src/constants.js'
+      - 'packages/k6-api-adapter/src/errors.js'
+      - 'packages/k6-api-adapter/src/index.js'
+      - 'packages/k6-api-adapter/src/output-root-contracts.js'
+      - 'packages/k6-api-adapter/test/m3-r4-r0-governed-output-root-boundary.test.js'
+      - 'packages/k6-api-adapter/test/m3-r4-p1-output-root-contracts.test.js'
+      - 'packages/k6-api-adapter/test/output-root-contract-test-helpers.js'
+      - 'schemas/execution/k6-api-runtime/p1-output-root-schema-catalog.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-governed-output-root-policy.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-descriptor.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-governed-output-root-contract.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p1-evidence.schema.json'
+      - 'scripts/validate-m3-r4-p1-output-root-contracts.js'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/m3-r4-p1-output-root-contracts.yml'
+      - 'docs/02-development/m3-r4-p1-output-root-contracts-handoff.md'
+      - 'docs/03-roadmap/m3-r4-governed-output-root.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/04-governance/m3-r4-p1-output-root-contract-acceptance.md'
+      - 'docs/m3-r4-p1-index.md'
+      - 'docs/releases/M3-R4-P1-output-root-contracts.md'
+      - 'package.json'
+      - 'packages/k6-api-adapter/src/constants.js'
+      - 'packages/k6-api-adapter/src/errors.js'
+      - 'packages/k6-api-adapter/src/index.js'
+      - 'packages/k6-api-adapter/src/output-root-contracts.js'
+      - 'packages/k6-api-adapter/test/m3-r4-r0-governed-output-root-boundary.test.js'
+      - 'packages/k6-api-adapter/test/m3-r4-p1-output-root-contracts.test.js'
+      - 'packages/k6-api-adapter/test/output-root-contract-test-helpers.js'
+      - 'schemas/execution/k6-api-runtime/p1-output-root-schema-catalog.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-governed-output-root-policy.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-descriptor.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-governed-output-root-contract.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p1-evidence.schema.json'
+      - 'scripts/validate-m3-r4-p1-output-root-contracts.js'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m3-r4-p1-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-output-root-contracts:
+    runs-on: ubuntu-24.04
+    env:
+      EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+      M3_R4_P1_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXACT_HEAD }}
+          persist-credentials: false
+
+      - name: Verify exact Head checkout
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$EXACT_HEAD"
+
+      - name: Set up baseline Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run focused P1 contracts on Node.js 22
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test packages/k6-api-adapter/test/m3-r4-p1-output-root-contracts.test.js \
+            2>&1 | tee /tmp/m3-r4-p1-focused-node22.tap
+
+      - name: Capture Node.js 22 compatibility product
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' > /tmp/m3-r4-p1-product-node22.txt
+          import { sha256 } from '@kdtp/knowledge-core';
+          import { createK6OutputArtifactDescriptor } from './packages/k6-api-adapter/src/index.js';
+          import { outputRootContractFixture } from './packages/k6-api-adapter/test/output-root-contract-test-helpers.js';
+          const fixture = await outputRootContractFixture();
+          process.stdout.write(`${sha256({
+            policy: fixture.outputRootPolicy,
+            descriptor: createK6OutputArtifactDescriptor(),
+            contract: fixture.outputRootContract,
+          })}\n`);
+          NODE
+
+      - name: Set up fake-only compatibility Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Run focused P1 contracts on Node.js 24
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test --test-reporter=tap \
+            packages/k6-api-adapter/test/m3-r4-p1-output-root-contracts.test.js \
+            2>&1 | tee /tmp/m3-r4-p1-focused-node24.tap
+
+      - name: Capture and compare Node.js 24 compatibility product
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' > /tmp/m3-r4-p1-product-node24.txt
+          import { sha256 } from '@kdtp/knowledge-core';
+          import { createK6OutputArtifactDescriptor } from './packages/k6-api-adapter/src/index.js';
+          import { outputRootContractFixture } from './packages/k6-api-adapter/test/output-root-contract-test-helpers.js';
+          const fixture = await outputRootContractFixture();
+          process.stdout.write(`${sha256({
+            policy: fixture.outputRootPolicy,
+            descriptor: createK6OutputArtifactDescriptor(),
+            contract: fixture.outputRootContract,
+          })}\n`);
+          NODE
+          test "$(cat /tmp/m3-r4-p1-product-node22.txt)" \
+            = "$(cat /tmp/m3-r4-p1-product-node24.txt)"
+
+      - name: Restore baseline Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run all k6 API Adapter tests
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test packages/k6-api-adapter/test/*.test.js \
+            2>&1 | tee /tmp/m3-r4-p1-adapter-node22.tap
+
+      - name: Run complete Node.js test suite
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee /tmp/m3-r4-p1-full-node22.tap
+
+      - name: Export exact test counts
+        shell: bash
+        run: |
+          tap_value() {
+            awk -v key="$2" '$1 == "#" && $2 == key { value = $3 } END { if (value == "") exit 1; print value }' "$1"
+          }
+          export_result() {
+            prefix="$1"
+            file="$2"
+            echo "${prefix}_TOTAL=$(tap_value "$file" tests)" >> "$GITHUB_ENV"
+            echo "${prefix}_PASSED=$(tap_value "$file" pass)" >> "$GITHUB_ENV"
+            echo "${prefix}_SKIPPED=$(tap_value "$file" skipped)" >> "$GITHUB_ENV"
+            echo "${prefix}_FAILED=$(tap_value "$file" fail)" >> "$GITHUB_ENV"
+          }
+          export_result M3_R4_P1_FOCUSED_NODE22 /tmp/m3-r4-p1-focused-node22.tap
+          export_result M3_R4_P1_FOCUSED_NODE24 /tmp/m3-r4-p1-focused-node24.tap
+          export_result M3_R4_P1_ADAPTER /tmp/m3-r4-p1-adapter-node22.tap
+          export_result M3_R4_P1_FULL /tmp/m3-r4-p1-full-node22.tap
+          echo "M3_R4_P1_REPOSITORY_VALIDATOR=success" >> "$GITHUB_ENV"
+          echo "M3_R4_P1_COMPATIBILITY_PRODUCT_DIGEST=$(cat /tmp/m3-r4-p1-product-node22.txt)" \
+            >> "$GITHUB_ENV"
+
+      - name: Run complete Repository Validator
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run validate 2>&1 | tee /tmp/m3-r4-p1-repository-validator.log
+
+      - name: Generate exact-Head P1 Evidence
+        shell: bash
+        run: |
+          node scripts/validate-m3-r4-p1-output-root-contracts.js \
+            > /tmp/m3-r4-p1-output-root-contract-evidence.json
+
+      - name: Assemble and audit permanent P1 Artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact=/tmp/m3-r4-p1-output-root-contract-artifact
+          rm -rf "$artifact"
+          mkdir -p "$artifact/contracts" "$artifact/schemas" \
+            "$artifact/evidence" "$artifact/metadata"
+          cp packages/k6-api-adapter/src/constants.js "$artifact/contracts/constants.js"
+          cp packages/k6-api-adapter/src/errors.js "$artifact/contracts/errors.js"
+          cp packages/k6-api-adapter/src/index.js "$artifact/contracts/index.js"
+          cp packages/k6-api-adapter/src/output-root-contracts.js \
+            "$artifact/contracts/output-root-contracts.js"
+          cp schemas/execution/k6-api-runtime/p1-output-root-schema-catalog.json \
+            "$artifact/schemas/p1-output-root-schema-catalog.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-governed-output-root-policy.schema.json \
+            "$artifact/schemas/k6-governed-output-root-policy.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-output-artifact-descriptor.schema.json \
+            "$artifact/schemas/k6-output-artifact-descriptor.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-governed-output-root-contract.schema.json \
+            "$artifact/schemas/k6-governed-output-root-contract.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p1-evidence.schema.json \
+            "$artifact/schemas/m3-r4-output-root-p1-evidence.schema.json"
+          cp /tmp/m3-r4-p1-output-root-contract-evidence.json \
+            "$artifact/evidence/m3-r4-p1-output-root-contract-evidence.json"
+
+          ARTIFACT_ROOT="$artifact" node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          import { scanSensitiveValues, validateStorePath } from './packages/k6-api-adapter/test/p5-test-helpers.js';
+
+          const root = process.env.ARTIFACT_ROOT;
+          const result = (prefix) => ({
+            total: Number(process.env[`${prefix}_TOTAL`]),
+            passed: Number(process.env[`${prefix}_PASSED`]),
+            skipped: Number(process.env[`${prefix}_SKIPPED`]),
+            failed: Number(process.env[`${prefix}_FAILED`]),
+          });
+          const testResults = {
+            focusedNode22: result('M3_R4_P1_FOCUSED_NODE22'),
+            focusedNode24: result('M3_R4_P1_FOCUSED_NODE24'),
+            k6ApiAdapter: result('M3_R4_P1_ADAPTER'),
+            fullNode: result('M3_R4_P1_FULL'),
+            repositoryValidator: { status: 'success' },
+            compatibilityProductDigest: process.env.M3_R4_P1_COMPATIBILITY_PRODUCT_DIGEST,
+          };
+          writeFileSync(join(root, 'metadata/test-results.json'),
+            `${JSON.stringify(testResults, null, 2)}\n`);
+
+          const payloadPaths = [
+            'contracts/constants.js',
+            'contracts/errors.js',
+            'contracts/index.js',
+            'contracts/output-root-contracts.js',
+            'schemas/p1-output-root-schema-catalog.json',
+            'schemas/k6-governed-output-root-policy.schema.json',
+            'schemas/k6-output-artifact-descriptor.schema.json',
+            'schemas/k6-governed-output-root-contract.schema.json',
+            'schemas/m3-r4-output-root-p1-evidence.schema.json',
+            'evidence/m3-r4-p1-output-root-contract-evidence.json',
+            'metadata/test-results.json',
+          ];
+          const sensitiveScan = {};
+          const entries = payloadPaths.map((path) => {
+            validateStorePath(path);
+            const bytes = readFileSync(join(root, path));
+            const text = bytes.toString('utf8');
+            sensitiveScan[path] = path.endsWith('.json') ? JSON.parse(text) : text;
+            return {
+              path,
+              byteLength: bytes.length,
+              sha256: createHash('sha256').update(bytes).digest('hex'),
+            };
+          });
+          scanSensitiveValues(sensitiveScan, 'M3-R4-P1 Artifact');
+          const manifest = {
+            schemaVersion: 'm3-r4-p1-artifact-manifest/v1',
+            repository: 'akaryc1b/knowledge-driven-test-platform',
+            headSha: process.env.M3_R4_P1_EXACT_HEAD,
+            artifactPathCount: 12,
+            manifestedPayloadPathCount: entries.length,
+            entries,
+            sensitiveScanPassed: true,
+          };
+          writeFileSync(join(root, 'metadata/artifact-manifest.json'),
+            `${JSON.stringify(manifest, null, 2)}\n`);
+          NODE
+
+          test "$(find "$artifact" -type f | wc -l | tr -d ' ')" = "12"
+          test -z "$(find "$artifact" -type l -print -quit)"
+          test -z "$(find "$artifact" ! -type f ! -type d -print -quit)"
+
+      - name: Upload permanent P1 Evidence Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r4-p1-output-root-contract-evidence
+          path: /tmp/m3-r4-p1-output-root-contract-artifact
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 6
+          overwrite: false
+          include-hidden-files: false
