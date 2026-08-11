@@ -113,7 +113,8 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          node --test packages/k6-api-adapter/test/m3-r4-p1-output-root-contracts.test.js \
+          node --test --test-reporter=tap \
+            packages/k6-api-adapter/test/m3-r4-p1-output-root-contracts.test.js \
             2>&1 | tee /tmp/m3-r4-p1-focused-node24.tap
 
       - name: Capture and compare Node.js 24 compatibility product
