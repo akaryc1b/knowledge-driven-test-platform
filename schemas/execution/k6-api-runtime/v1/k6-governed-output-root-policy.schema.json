@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-runtime/v1/k6-governed-output-root-policy.schema.json",
+  "title": "K6 Governed Output Root Policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "policyId",
+    "version",
+    "implementationStatus",
+    "ownership",
+    "role",
+    "logicalName",
+    "hostPathIncluded",
+    "callerPathAccepted",
+    "absolutePathAccepted",
+    "recursiveDiscoveryAllowed",
+    "regularFilesOnly",
+    "symbolicLinksAllowed",
+    "hardLinksAllowed",
+    "specialFilesAllowed",
+    "sourceBundleMutationAllowed",
+    "limits",
+    "policyDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "k6-governed-output-root-policy/v1" },
+    "policyId": { "const": "k6-governed-output-root" },
+    "version": { "const": "1.0.0" },
+    "implementationStatus": { "const": "CONTRACT_ONLY" },
+    "ownership": { "const": "PLATFORM_OWNED" },
+    "role": { "const": "EXECUTION_SCOPED_WRITABLE_RESULTS" },
+    "logicalName": { "const": "execution-output-root" },
+    "hostPathIncluded": { "const": false },
+    "callerPathAccepted": { "const": false },
+    "absolutePathAccepted": { "const": false },
+    "recursiveDiscoveryAllowed": { "const": false },
+    "regularFilesOnly": { "const": true },
+    "symbolicLinksAllowed": { "const": false },
+    "hardLinksAllowed": { "const": false },
+    "specialFilesAllowed": { "const": false },
+    "sourceBundleMutationAllowed": { "const": false },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maxFiles",
+        "maxFileBytes",
+        "maxTotalBytes",
+        "maxJsonDepth",
+        "maxCollectionDurationMs"
+      ],
+      "properties": {
+        "maxFiles": { "const": 1 },
+        "maxFileBytes": { "const": 1048576 },
+        "maxTotalBytes": { "const": 1048576 },
+        "maxJsonDepth": { "const": 32 },
+        "maxCollectionDurationMs": { "const": 10000 }
+      }
+    },
+    "policyDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
