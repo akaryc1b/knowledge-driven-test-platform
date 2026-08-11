@@ -1,4 +1,5 @@
 import {
+  K6_OUTPUT_ARTIFACT_KIND,
   createK6GovernedOutputRootContract,
   createK6GovernedOutputRootPolicy,
   createK6ProcessTerminalObservation,
@@ -9,7 +10,23 @@ import {
 import { processExecutionFixture } from './process-execution-lifecycle-test-helpers.js';
 
 export async function outputRootContractFixture(options = {}) {
-  const processFixture = await processExecutionFixture(options.processOptions);
+  const suppliedProcessOptions = options.processOptions ?? {};
+  const suppliedP1Options = suppliedProcessOptions.p1Options ?? {};
+  const suppliedRuntimeOptions = suppliedP1Options.runtimeOptions ?? {};
+  const suppliedResources = suppliedRuntimeOptions.resources ?? {};
+  const processFixture = await processExecutionFixture({
+    ...suppliedProcessOptions,
+    p1Options: {
+      ...suppliedP1Options,
+      runtimeOptions: {
+        ...suppliedRuntimeOptions,
+        resources: {
+          ...suppliedResources,
+          outputArtifactKinds: [K6_OUTPUT_ARTIFACT_KIND],
+        },
+      },
+    },
+  });
   const pending = executeK6ProcessLifecycle({
     adapter: processFixture.adapter,
     command: processFixture.command,
