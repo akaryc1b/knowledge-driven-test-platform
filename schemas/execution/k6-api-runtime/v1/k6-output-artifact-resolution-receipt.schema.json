@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-runtime/v1/k6-output-artifact-resolution-receipt.schema.json",
+  "title": "K6 Output Artifact Resolution Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "receiptId",
+    "portId",
+    "portDigest",
+    "resolutionRequestDigest",
+    "allocationHandle",
+    "artifactHandle",
+    "descriptorDigest",
+    "relativePath",
+    "accepted",
+    "delegated",
+    "resolved",
+    "opaqueHandleReturned",
+    "regularFileVerified",
+    "objectOpened",
+    "fileRead",
+    "fileWritten",
+    "realFilesystemAccessed",
+    "hostPathIncluded",
+    "receiptDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "k6-output-artifact-resolution-receipt/v1"
+    },
+    "receiptId": {
+      "type": "string",
+      "pattern": "^k6artifact-resolution-receipt-[a-f0-9]{20}$"
+    },
+    "portId": {
+      "const": "k6-trusted-output-root-port"
+    },
+    "portDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "resolutionRequestDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "allocationHandle": {
+      "type": "string",
+      "pattern": "^k6root-handle-[a-f0-9]{20}$"
+    },
+    "artifactHandle": {
+      "type": "string",
+      "pattern": "^k6artifact-handle-[a-f0-9]{20}$"
+    },
+    "descriptorDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "relativePath": {
+      "const": "outputs/summary.json"
+    },
+    "accepted": {
+      "const": true
+    },
+    "delegated": {
+      "const": true
+    },
+    "resolved": {
+      "const": true
+    },
+    "opaqueHandleReturned": {
+      "const": true
+    },
+    "regularFileVerified": {
+      "const": false
+    },
+    "objectOpened": {
+      "const": false
+    },
+    "fileRead": {
+      "const": false
+    },
+    "fileWritten": {
+      "const": false
+    },
+    "realFilesystemAccessed": {
+      "const": false
+    },
+    "hostPathIncluded": {
+      "const": false
+    },
+    "receiptDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

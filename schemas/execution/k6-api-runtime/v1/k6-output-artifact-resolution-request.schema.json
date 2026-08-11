@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-runtime/v1/k6-output-artifact-resolution-request.schema.json",
+  "title": "K6 Output Artifact Resolution Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "requestId",
+    "portDigest",
+    "rootContractId",
+    "rootContractDigest",
+    "allocationRequestDigest",
+    "allocationReceiptDigest",
+    "allocationHandle",
+    "descriptorId",
+    "descriptorDigest",
+    "kind",
+    "relativePath",
+    "required",
+    "regularFileRequired",
+    "symbolicLinkAllowed",
+    "hardLinkAllowed",
+    "specialFileAllowed",
+    "openAuthorized",
+    "readAuthorized",
+    "writeAuthorized",
+    "requestDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "k6-output-artifact-resolution-request/v1"
+    },
+    "requestId": {
+      "type": "string",
+      "pattern": "^k6artifact-resolution-[a-f0-9]{20}$"
+    },
+    "portDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "rootContractId": {
+      "type": "string",
+      "pattern": "^k6output-root-contract-[a-f0-9]{20}$"
+    },
+    "rootContractDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "allocationRequestDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "allocationReceiptDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "allocationHandle": {
+      "type": "string",
+      "pattern": "^k6root-handle-[a-f0-9]{20}$"
+    },
+    "descriptorId": {
+      "const": "k6-output-summary-json"
+    },
+    "descriptorDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "kind": {
+      "const": "k6-run-summary-json"
+    },
+    "relativePath": {
+      "const": "outputs/summary.json"
+    },
+    "required": {
+      "const": true
+    },
+    "regularFileRequired": {
+      "const": true
+    },
+    "symbolicLinkAllowed": {
+      "const": false
+    },
+    "hardLinkAllowed": {
+      "const": false
+    },
+    "specialFileAllowed": {
+      "const": false
+    },
+    "openAuthorized": {
+      "const": false
+    },
+    "readAuthorized": {
+      "const": false
+    },
+    "writeAuthorized": {
+      "const": false
+    },
+    "requestDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

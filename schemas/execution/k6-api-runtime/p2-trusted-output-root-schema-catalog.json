@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "k6-output-root-p2-schema-catalog/v1",
+  "schemas": [
+    {
+      "schemaVersion": "k6-trusted-output-root-port/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-trusted-output-root-port.schema.json"
+    },
+    {
+      "schemaVersion": "k6-output-root-allocation-request/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-output-root-allocation-request.schema.json"
+    },
+    {
+      "schemaVersion": "k6-output-root-allocation-receipt/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-output-root-allocation-receipt.schema.json"
+    },
+    {
+      "schemaVersion": "k6-output-artifact-resolution-request/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-output-artifact-resolution-request.schema.json"
+    },
+    {
+      "schemaVersion": "k6-output-artifact-resolution-receipt/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-output-artifact-resolution-receipt.schema.json"
+    },
+    {
+      "schemaVersion": "k6-trusted-output-root-boundary-evidence/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-trusted-output-root-boundary-evidence.schema.json"
+    },
+    {
+      "schemaVersion": "m3-r4-output-root-p2-evidence/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p2-evidence.schema.json"
+    }
+  ]
+}
