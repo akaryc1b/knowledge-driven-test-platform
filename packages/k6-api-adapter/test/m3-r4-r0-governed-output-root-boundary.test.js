@@ -24,20 +24,26 @@ function assertOrdered(text, fragments) {
   }
 }
 
-test('M3-R4 permits P1 contracts and the P2 injected fake-only port', async () => {
+test('M3-R4 permits P1 contracts, P2 port and P3 fake-only collector', async () => {
   const adapterIndex = await readRepositoryFile(
     'packages/k6-api-adapter/src/index.js');
-  assert.equal(adapterIndex.includes(
-    "export * from './output-root-contracts.js';"), true);
-  assert.equal(adapterIndex.includes(
-    "export * from './trusted-output-root-port.js';"), true);
+  for (const allowed of [
+    "export * from './output-root-contracts.js';",
+    "export * from './trusted-output-root-port.js';",
+    "export * from './bounded-file-result-collector.js';",
+  ]) {
+    assert.equal(adapterIndex.includes(allowed), true, allowed);
+  }
   for (const forbidden of [
     './governed-output-root.js',
     './output-root-allocator.js',
+    './filesystem-output-root-port.js',
+    './real-output-root-port.js',
     './file-result-collector.js',
+    './filesystem-result-collector.js',
     'createGovernedOutputRoot',
     'allocateRealOutputRoot',
-    'collectFileResults',
+    'collectHostFileResults',
     'readResultFile',
   ]) {
     assert.equal(adapterIndex.includes(forbidden), false,
@@ -45,13 +51,13 @@ test('M3-R4 permits P1 contracts and the P2 injected fake-only port', async () =
   }
 
   await Promise.all([
-    assertRepositoryPathMissing(
-      'packages/k6-api-adapter/src/governed-output-root.js'),
-    assertRepositoryPathMissing(
-      'packages/k6-api-adapter/src/output-root-allocator.js'),
-    assertRepositoryPathMissing(
-      'packages/k6-api-adapter/src/file-result-collector.js'),
-  ]);
+    'packages/k6-api-adapter/src/governed-output-root.js',
+    'packages/k6-api-adapter/src/output-root-allocator.js',
+    'packages/k6-api-adapter/src/filesystem-output-root-port.js',
+    'packages/k6-api-adapter/src/real-output-root-port.js',
+    'packages/k6-api-adapter/src/file-result-collector.js',
+    'packages/k6-api-adapter/src/filesystem-result-collector.js',
+  ].map(assertRepositoryPathMissing));
 });
 
 test('M3-R4 preserves Node baseline and existing runtime implementation files', async () => {
@@ -62,8 +68,7 @@ test('M3-R4 preserves Node baseline and existing runtime implementation files', 
 
   const index = await readRepositoryFile('packages/k6-api-adapter/src/index.js');
   assert.equal(index.includes("export * from './runtime-admission.js';"), true);
-  assert.equal(index.includes(
-    "export * from './local-process-boundary.js';"), true);
+  assert.equal(index.includes("export * from './local-process-boundary.js';"), true);
   assert.equal(index.includes(
     "export * from './process-execution-lifecycle.js';"), true);
 });
@@ -107,7 +112,7 @@ test('M3-R4 R0 governance records preserve the exact predecessor and non-impleme
   }
 });
 
-test('M3-R4 keeps the safe slice order and starts only P2', async () => {
+test('M3-R4 keeps the safe slice order and starts only P3', async () => {
   const roadmap = await readRepositoryFile(
     'docs/03-roadmap/m3-r4-governed-output-root.md');
   const r0Handoff = await readRepositoryFile(
@@ -121,10 +126,10 @@ test('M3-R4 keeps the safe slice order and starts only P2', async () => {
     '**G1–G4 — Formal acceptance and exact-main closure**',
   ]);
   assert.equal(r0Handoff.includes('m3R4P1Started=false'), true);
-  assert.equal(roadmap.includes('slice=M3-R4-P2'), true);
-  assert.equal(roadmap.includes('m3R4P1ExactHeadAcceptanceComplete=true'), true);
-  assert.equal(roadmap.includes('m3R4P2Started=true'), true);
-  assert.equal(roadmap.includes('m3R4P3Started=false'), true);
+  assert.equal(roadmap.includes('slice=M3-R4-P3'), true);
+  assert.equal(roadmap.includes('m3R4P2ExactHeadAcceptanceComplete=true'), true);
+  assert.equal(roadmap.includes('m3R4P3Started=true'), true);
+  assert.equal(roadmap.includes('m3R4P4Started=false'), true);
 });
 
 test('M3-R4 R0 matrix covers path, object, race, resource and disclosure threats', async () => {

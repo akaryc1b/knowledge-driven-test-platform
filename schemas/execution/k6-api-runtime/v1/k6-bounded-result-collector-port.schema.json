@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kdtp.local/schemas/execution/k6-api-runtime/v1/k6-bounded-result-collector-port.schema.json",
+  "title": "K6 Bounded Result Collector Port",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "portId",
+    "portVersion",
+    "implementationStatus",
+    "ownership",
+    "capabilities",
+    "portDigest"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "k6-bounded-result-collector-port/v1"
+    },
+    "portId": {
+      "const": "k6-bounded-result-collector-port"
+    },
+    "portVersion": {
+      "const": "1.0.0"
+    },
+    "implementationStatus": {
+      "const": "INJECTED_FAKE_ONLY"
+    },
+    "ownership": {
+      "const": "PLATFORM_OWNED"
+    },
+    "capabilities": {
+      "const": {
+        "sealLogicalRoot": true,
+        "inspectDeclaredArtifact": true,
+        "provideTransientPayload": true,
+        "accessRealFilesystem": false,
+        "returnHostPath": false,
+        "recursivelyDiscover": false,
+        "persistRawPayload": false
+      }
+    },
+    "portDigest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
