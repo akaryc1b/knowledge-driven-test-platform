@@ -17,10 +17,12 @@ on:
       - 'packages/k6-api-adapter/src/bounded-result-collector-contracts.js'
       - 'packages/k6-api-adapter/src/bounded-result-collector-definitions.js'
       - 'packages/k6-api-adapter/src/bounded-result-collector-validation.js'
+      - 'packages/k6-api-adapter/src/bounded-result-collector-predecessor.js'
       - 'packages/k6-api-adapter/test/bounded-file-result-collector-test-helpers.js'
       - 'packages/k6-api-adapter/test/m3-r4-p3-bounded-file-result-collector.test.js'
       - 'packages/k6-api-adapter/test/m3-r4-p3-bounded-file-result-security.test.js'
       - 'packages/k6-api-adapter/test/m3-r4-r0-governed-output-root-boundary.test.js'
+      - 'schemas/execution/k6-api-runtime/README.md'
       - 'schemas/execution/k6-api-runtime/p3-bounded-result-schema-catalog.json'
       - 'schemas/execution/k6-api-runtime/v1/k6-bounded-result-collector-port.schema.json'
       - 'schemas/execution/k6-api-runtime/v1/k6-output-root-seal-request.schema.json'
@@ -50,10 +52,12 @@ on:
       - 'packages/k6-api-adapter/src/bounded-result-collector-contracts.js'
       - 'packages/k6-api-adapter/src/bounded-result-collector-definitions.js'
       - 'packages/k6-api-adapter/src/bounded-result-collector-validation.js'
+      - 'packages/k6-api-adapter/src/bounded-result-collector-predecessor.js'
       - 'packages/k6-api-adapter/test/bounded-file-result-collector-test-helpers.js'
       - 'packages/k6-api-adapter/test/m3-r4-p3-bounded-file-result-collector.test.js'
       - 'packages/k6-api-adapter/test/m3-r4-p3-bounded-file-result-security.test.js'
       - 'packages/k6-api-adapter/test/m3-r4-r0-governed-output-root-boundary.test.js'
+      - 'schemas/execution/k6-api-runtime/README.md'
       - 'schemas/execution/k6-api-runtime/p3-bounded-result-schema-catalog.json'
       - 'schemas/execution/k6-api-runtime/v1/k6-bounded-result-collector-port.schema.json'
       - 'schemas/execution/k6-api-runtime/v1/k6-output-root-seal-request.schema.json'
@@ -257,6 +261,8 @@ jobs:
             "$artifact/contracts/bounded-result-collector-definitions.js"
           cp packages/k6-api-adapter/src/bounded-result-collector-validation.js \
             "$artifact/contracts/bounded-result-collector-validation.js"
+          cp packages/k6-api-adapter/src/bounded-result-collector-predecessor.js \
+            "$artifact/contracts/bounded-result-collector-predecessor.js"
           cp schemas/execution/k6-api-runtime/p3-bounded-result-schema-catalog.json \
             "$artifact/schemas/p3-bounded-result-schema-catalog.json"
           cp schemas/execution/k6-api-runtime/v1/k6-bounded-result-collector-port.schema.json \
@@ -312,6 +318,7 @@ jobs:
             'contracts/bounded-result-collector-contracts.js',
             'contracts/bounded-result-collector-definitions.js',
             'contracts/bounded-result-collector-validation.js',
+            'contracts/bounded-result-collector-predecessor.js',
             'schemas/p3-bounded-result-schema-catalog.json',
             'schemas/k6-bounded-result-collector-port.schema.json',
             'schemas/k6-output-root-seal-request.schema.json',
@@ -342,7 +349,7 @@ jobs:
             schemaVersion: 'm3-r4-p3-artifact-manifest/v1',
             repository: 'akaryc1b/knowledge-driven-test-platform',
             headSha: process.env.M3_R4_P3_EXACT_HEAD,
-            artifactPathCount: 19,
+            artifactPathCount: 20,
             manifestedPayloadPathCount: entries.length,
             entries,
             sensitiveScanPassed: true,
@@ -351,7 +358,7 @@ jobs:
             `${JSON.stringify(manifest, null, 2)}\n`);
           NODE
 
-          test "$(find "$artifact" -type f | wc -l | tr -d ' ')" = "19"
+          test "$(find "$artifact" -type f | wc -l | tr -d ' ')" = "20"
           test -z "$(find "$artifact" -type l -print -quit)"
           test -z "$(find "$artifact" ! -type f ! -type d -print -quit)"
 

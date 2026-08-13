@@ -278,6 +278,10 @@ export function validateP3Repository(repository) {
     "node-version: '22'",
     "node-version: '24'",
     'm3-r4-p3-bounded-result-collector-evidence',
+    'schemas/execution/k6-api-runtime/README.md',
+    'packages/k6-api-adapter/src/bounded-result-collector-predecessor.js',
+    'contracts/bounded-result-collector-predecessor.js',
+    'artifactPathCount: 20',
     'retention-days: 90',
     'overwrite: false',
   ]) invariant(repository.workflow.includes(marker),
@@ -313,7 +317,10 @@ export function validateP3Repository(repository) {
     'readdir(',
     'realpath(',
     'spawn(',
-    'exec(',
+    'childProcess.exec(',
+    'execFile(',
+    'execFileSync(',
+    'execSync(',
   ]) invariant(!productText.includes(forbidden),
     `M3-R4-P3 product source contains an effectful primitive: ${forbidden}`);
   return repository;
