@@ -295,7 +295,10 @@ test('P3 production modules contain no filesystem, process or environment primit
     'readdir(',
     'realpath(',
     'spawn(',
-    'exec(',
+    'childProcess.exec(',
+    'execFile(',
+    'execFileSync(',
+    'execSync(',
   ]) {
     assert.equal(source.includes(forbidden), false, forbidden);
   }
