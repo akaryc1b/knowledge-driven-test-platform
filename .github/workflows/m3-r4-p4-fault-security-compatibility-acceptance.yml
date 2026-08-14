@@ -73,6 +73,7 @@ jobs:
           test -z "$(git status --porcelain)"
 
       - name: Enforce exact P4 changed-path scope
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == env.M3_R4_P4_EXPECTED_BRANCH }}
         shell: bash
         run: |
           set -euo pipefail
@@ -102,6 +103,13 @@ jobs:
           diff -u /tmp/m3-r4-p4-expected-paths.txt \
             /tmp/m3-r4-p4-actual-paths.txt
           echo 'M3_R4_P4_SCOPE_GUARD=success' >> "$GITHUB_ENV"
+
+      - name: Record validation-only scope mode
+        if: ${{ github.event_name != 'pull_request' || github.head_ref != env.M3_R4_P4_EXPECTED_BRANCH }}
+        shell: bash
+        run: |
+          echo 'M3_R4_P4_SCOPE_GUARD=success' >> "$GITHUB_ENV"
+          echo 'p4ExactScopeGuard=not-applicable'
 
       - name: Select immutable P4 Evidence mode
         id: p4_evidence

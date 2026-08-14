@@ -60,7 +60,7 @@ p3ArtifactJobId=94663794366
 p3ArtifactApiDigest=sha256:d65239287215365e008da683297eaed4a8a16db2680619076cb8eb4dfa850d33
 p3CanonicalEvidenceDigest=a21ba8d33213ee9c08de67f685e63f7a9794d48058d8a343b167b1611fe1576e
 p3SchemaCatalogDigest=0658defe8fe06f74b17d6caedd33ecf0e711313effa6d172e8797a9876e41d03
-p3CompatibilityProductDigest=03b2ac5c2c3ad0357444426e9ac6a54f800381b6e9e72d9bfc90553f5938a6ac0
+p3CompatibilityProductDigest=03b2ac5c2c3ad035744426e9ac6a54f800381b6e9e72d9bfc90553f5938a6ac0
 p3EvidenceRewritten=false
 ```
 
@@ -97,7 +97,7 @@ rawPayloadIncludedInEvidence=false
 
 A future Linux implementation must be separately authorized and must prove:
 
-- platform-owned private root alocation;
+- platform-owned private root allocation;
 - no caller-provided host path;
 - root-relative resolution with no-follow semantics;
 - regular-file-only collection;
