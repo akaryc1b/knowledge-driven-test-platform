@@ -169,9 +169,9 @@ class BoundedJsonParser {
         continue;
       }
       if (char === '"') {
-        const token = this.text.slice(start, this.index);
+        const stringLiteral = this.text.slice(start, this.index);
         try {
-          return JSON.parse(token);
+          return JSON.parse(stringLiteral);
         } catch {
           throw new K6OutputRootContractError(
             'K6_OUTPUT_JSON_STRING_INVALID',
