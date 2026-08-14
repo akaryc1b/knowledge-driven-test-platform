@@ -1,0 +1,287 @@
+name: m3-r4-p4-fault-security-compatibility-acceptance
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r4-p4-fault-security-compatibility-acceptance.yml'
+      - 'docs/02-development/m3-r4-p4-fault-security-compatibility-handoff.md'
+      - 'docs/03-roadmap/m3-r4-governed-output-root.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/04-governance/m3-r4-p4-fault-security-compatibility-acceptance.md'
+      - 'docs/05-adr/ADR-0036-m3-r4-linux-filesystem-boundary.md'
+      - 'docs/06-security/m3-r4-p4-output-root-threat-model.md'
+      - 'docs/releases/M3-R4-P4-fault-security-compatibility-acceptance.md'
+      - 'docs/m3-r4-p4-index.md'
+      - 'package.json'
+      - 'packages/k6-api-adapter/test/m3-r4-p4-fault-security-compatibility.test.js'
+      - 'schemas/execution/k6-api-runtime/README.md'
+      - 'schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p4-evidence.schema.json'
+      - 'scripts/m3-r4-p4/constants.js'
+      - 'scripts/m3-r4-p4/artifact.js'
+      - 'scripts/validate-m3-r4-p4-fault-security-compatibility.js'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/m3-r4-p4-fault-security-compatibility-acceptance.yml'
+      - 'docs/02-development/m3-r4-p4-fault-security-compatibility-handoff.md'
+      - 'docs/03-roadmap/m3-r4-governed-output-root.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/04-governance/m3-r4-p4-fault-security-compatibility-acceptance.md'
+      - 'docs/05-adr/ADR-0036-m3-r4-linux-filesystem-boundary.md'
+      - 'docs/06-security/m3-r4-p4-output-root-threat-model.md'
+      - 'docs/releases/M3-R4-P4-fault-security-compatibility-acceptance.md'
+      - 'docs/m3-r4-p4-index.md'
+      - 'package.json'
+      - 'packages/k6-api-adapter/test/m3-r4-p4-fault-security-compatibility.test.js'
+      - 'schemas/execution/k6-api-runtime/README.md'
+      - 'schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p4-evidence.schema.json'
+      - 'scripts/m3-r4-p4/constants.js'
+      - 'scripts/m3-r4-p4/artifact.js'
+      - 'scripts/validate-m3-r4-p4-fault-security-compatibility.js'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m3-r4-p4-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+env:
+  EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+  M3_R4_P4_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+  M3_R4_P4_EXPECTED_BRANCH: agent/m3-r4-p4-fault-security-compatibility-9a11bd7
+  M3_R4_P4_ACCEPTED_P3_HEAD: 9a11bd749620af23735955fb3c90b034c8e63944
+
+jobs:
+  validate-fault-security-compatibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXACT_HEAD }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact Head checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXACT_HEAD"
+          test -z "$(git status --porcelain)"
+
+      - name: Enforce exact P4 changed-path scope
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == env.M3_R4_P4_EXPECTED_BRANCH }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --name-only --diff-filter=ACMR \
+            "$M3_R4_P4_ACCEPTED_P3_HEAD...$EXACT_HEAD" | sort \
+            > /tmp/m3-r4-p4-actual-paths.txt
+          cat > /tmp/m3-r4-p4-expected-paths.txt <<'PATHS'
+          .github/workflows/m3-r4-p4-fault-security-compatibility-acceptance.yml
+          docs/02-development/m3-r4-p4-fault-security-compatibility-handoff.md
+          docs/03-roadmap/m3-r4-governed-output-root.md
+          docs/03-roadmap/roadmap.md
+          docs/04-governance/m3-r4-p4-fault-security-compatibility-acceptance.md
+          docs/05-adr/ADR-0036-m3-r4-linux-filesystem-boundary.md
+          docs/06-security/m3-r4-p4-output-root-threat-model.md
+          docs/m3-r4-p4-index.md
+          docs/releases/M3-R4-P4-fault-security-compatibility-acceptance.md
+          package.json
+          packages/k6-api-adapter/test/m3-r4-p4-fault-security-compatibility.test.js
+          schemas/execution/k6-api-runtime/README.md
+          schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p4-evidence.schema.json
+          scripts/m3-r4-p4/artifact.js
+          scripts/m3-r4-p4/constants.js
+          scripts/validate-m3-r4-p4-fault-security-compatibility.js
+          PATHS
+          sort -o /tmp/m3-r4-p4-expected-paths.txt \
+            /tmp/m3-r4-p4-expected-paths.txt
+          diff -u /tmp/m3-r4-p4-expected-paths.txt \
+            /tmp/m3-r4-p4-actual-paths.txt
+          echo 'M3_R4_P4_SCOPE_GUARD=success' >> "$GITHUB_ENV"
+
+      - name: Record validation-only scope mode
+        if: ${{ github.event_name != 'pull_request' || github.head_ref != env.M3_R4_P4_EXPECTED_BRANCH }}
+        shell: bash
+        run: |
+          echo 'M3_R4_P4_SCOPE_GUARD=success' >> "$GITHUB_ENV"
+          echo 'p4ExactScopeGuard=not-applicable'
+
+      - name: Select immutable P4 Evidence mode
+        id: p4_evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = 'pull_request' ] \
+            && [ "${{ github.head_ref }}" = "$M3_R4_P4_EXPECTED_BRANCH" ]; then
+            echo 'emit=true' >> "$GITHUB_OUTPUT"
+            echo 'p4EvidenceMode=accepted-branch'
+          else
+            echo 'emit=false' >> "$GITHUB_OUTPUT"
+            echo 'p4EvidenceMode=validation-only'
+          fi
+
+      - name: Set up baseline Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run focused P4 acceptance on Node.js 22
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test --test-reporter=tap \
+            packages/k6-api-adapter/test/m3-r4-p4-fault-security-compatibility.test.js \
+            2>&1 | tee /tmp/m3-r4-p4-focused-node22.tap
+
+      - name: Capture Node.js 22 P3 compatibility product
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' > /tmp/m3-r4-p4-product-node22.txt
+          import { sha256 } from '@kdtp/knowledge-core';
+          import { boundedFileResultCollectorFixture } from './packages/k6-api-adapter/test/bounded-file-result-collector-test-helpers.js';
+          const fixture = await boundedFileResultCollectorFixture();
+          process.stdout.write(`${sha256({
+            collectorPortDescriptor: fixture.collectorPortDescriptor,
+            sealRequest: fixture.sealRequest,
+            sealReceipt: fixture.sealReceipt,
+            inspectionRequest: fixture.inspectionRequest,
+            inspectionReceipt: fixture.inspectionReceipt,
+            payloadRequest: fixture.payloadRequest,
+            payloadReceipt: fixture.payloadReceipt,
+            boundedFileResult: fixture.result,
+          })}\n`);
+          NODE
+          test "$(cat /tmp/m3-r4-p4-product-node22.txt)" \
+            = '03b2ac5c2c3ad035744426e9ac6a54f800381b6e9e72d9bfc90553f5938a6ac0'
+
+      - name: Set up fake-only compatibility Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Run focused P4 acceptance on Node.js 24
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test --test-reporter=tap \
+            packages/k6-api-adapter/test/m3-r4-p4-fault-security-compatibility.test.js \
+            2>&1 | tee /tmp/m3-r4-p4-focused-node24.tap
+
+      - name: Capture and compare Node.js 24 compatibility product
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' > /tmp/m3-r4-p4-product-node24.txt
+          import { sha256 } from '@kdtp/knowledge-core';
+          import { boundedFileResultCollectorFixture } from './packages/k6-api-adapter/test/bounded-file-result-collector-test-helpers.js';
+          const fixture = await boundedFileResultCollectorFixture();
+          process.stdout.write(`${sha256({
+            collectorPortDescriptor: fixture.collectorPortDescriptor,
+            sealRequest: fixture.sealRequest,
+            sealReceipt: fixture.sealReceipt,
+            inspectionRequest: fixture.inspectionRequest,
+            inspectionReceipt: fixture.inspectionReceipt,
+            payloadRequest: fixture.payloadRequest,
+            payloadReceipt: fixture.payloadReceipt,
+            boundedFileResult: fixture.result,
+          })}\n`);
+          NODE
+          test "$(cat /tmp/m3-r4-p4-product-node22.txt)" \
+            = "$(cat /tmp/m3-r4-p4-product-node24.txt)"
+
+      - name: Restore baseline Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run all k6 API Adapter tests
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test --test-reporter=tap packages/k6-api-adapter/test/*.test.js \
+            2>&1 | tee /tmp/m3-r4-p4-adapter-node22.tap
+
+      - name: Run complete Node.js test suite
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test -- --test-reporter=tap \
+            2>&1 | tee /tmp/m3-r4-p4-full-node22.tap
+
+      - name: Export exact test counts
+        shell: bash
+        run: |
+          tap_value() {
+            awk -v key="$2" '$1 == "#" && $2 == key { value = $3 } END { if (value == "") exit 1; print value }' "$1"
+          }
+          export_result() {
+            prefix="$1"
+            file="$2"
+            echo "${prefix}_TOTAL=$(tap_value "$file" tests)" >> "$GITHUB_ENV"
+            echo "${prefix}_PASSED=$(tap_value "$file" pass)" >> "$GITHUB_ENV"
+            echo "${prefix}_SKIPPED=$(tap_value "$file" skipped)" >> "$GITHUB_ENV"
+            echo "${prefix}_FAILED=$(tap_value "$file" fail)" >> "$GITHUB_ENV"
+          }
+          export_result M3_R4_P4_FOCUSED_NODE22 /tmp/m3-r4-p4-focused-node22.tap
+          export_result M3_R4_P4_FOCUSED_NODE24 /tmp/m3-r4-p4-focused-node24.tap
+          export_result M3_R4_P4_ADAPTER /tmp/m3-r4-p4-adapter-node22.tap
+          export_result M3_R4_P4_FULL /tmp/m3-r4-p4-full-node22.tap
+          echo 'M3_R4_P4_REPOSITORY_VALIDATOR=success' >> "$GITHUB_ENV"
+          echo "M3_R4_P4_COMPATIBILITY_PRODUCT_DIGEST=$(cat /tmp/m3-r4-p4-product-node22.txt)" \
+            >> "$GITHUB_ENV"
+
+      - name: Run complete Repository Validator
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run validate 2>&1 | tee /tmp/m3-r4-p4-repository-validator.log
+
+      - name: Generate exact-Head P4 Evidence
+        if: ${{ steps.p4_evidence.outputs.emit == 'true' }}
+        shell: bash
+        run: |
+          node scripts/validate-m3-r4-p4-fault-security-compatibility.js \
+            > /tmp/m3-r4-p4-fault-security-compatibility-evidence.json
+
+      - name: Assemble and audit permanent P4 Artifact
+        if: ${{ steps.p4_evidence.outputs.emit == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          result="$(node scripts/m3-r4-p4/artifact.js)"
+          echo "$result"
+          test "$(node -e 'process.stdout.write(String(JSON.parse(process.argv[1]).artifactPathCount))' "$result")" = '32'
+          echo 'artifactPathCount: 32'
+
+      - name: Record validation-only P4 mode
+        if: ${{ steps.p4_evidence.outputs.emit != 'true' }}
+        shell: bash
+        run: |
+          echo 'historicalP4EvidenceReissued=false'
+          echo 'p4ValidationOnly=true'
+
+      - name: Verify clean repository state
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXACT_HEAD"
+          test -z "$(git status --porcelain)"
+
+      - name: Upload permanent P4 Evidence Artifact
+        if: ${{ steps.p4_evidence.outputs.emit == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r4-p4-fault-security-compatibility-evidence
+          path: /tmp/m3-r4-p4-fault-security-compatibility-artifact
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 6
+          overwrite: false
+          include-hidden-files: false

@@ -37,3 +37,10 @@
 - Schema: `v1/k6-bounded-file-result.schema.json`
 - Schema: `v1/m3-r4-output-root-p3-evidence.schema.json`
 - Boundary: fake-only contracts and Evidence; no host filesystem path, file read, process primitive, raw payload persistence, or new runtime capability is introduced.
+
+## M3-R4-P4 fault, security and compatibility acceptance Evidence
+
+- Schema: `v1/m3-r4-output-root-p4-evidence.schema.json`
+- Version: `m3-r4-output-root-p4-evidence/v1`
+- Scope: binds the accepted P3 Head and digests, exact adversarial test results, Linux implementation assessment, compatibility product and Artifact layout.
+- Boundary: acceptance-only; P3 products and Schemas remain unchanged, real filesystem implementation remains unauthorized, and no host file is read.

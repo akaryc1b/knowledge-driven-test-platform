@@ -85,20 +85,14 @@ realFilesystemPortImplemented=false
 outputDirectoryCreated=false
 ```
 
-### 当前阶段：M3-R4-P3 Bounded Sealed-Root Result Collector
-
-P3 仅在注入式 fake 边界内：
-
-- 将逻辑生命周期从 `ALLOCATED` 推进到 `SEALED` 和 `COLLECTED`；
-- 只检查 `outputs/summary.json` / `k6-run-summary-json`；
-- 接受临时 `Uint8Array`，并校验长度、SHA-256、UTF-8、BOM、重复键、JSON 深度与时限；
-- 只输出元数据和 digest，不保留原始结果内容；
-- 不增加真实宿主文件系统实现，不运行 k6。
+### 已接受阶段：M3-R4-P3 Bounded Sealed-Root Result Collector
 
 ```text
+p3Head=9a11bd749620af23735955fb3c90b034c8e63944
 m3R4P3Started=true
 m3R4P3ImplementationComplete=true
-m3R4P3ExactHeadAcceptanceComplete=false
+m3R4P3ExactHeadAcceptanceComplete=true
+m3R4P3ArtifactIndependentlyVerified=true
 implementationStatus=INJECTED_FAKE_ONLY
 logicalRootSealed=true
 boundedJsonResultCollected=true
@@ -106,13 +100,34 @@ rawPayloadPersisted=false
 rawPayloadIncludedInEvidence=false
 realFilesystemCollectorImplemented=false
 realHostFileReadPerformed=false
-m3R4P4Started=false
-repositoryBlockers=[]
-nextRequiredSlice=M3-R4-P4
 ```
 
-P4 的 fault/security/compatibility acceptance 与 G1–G4 仍保持冻结。P3
-exact-Head 验收不自动授权 Ready、Merge、真实文件系统适配器或 k6 执行。
+### 当前阶段：M3-R4-P4 Fault, Security and Compatibility Acceptance
+
+P4 只增加验收、Schema、Validator、Workflow 和治理记录，不修改 P3
+运行时产品：
+
+```text
+slice=M3-R4-P4
+issue=85
+m3R4P4Started=true
+m3R4P4ImplementationComplete=true
+m3R4P4ExactHeadAcceptanceComplete=false
+implementationStatus=ACCEPTANCE_ONLY
+p3CollectorProductChanged=false
+realFilesystemImplementationEvaluated=true
+realFilesystemImplementationAuthorized=false
+realFilesystemCollectorImplemented=false
+platformCompatibility=linux-contract-baseline
+windowsCompatibilityClaimed=false
+macosCompatibilityClaimed=false
+m3R4G1Started=false
+repositoryBlockers=[]
+nextRequiredSlice=M3-R4-G1
+```
+
+P4 完成后进入 G1–G4 正式验收与 exact-main 收口，不自动授权真实文件系统
+适配器、k6 执行或任何 M4 能力。
 
 ## M4 — Multi-Project Operations
 
