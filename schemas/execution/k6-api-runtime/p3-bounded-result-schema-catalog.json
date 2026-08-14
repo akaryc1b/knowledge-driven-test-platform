@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "k6-output-root-p3-schema-catalog/v1",
+  "schemas": [
+    {
+      "schemaVersion": "k6-bounded-result-collector-port/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-bounded-result-collector-port.schema.json"
+    },
+    {
+      "schemaVersion": "k6-output-root-seal-request/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-output-root-seal-request.schema.json"
+    },
+    {
+      "schemaVersion": "k6-output-root-seal-receipt/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-output-root-seal-receipt.schema.json"
+    },
+    {
+      "schemaVersion": "k6-output-artifact-inspection-request/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-output-artifact-inspection-request.schema.json"
+    },
+    {
+      "schemaVersion": "k6-output-artifact-inspection-receipt/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-output-artifact-inspection-receipt.schema.json"
+    },
+    {
+      "schemaVersion": "k6-output-artifact-payload-request/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-output-artifact-payload-request.schema.json"
+    },
+    {
+      "schemaVersion": "k6-output-artifact-payload-receipt/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-output-artifact-payload-receipt.schema.json"
+    },
+    {
+      "schemaVersion": "k6-bounded-file-result/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/k6-bounded-file-result.schema.json"
+    },
+    {
+      "schemaVersion": "m3-r4-output-root-p3-evidence/v1",
+      "path": "schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p3-evidence.schema.json"
+    }
+  ]
+}

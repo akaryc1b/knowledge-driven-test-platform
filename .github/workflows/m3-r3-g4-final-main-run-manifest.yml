@@ -81,7 +81,7 @@ jobs:
             > /tmp/m3-r3-g4-final-main-run-manifest-validator.log 2>&1
           printf 'M3_R3_G4_C2_VALIDATOR_STATUS=success\n' >> "$GITHUB_ENV"
       - name: Generate pre-merge contract Evidence
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'agent/m3-r3-g4-final-main-run-manifest-cdecd4e' }}
         id: premerge
         env:
           GH_TOKEN: ${{ github.token }}
@@ -99,7 +99,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$M3_R3_G4_C2_EXACT_HEAD"
           test -z "$(git status --porcelain)"
       - name: Upload permanent pre-merge contract Artifact
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'agent/m3-r3-g4-final-main-run-manifest-cdecd4e' }}
         uses: actions/upload-artifact@v4
         with:
           name: m3-r3-g4-final-main-run-manifest-evidence

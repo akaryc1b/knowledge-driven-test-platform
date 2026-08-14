@@ -1,0 +1,374 @@
+name: m3-r4-p3-bounded-result-collector
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/m3-r4-p3-bounded-result-collector.yml'
+      - 'docs/02-development/m3-r4-p3-bounded-result-collector-handoff.md'
+      - 'docs/03-roadmap/m3-r4-governed-output-root.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/04-governance/m3-r4-p3-bounded-result-collector-acceptance.md'
+      - 'docs/m3-r4-p3-index.md'
+      - 'docs/releases/M3-R4-P3-bounded-result-collector.md'
+      - 'package.json'
+      - 'packages/k6-api-adapter/src/index.js'
+      - 'packages/k6-api-adapter/src/bounded-file-result-collector.js'
+      - 'packages/k6-api-adapter/src/bounded-json-result-payload.js'
+      - 'packages/k6-api-adapter/src/bounded-result-collector-contracts.js'
+      - 'packages/k6-api-adapter/src/bounded-result-collector-definitions.js'
+      - 'packages/k6-api-adapter/src/bounded-result-collector-validation.js'
+      - 'packages/k6-api-adapter/src/bounded-result-collector-predecessor.js'
+      - 'packages/k6-api-adapter/test/bounded-file-result-collector-test-helpers.js'
+      - 'packages/k6-api-adapter/test/m3-r4-p3-bounded-file-result-collector.test.js'
+      - 'packages/k6-api-adapter/test/m3-r4-p3-bounded-file-result-security.test.js'
+      - 'packages/k6-api-adapter/test/m3-r4-r0-governed-output-root-boundary.test.js'
+      - 'schemas/execution/k6-api-runtime/README.md'
+      - 'schemas/execution/k6-api-runtime/p3-bounded-result-schema-catalog.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-bounded-result-collector-port.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-root-seal-request.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-root-seal-receipt.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-inspection-request.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-inspection-receipt.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-payload-request.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-payload-receipt.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-bounded-file-result.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p3-evidence.schema.json'
+      - 'scripts/validate-m3-r4-p3-bounded-result-collector.js'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/m3-r4-p3-bounded-result-collector.yml'
+      - 'docs/02-development/m3-r4-p3-bounded-result-collector-handoff.md'
+      - 'docs/03-roadmap/m3-r4-governed-output-root.md'
+      - 'docs/03-roadmap/roadmap.md'
+      - 'docs/04-governance/m3-r4-p3-bounded-result-collector-acceptance.md'
+      - 'docs/m3-r4-p3-index.md'
+      - 'docs/releases/M3-R4-P3-bounded-result-collector.md'
+      - 'package.json'
+      - 'packages/k6-api-adapter/src/index.js'
+      - 'packages/k6-api-adapter/src/bounded-file-result-collector.js'
+      - 'packages/k6-api-adapter/src/bounded-json-result-payload.js'
+      - 'packages/k6-api-adapter/src/bounded-result-collector-contracts.js'
+      - 'packages/k6-api-adapter/src/bounded-result-collector-definitions.js'
+      - 'packages/k6-api-adapter/src/bounded-result-collector-validation.js'
+      - 'packages/k6-api-adapter/src/bounded-result-collector-predecessor.js'
+      - 'packages/k6-api-adapter/test/bounded-file-result-collector-test-helpers.js'
+      - 'packages/k6-api-adapter/test/m3-r4-p3-bounded-file-result-collector.test.js'
+      - 'packages/k6-api-adapter/test/m3-r4-p3-bounded-file-result-security.test.js'
+      - 'packages/k6-api-adapter/test/m3-r4-r0-governed-output-root-boundary.test.js'
+      - 'schemas/execution/k6-api-runtime/README.md'
+      - 'schemas/execution/k6-api-runtime/p3-bounded-result-schema-catalog.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-bounded-result-collector-port.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-root-seal-request.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-root-seal-receipt.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-inspection-request.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-inspection-receipt.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-payload-request.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-output-artifact-payload-receipt.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/k6-bounded-file-result.schema.json'
+      - 'schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p3-evidence.schema.json'
+      - 'scripts/validate-m3-r4-p3-bounded-result-collector.js'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m3-r4-p3-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-bounded-result-collector:
+    runs-on: ubuntu-24.04
+    env:
+      EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+      M3_R4_P3_EXACT_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Check out exact repository state
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.EXACT_HEAD }}
+          persist-credentials: false
+
+      - name: Verify exact Head checkout
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$EXACT_HEAD"
+
+      - name: Set up baseline Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run focused P3 collector contracts on Node.js 22
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test --test-reporter=tap \
+            packages/k6-api-adapter/test/m3-r4-p3-bounded-file-result-collector.test.js \
+            packages/k6-api-adapter/test/m3-r4-p3-bounded-file-result-security.test.js \
+            2>&1 | tee /tmp/m3-r4-p3-focused-node22.tap
+
+      - name: Capture Node.js 22 compatibility product
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' > /tmp/m3-r4-p3-product-node22.txt
+          import { sha256 } from '@kdtp/knowledge-core';
+          import { boundedFileResultCollectorFixture } from './packages/k6-api-adapter/test/bounded-file-result-collector-test-helpers.js';
+          const fixture = await boundedFileResultCollectorFixture();
+          process.stdout.write(`${sha256({
+            collectorPortDescriptor: fixture.collectorPortDescriptor,
+            sealRequest: fixture.sealRequest,
+            sealReceipt: fixture.sealReceipt,
+            inspectionRequest: fixture.inspectionRequest,
+            inspectionReceipt: fixture.inspectionReceipt,
+            payloadRequest: fixture.payloadRequest,
+            payloadReceipt: fixture.payloadReceipt,
+            boundedFileResult: fixture.result,
+          })}\n`);
+          NODE
+
+      - name: Set up fake-only compatibility Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Run focused P3 collector contracts on Node.js 24
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test --test-reporter=tap \
+            packages/k6-api-adapter/test/m3-r4-p3-bounded-file-result-collector.test.js \
+            packages/k6-api-adapter/test/m3-r4-p3-bounded-file-result-security.test.js \
+            2>&1 | tee /tmp/m3-r4-p3-focused-node24.tap
+
+      - name: Capture and compare Node.js 24 compatibility product
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE' > /tmp/m3-r4-p3-product-node24.txt
+          import { sha256 } from '@kdtp/knowledge-core';
+          import { boundedFileResultCollectorFixture } from './packages/k6-api-adapter/test/bounded-file-result-collector-test-helpers.js';
+          const fixture = await boundedFileResultCollectorFixture();
+          process.stdout.write(`${sha256({
+            collectorPortDescriptor: fixture.collectorPortDescriptor,
+            sealRequest: fixture.sealRequest,
+            sealReceipt: fixture.sealReceipt,
+            inspectionRequest: fixture.inspectionRequest,
+            inspectionReceipt: fixture.inspectionReceipt,
+            payloadRequest: fixture.payloadRequest,
+            payloadReceipt: fixture.payloadReceipt,
+            boundedFileResult: fixture.result,
+          })}\n`);
+          NODE
+          test "$(cat /tmp/m3-r4-p3-product-node22.txt)" \
+            = "$(cat /tmp/m3-r4-p3-product-node24.txt)"
+
+      - name: Restore baseline Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run all k6 API Adapter tests
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test --test-reporter=tap packages/k6-api-adapter/test/*.test.js \
+            2>&1 | tee /tmp/m3-r4-p3-adapter-node22.tap
+
+      - name: Run complete Node.js test suite
+        shell: bash
+        run: |
+          set -o pipefail
+          node --test --test-reporter=tap \
+            packages/knowledge-core/test/*.test.js \
+            packages/knowledge-registry/test/*.test.js \
+            packages/knowledge-registry-postgres/test/*.test.js \
+            packages/knowledge-governance/test/*.test.js \
+            packages/knowledge-governance-postgres/test/*.test.js \
+            packages/governance-query/test/*.test.js \
+            packages/project-membership/test/*.test.js \
+            packages/project-membership-postgres/test/*.test.js \
+            packages/governance-http/test/*.test.js \
+            packages/governance-auth-oidc/test/*.test.js \
+            apps/knowledge-cli/test/*.test.js \
+            apps/read-only-governance-service/test/*.test.js \
+            packages/test-plan/test/*.test.js \
+            packages/test-capability/test/*.test.js \
+            packages/test-planner/test/*.test.js \
+            packages/test-plan-registry/test/*.test.js \
+            packages/test-plan-postgres/test/*.test.js \
+            packages/test-plan-governance/test/*.test.js \
+            packages/test-planning-orchestration/test/*.test.js \
+            apps/test-plan-cli/test/*.test.js \
+            packages/test-plan-query/test/*.test.js \
+            packages/test-plan-http/test/*.test.js \
+            packages/execution-contract/test/*.test.js \
+            packages/k6-api-adapter/test/*.test.js \
+            2>&1 | tee /tmp/m3-r4-p3-full-node22.tap
+
+      - name: Export exact test counts
+        shell: bash
+        run: |
+          tap_value() {
+            awk -v key="$2" '$1 == "#" && $2 == key { value = $3 } END { if (value == "") exit 1; print value }' "$1"
+          }
+          export_result() {
+            prefix="$1"
+            file="$2"
+            echo "${prefix}_TOTAL=$(tap_value "$file" tests)" >> "$GITHUB_ENV"
+            echo "${prefix}_PASSED=$(tap_value "$file" pass)" >> "$GITHUB_ENV"
+            echo "${prefix}_SKIPPED=$(tap_value "$file" skipped)" >> "$GITHUB_ENV"
+            echo "${prefix}_FAILED=$(tap_value "$file" fail)" >> "$GITHUB_ENV"
+          }
+          export_result M3_R4_P3_FOCUSED_NODE22 /tmp/m3-r4-p3-focused-node22.tap
+          export_result M3_R4_P3_FOCUSED_NODE24 /tmp/m3-r4-p3-focused-node24.tap
+          export_result M3_R4_P3_ADAPTER /tmp/m3-r4-p3-adapter-node22.tap
+          export_result M3_R4_P3_FULL /tmp/m3-r4-p3-full-node22.tap
+          echo "M3_R4_P3_REPOSITORY_VALIDATOR=success" >> "$GITHUB_ENV"
+          echo "M3_R4_P3_COMPATIBILITY_PRODUCT_DIGEST=$(cat /tmp/m3-r4-p3-product-node22.txt)" \
+            >> "$GITHUB_ENV"
+
+      - name: Run complete Repository Validator
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run validate 2>&1 | tee /tmp/m3-r4-p3-repository-validator.log
+
+      - name: Generate exact-Head P3 Evidence
+        shell: bash
+        run: |
+          node scripts/validate-m3-r4-p3-bounded-result-collector.js \
+            > /tmp/m3-r4-p3-bounded-result-collector-evidence.json
+
+      - name: Assemble and audit permanent P3 Artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact=/tmp/m3-r4-p3-bounded-result-collector-artifact
+          rm -rf "$artifact"
+          mkdir -p "$artifact/contracts" "$artifact/schemas" \
+            "$artifact/evidence" "$artifact/metadata"
+          cp packages/k6-api-adapter/src/index.js "$artifact/contracts/index.js"
+          cp packages/k6-api-adapter/src/bounded-file-result-collector.js \
+            "$artifact/contracts/bounded-file-result-collector.js"
+          cp packages/k6-api-adapter/src/bounded-json-result-payload.js \
+            "$artifact/contracts/bounded-json-result-payload.js"
+          cp packages/k6-api-adapter/src/bounded-result-collector-contracts.js \
+            "$artifact/contracts/bounded-result-collector-contracts.js"
+          cp packages/k6-api-adapter/src/bounded-result-collector-definitions.js \
+            "$artifact/contracts/bounded-result-collector-definitions.js"
+          cp packages/k6-api-adapter/src/bounded-result-collector-validation.js \
+            "$artifact/contracts/bounded-result-collector-validation.js"
+          cp packages/k6-api-adapter/src/bounded-result-collector-predecessor.js \
+            "$artifact/contracts/bounded-result-collector-predecessor.js"
+          cp schemas/execution/k6-api-runtime/p3-bounded-result-schema-catalog.json \
+            "$artifact/schemas/p3-bounded-result-schema-catalog.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-bounded-result-collector-port.schema.json \
+            "$artifact/schemas/k6-bounded-result-collector-port.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-output-root-seal-request.schema.json \
+            "$artifact/schemas/k6-output-root-seal-request.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-output-root-seal-receipt.schema.json \
+            "$artifact/schemas/k6-output-root-seal-receipt.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-output-artifact-inspection-request.schema.json \
+            "$artifact/schemas/k6-output-artifact-inspection-request.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-output-artifact-inspection-receipt.schema.json \
+            "$artifact/schemas/k6-output-artifact-inspection-receipt.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-output-artifact-payload-request.schema.json \
+            "$artifact/schemas/k6-output-artifact-payload-request.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-output-artifact-payload-receipt.schema.json \
+            "$artifact/schemas/k6-output-artifact-payload-receipt.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/k6-bounded-file-result.schema.json \
+            "$artifact/schemas/k6-bounded-file-result.schema.json"
+          cp schemas/execution/k6-api-runtime/v1/m3-r4-output-root-p3-evidence.schema.json \
+            "$artifact/schemas/m3-r4-output-root-p3-evidence.schema.json"
+          cp /tmp/m3-r4-p3-bounded-result-collector-evidence.json \
+            "$artifact/evidence/m3-r4-p3-bounded-result-collector-evidence.json"
+
+          ARTIFACT_ROOT="$artifact" node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          import { scanSensitiveValues, validateStorePath } from './packages/k6-api-adapter/test/p5-test-helpers.js';
+
+          const root = process.env.ARTIFACT_ROOT;
+          const result = (prefix) => ({
+            total: Number(process.env[`${prefix}_TOTAL`]),
+            passed: Number(process.env[`${prefix}_PASSED`]),
+            skipped: Number(process.env[`${prefix}_SKIPPED`]),
+            failed: Number(process.env[`${prefix}_FAILED`]),
+          });
+          const testResults = {
+            focusedNode22: result('M3_R4_P3_FOCUSED_NODE22'),
+            focusedNode24: result('M3_R4_P3_FOCUSED_NODE24'),
+            k6ApiAdapter: result('M3_R4_P3_ADAPTER'),
+            fullNode: result('M3_R4_P3_FULL'),
+            repositoryValidator: { status: 'success' },
+            compatibilityProductDigest:
+              process.env.M3_R4_P3_COMPATIBILITY_PRODUCT_DIGEST,
+          };
+          writeFileSync(join(root, 'metadata/test-results.json'),
+            `${JSON.stringify(testResults, null, 2)}\n`);
+
+          const payloadPaths = [
+            'contracts/index.js',
+            'contracts/bounded-file-result-collector.js',
+            'contracts/bounded-json-result-payload.js',
+            'contracts/bounded-result-collector-contracts.js',
+            'contracts/bounded-result-collector-definitions.js',
+            'contracts/bounded-result-collector-validation.js',
+            'contracts/bounded-result-collector-predecessor.js',
+            'schemas/p3-bounded-result-schema-catalog.json',
+            'schemas/k6-bounded-result-collector-port.schema.json',
+            'schemas/k6-output-root-seal-request.schema.json',
+            'schemas/k6-output-root-seal-receipt.schema.json',
+            'schemas/k6-output-artifact-inspection-request.schema.json',
+            'schemas/k6-output-artifact-inspection-receipt.schema.json',
+            'schemas/k6-output-artifact-payload-request.schema.json',
+            'schemas/k6-output-artifact-payload-receipt.schema.json',
+            'schemas/k6-bounded-file-result.schema.json',
+            'schemas/m3-r4-output-root-p3-evidence.schema.json',
+            'evidence/m3-r4-p3-bounded-result-collector-evidence.json',
+            'metadata/test-results.json',
+          ];
+          const sensitiveScan = {};
+          const entries = payloadPaths.map((path) => {
+            validateStorePath(path);
+            const bytes = readFileSync(join(root, path));
+            const text = bytes.toString('utf8');
+            sensitiveScan[path] = path.endsWith('.json') ? JSON.parse(text) : text;
+            return {
+              path,
+              byteLength: bytes.length,
+              sha256: createHash('sha256').update(bytes).digest('hex'),
+            };
+          });
+          scanSensitiveValues(sensitiveScan, 'M3-R4-P3 Artifact');
+          const manifest = {
+            schemaVersion: 'm3-r4-p3-artifact-manifest/v1',
+            repository: 'akaryc1b/knowledge-driven-test-platform',
+            headSha: process.env.M3_R4_P3_EXACT_HEAD,
+            artifactPathCount: 20,
+            manifestedPayloadPathCount: entries.length,
+            entries,
+            sensitiveScanPassed: true,
+          };
+          writeFileSync(join(root, 'metadata/artifact-manifest.json'),
+            `${JSON.stringify(manifest, null, 2)}\n`);
+          NODE
+
+          test "$(find "$artifact" -type f | wc -l | tr -d ' ')" = "20"
+          test -z "$(find "$artifact" -type l -print -quit)"
+          test -z "$(find "$artifact" ! -type f ! -type d -print -quit)"
+
+      - name: Upload permanent P3 Evidence Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: m3-r4-p3-bounded-result-collector-evidence
+          path: /tmp/m3-r4-p3-bounded-result-collector-artifact
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 6
+          overwrite: false
+          include-hidden-files: false
